@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "title": "World Creator",
+      "subtitle": "Creator / Developer",
+      "description": "Built the world and its systems.",
+      "imageUrl": "https://example.com/staff/creator.png",
+      "url": "https://example.com",
+      "value": "creator"
+    },
+    {
+      "title": "Community Helper",
+      "subtitle": "Moderator",
+      "description": "Helps with events and community support.",
+      "imageUrl": "",
+      "url": "",
+      "value": "moderator"
+    }
+  ]
+}
