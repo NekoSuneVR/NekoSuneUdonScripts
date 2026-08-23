@@ -4,6 +4,38 @@ All notable changes to this package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] — 2026-08-23
+
+Avatar optimization update focused on safe mesh compression and Quest/mobile readiness.
+
+### Added
+
+- **Mesh Compressor** — `NekoSune → Avatar → Mesh Compressor`.
+  - Scans every skinned/basic mesh under an avatar and reports triangles, vertices, material slots, blendshapes, Read/Write state, mergeable material slots, and degenerate triangles.
+  - Quest preset highlights the current mobile triangle, skinned-mesh, and material-slot targets without pretending that file compression reduces topology.
+  - **Create safe optimized copies** writes new mesh assets instead of overwriting FBX/model sources.
+  - Removes repeated-index / zero-area triangles while preserving the original vertex array.
+  - Merges submeshes that already use the exact same material, reducing redundant material slots and draw work without touching UVs, bone weights, normals, tangents, or blendshapes.
+  - Protects large blendshape/facial meshes from blind destructive decimation and marks them as retopology candidates instead.
+  - Copyable mesh report for comparing optimization work.
+- **Mesh import compression presets** — Lossless, Balanced, Smaller, and Quest.
+  - Uses Unity `ModelImporter.meshCompression` (Off / Low / Medium / High).
+  - Optional polygon-order cache optimization.
+  - Vertex-order optimization is deliberately left unchanged on model files containing blendshapes.
+  - Reimports model assets only after an explicit confirmation dialog.
+- Detailed Mesh Compressor documentation under `Editor/MeshOptimizer/README.md`.
+
+### Changed
+
+- Avatar release workflow now uses `actions/checkout@v6` so it runs on the current Node 24 action runtime.
+- English Hub localization now includes the Mesh Compressor card. Other languages safely fall back to English until translated.
+
+### Safety
+
+- Mesh compression is presented accurately as stored mesh-data compression; it does not lower triangle count.
+- The optimizer does not provide a fake percentage decimator that randomly drops triangles from faces, clothing, or blendshape meshes.
+- Safe cleanup is non-destructive and keeps original model assets intact.
+
 ## [0.1.0] — 2026-08-23
 
 First release.
@@ -71,4 +103,5 @@ First release.
   `GameObject → NekoSune → Lip Sync Studio` and `GameObject → NekoSune → Rank Advisor` in the
   hierarchy.
 
+[0.2.0]: #
 [0.1.0]: #
