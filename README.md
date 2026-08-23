@@ -1,27 +1,17 @@
 # NekoSune Avatar Tools
 
-Focused avatar authoring tools split from the old all-in-one Avatar package.
+Focused addon package for the NekoSune Avatar Hub.
 
 **Package ID:** `com.nekosune.avatar-tools`
 
-## Included
+## Includes
 
-- **Lip Sync Studio** — `NekoSune → Avatar → Lip Sync Studio`
-- **Rank Advisor** — `NekoSune → Avatar → Rank Advisor`
-- Shared avatar reflection/performance utilities used by NekoSune Optimizer, Doctors and Converters.
+- Lip Sync Studio
+- Rank Advisor
+- shared avatar reflection/performance analysis API used by Optimizer, Doctors and Converters
 
-This package intentionally does **not** contain Compressor/Quest optimization, Doctors, ChilloutVR conversion, Props conversion or Resonite export. Those are separate VPM packages.
+This package depends on `com.nekosune.avatars`, so installing it automatically installs the Avatar Hub. Its `[NekoAddon]` cards are then discovered by the Hub without any registry edit.
 
-## Install
+The Hub/Core/localization implementation intentionally lives only in the `avatar` branch to make future addon branches small and reusable.
 
-Use the shared VCC repository:
-
-```text
-https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
-```
-
-## Branch
-
-```text
-https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#avatar-tools
-```
+VCC repository: `https://nekosunevr.github.io/NekoSuneUdonScripts/index.json`

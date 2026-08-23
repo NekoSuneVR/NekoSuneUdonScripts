@@ -1,10 +1,14 @@
 {
   "name": "com.nekosune.avatar-tools",
   "displayName": "NekoSune Avatar Tools",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "unity": "2019.4",
-  "description": "Focused VRChat avatar creator tools: Lip Sync Studio, Rank Advisor, and the shared avatar analysis API used by other NekoSune packages.",
+  "description": "Avatar Hub addon containing Lip Sync Studio, Rank Advisor and the shared avatar reflection/performance API used by other NekoSune addons.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
-  "keywords": ["vrchat","avatar","tools","lipsync","viseme","rank","performance"],
+  "keywords": ["vrchat","avatar","addon","lipsync","viseme","rank","performance"],
+  "vpmDependencies": {
+    "com.nekosune.avatars": ">=0.7.0",
+    "com.vrchat.avatars": ">=3.5.0"
+  },
   "hideInEditor": false
 }
