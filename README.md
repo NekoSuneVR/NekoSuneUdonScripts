@@ -2,7 +2,7 @@
 
 A modular VCC/VPM suite for VRChat creators.
 
-The repository now uses **feature packages** instead of putting every editor tool into one Avatar or World package. `main` remains the shared VCC listing/landing branch.
+The repository is built around **two lightweight base Hub/template packages** and a set of separately installable feature addons. The base branches stay small so new features can be added on new branches without copying the whole toolbox.
 
 ## VCC repository
 
@@ -10,41 +10,81 @@ The repository now uses **feature packages** instead of putting every editor too
 https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
 ```
 
-## Modular packages
+## Architecture
 
-| Branch | Package ID | Package | Main purpose |
-| --- | --- | --- | --- |
-| `avatar-tools` | `com.nekosune.avatar-tools` | NekoSune Avatar Tools | Lip Sync Studio + Rank Advisor + shared avatar analysis API |
-| `world-tools` | `com.nekosune.world-tools` | NekoSune World Tools | World framework + Template Guide + shared world UI API |
-| `optimizer` | `com.nekosune.optimizer` | NekoSune Optimizer | Avatar Compressor/Mesh/Quest/VRAM + World Optimizer |
-| `doctors` | `com.nekosune.doctors` | NekoSune Doctors | Avatar/PhysBone/Face/Animator + World/Udon diagnostics |
-| `converters` | `com.nekosune.converters` | NekoSune Converters | ChilloutVR CCK 3/4 Avatar/Prop/World + Resonite export |
+```text
+avatar
+└─ com.nekosune.avatars
+   NekoSune Avatar Hub
+   ├─ Hub
+   ├─ About
+   ├─ localization/styles
+   └─ public addon discovery API
 
-### Compatibility bundles
+world
+└─ com.nekosune.worlds
+   NekoSune World Hub
+   ├─ Hub
+   ├─ About
+   ├─ localization/styles
+   └─ public addon discovery API
 
-The original IDs remain available so existing projects are not abandoned:
+Installable addons
+├─ avatar-tools
+├─ world-tools
+├─ optimizer
+├─ doctors
+└─ converters
+```
 
-| Branch | Package ID | Behaviour |
+The Hub branches are **not bundles anymore**. They are the stable menu/template layer. Addons register themselves through the public `INekoAddon` + `[NekoAddon]` contract and are discovered by reflection when Unity loads their assemblies.
+
+That means adding a new addon does not require editing a central registry or changing the Hub source.
+
+## Base Hub packages
+
+| Branch | Package ID | Purpose |
 | --- | --- | --- |
-| `avatar` | `com.nekosune.avatars` | Bundle that installs Avatar Tools + Optimizer + Doctors + Converters + VRChat Avatars SDK |
-| `world` | `com.nekosune.worlds` | Bundle that installs World Tools + Optimizer + Doctors + Converters + VRChat Worlds SDK |
+| `avatar` | `com.nekosune.avatars` | Avatar Hub, About page, localization/styles and addon API |
+| `world` | `com.nekosune.worlds` | World Hub, About page, localization/styles and addon API |
 
-The bundle branches contain **no duplicate editor implementation**. The real source now lives in the modular branches.
+### Avatar Hub menu
+
+```text
+NekoSune
+└── Avatar
+    ├── Hub
+    └── About
+```
+
+### World Hub menu
+
+```text
+NekoSune
+└── World
+    ├── Hub
+    └── About
+```
+
+If no addons are installed, the Hub simply explains which addon packages are available. As soon as an addon assembly implementing the appropriate Hub interface is installed, its card appears automatically.
 
 ---
 
-## NekoSune Avatar Tools
+## Addon packages
+
+### NekoSune Avatar Tools
 
 Branch: `avatar-tools`
 
 Package: `com.nekosune.avatar-tools`
 
-Included:
+Contains:
 
 - **Lip Sync Studio**
 - **Rank Advisor**
-- localization/framework used by avatar-facing NekoSune modules
-- shared reflection/performance utilities used by Optimizer, Doctors and Converters
+- shared avatar reflection/performance API used by other NekoSune addons
+
+It depends on the Avatar Hub, so installing Avatar Tools automatically installs the base Avatar menu/Hub.
 
 Development Git URL:
 
@@ -52,19 +92,19 @@ Development Git URL:
 https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#avatar-tools
 ```
 
----
-
-## NekoSune World Tools
+### NekoSune World Tools
 
 Branch: `world-tools`
 
 Package: `com.nekosune.world-tools`
 
-Included:
+Contains:
 
-- **World Hub**
 - **World Template Guide**
-- shared world UI/framework used by Optimizer, Doctors and Converters
+- lightweight world extension helpers
+- Runtime/Udon starter-layout documentation
+
+It depends on the World Hub and automatically contributes its World card there.
 
 Development Git URL:
 
@@ -72,34 +112,31 @@ Development Git URL:
 https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#world-tools
 ```
 
----
-
-## NekoSune Optimizer
+### NekoSune Optimizer
 
 Branch: `optimizer`
 
 Package: `com.nekosune.optimizer`
 
-### Avatar optimization
+Avatar modules:
 
 - Rank-driven **Compressor**
-- safe mesh cleanup/material-slot merging
+- mesh cleanup/material-slot merging
 - mesh import compression
-- Quest/mobile preparation
-- Android-only texture overrides
-- VRAM / Texture Inspector
-- particle budget controls
+- **PC → Quest Assistant**
+- **VRAM / Texture Inspector**
+- particle-budget controls
 - safe PhysBone-collider cleanup assistance
 
-### World optimization
+World modules:
 
 - **World Optimizer**
-- scene triangle/material estimates
-- unique texture and estimated texture-memory review
-- oversized texture warnings
-- realtime light/shadow review
-- particle/audio counts
-- performance advisories kept separate from build/network diagnostics
+- scene geometry/material estimates
+- texture-memory and oversized-texture review
+- realtime lighting/shadow review
+- particle/audio review
+
+Optimizer registers with both Hubs automatically.
 
 Development Git URL:
 
@@ -107,27 +144,25 @@ Development Git URL:
 https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#optimizer
 ```
 
----
-
-## NekoSune Doctors
+### NekoSune Doctors
 
 Branch: `doctors`
 
 Package: `com.nekosune.doctors`
 
-### Avatar Doctors
+Avatar diagnostics:
 
 - Avatar / Preflight Doctor
 - PhysBone Doctor
 - Face Tracking Doctor
 - Expression + Animator Doctor
 
-### World Doctors
+World diagnostics:
 
 - World Doctor
 - Udon Network Doctor
 
-Optimization belongs to Optimizer; conversion belongs to Converters.
+Doctors registers with both Hubs and remains separate from Optimizer/Converters.
 
 Development Git URL:
 
@@ -135,37 +170,24 @@ Development Git URL:
 https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#doctors
 ```
 
----
-
-## NekoSune Converters
+### NekoSune Converters
 
 Branch: `converters`
 
 Package: `com.nekosune.converters`
 
-All cross-platform conversion is isolated here.
+Cross-platform conversion only:
 
-### ChilloutVR CCK
+- ChilloutVR **CCK 4 stable**
+- ChilloutVR **CCK 3 legacy**
+- VRChat Avatar → CVR Avatar
+- Unity/VRChat object → CVR Prop / Spawnable
+- VRChat World → CVR World
+- Advanced Avatar Settings / Animator toggle conversion where supported
+- optional PhysBone → Dynamic Bone bridge
+- VRChat Avatar → Resonite through the installed Modular Avatar / NDMF Resonite backend
 
-Supports runtime detection for:
-
-- **CCK 4 stable**
-- **CCK 3 legacy**
-
-Included conversion paths:
-
-- VRChat Avatar → ChilloutVR Avatar
-- Unity/VRChat hierarchy → ChilloutVR Prop / Spawnable
-- VRChat World → ChilloutVR World
-- Advanced Avatar Settings conversion
-- Bool/Float/Int avatar control conversion where supported
-- pickup/object-sync/interactable conversion for props
-- non-destructive world scene copy with supported spawn/mirror/station/video/sync/toggle conversion
-- optional PhysBone → Dynamic Bone bridge when Dynamic Bone is installed
-
-### Resonite
-
-The Resonite exporter is part of the same cross-platform Converters package. It uses the installed Modular Avatar / NDMF Resonite backend rather than inventing a second incompatible `.resonitepackage` format.
+Converters registers Avatar/Prop cards with the Avatar Hub and World conversion cards with the World Hub.
 
 Development Git URL:
 
@@ -175,66 +197,97 @@ https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#converters
 
 ---
 
+## Automatic Hub registration
+
+The base packages expose a public addon contract.
+
+A minimal Avatar addon looks like:
+
+```csharp
+using NekoSune.Avatars.Editor;
+using UnityEditor;
+
+[NekoAddon(Order = 100)]
+public sealed class MyAvatarAddon : INekoAddon
+{
+    public string Id => "my-avatar-addon";
+    public string TitleKey => "My Avatar Addon";
+    public string DescriptionKey => "Describe the feature.";
+    public string CategoryKey => "cat.avatar";
+    public string Glyph => "+";
+    public bool IsAvailable => true;
+
+    public void Open()
+        => EditorApplication.ExecuteMenuItem("NekoSune/Avatar/My Addon");
+}
+```
+
+For World addons use `NekoSune.Worlds.Editor.INekoAddon` and the World Hub assembly.
+
+The Hub scans loaded assemblies automatically. No switch statement, JSON registry, or Hub source edit is required.
+
+## Creating a new addon branch
+
+For a new Avatar addon:
+
+1. Create a new branch from `avatar` or from the closest existing addon.
+2. Give the branch/package a unique ID such as `com.nekosune.my-avatar-addon`.
+3. Add `com.nekosune.avatars` as a VPM dependency.
+4. Reference assembly `NekoSune.Avatars.Editor`.
+5. Add your tool and an `[NekoAddon]` registration class.
+6. Put menu entries under `NekoSune → Avatar → ...`.
+7. Add a release workflow that creates a ZIP with `package.json` at ZIP root.
+8. Bump the package version to publish; the shared listing will discover the release automatically.
+
+For a new World addon, do the same from `world`, depend on `com.nekosune.worlds`, reference `NekoSune.Worlds.Editor`, and use `NekoSune → World → ...` menus.
+
+Starter files are included directly on the two base branches:
+
+```text
+avatar/Templates/AvatarAddonTemplate.cs.txt
+world/Templates/WorldAddonTemplate.cs.txt
+```
+
 ## Dependency layout
 
 ```text
-Avatar Tools ─────────────┐
-                          ├─ Optimizer
-World Tools ──────────────┤
-                          ├─ Doctors
-                          └─ Converters
+Avatar Hub ────────────┬─ Avatar Tools
+                       ├─ Optimizer
+                       ├─ Doctors
+                       └─ Converters
 
-Avatar Bundle
-  ├─ VRChat Avatars SDK
-  ├─ Avatar Tools
-  ├─ Optimizer
-  ├─ Doctors
-  └─ Converters
+World Hub ─────────────┬─ World Tools
+                       ├─ Optimizer
+                       ├─ Doctors
+                       └─ Converters
 
-World Bundle
-  ├─ VRChat Worlds SDK
-  ├─ World Tools
-  ├─ Optimizer
-  ├─ Doctors
-  └─ Converters
+Avatar Tools
+└─ shared avatar analysis used by Optimizer / Doctors / Converters
 ```
 
-Avatar Tools and World Tools deliberately do not force the opposite VRChat SDK into the project. The modular feature packages use reflection/runtime detection where practical.
+The Hub packages themselves do not force the opposite VRChat SDK into a project. Cross-platform/mixed addons use reflection/runtime detection where practical.
 
----
+## Publishing / listing
 
-## Current release families
+Every package branch has its own release workflow. Release ZIPs put `package.json` directly at ZIP root.
+
+`main/source.json` points the VRChat package-list builder at this repository once. The builder then discovers every compatible release ZIP and publishes all package IDs into the same VCC repository:
 
 ```text
-avatar-tools-v1.0.0
-world-tools-v1.0.0
-optimizer-v1.0.0
-doctors-v1.0.0
-converters-v1.0.0
-avatars-v0.6.0
-worlds-v0.4.0
+https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
 ```
 
-Each release ZIP has `package.json` directly at its root so the shared VRChat package listing can index it.
-
-## Publishing
-
-Each package branch has its own release workflow. Bumping that branch's `package.json` version creates its package-specific release tag and then triggers the shared `main` listing rebuild.
-
-`source.json` only needs this repository in `githubRepos`; the package-list builder discovers all compatible release ZIPs and publishes them into one `index.json`.
+`Website/` renders package cards dynamically from that generated listing, so newly published addon packages can appear without manually editing the website package list.
 
 ## Main branch
 
-`main` contains:
-
 ```text
-.github/workflows/build-listing.yml
-Website/
-source.json
-README.md
+main
+├── .github/workflows/build-listing.yml
+├── Website/
+├── source.json
+└── README.md
 ```
-
-The website renders package cards dynamically from the generated listing, so new modular packages appear automatically when their releases are indexed.
 
 ## License
 
