@@ -1,9 +1,9 @@
 {
   "name": "com.nekosune.worlds",
   "displayName": "NekoSune Worlds",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "unity": "2022.3",
-  "description": "NekoSune toolbox and development framework for VRChat Worlds and Udon tooling. Avatar tools are shipped separately in com.nekosune.avatars.",
+  "description": "VRChat Worlds creator toolbox with World Doctor performance/Quest checks and Udon networking diagnostics.",
   "author": {
     "name": "NekoSuneVR",
     "email": "contact@nekosunevr.co.uk",
@@ -15,6 +15,9 @@
     "worlds",
     "udon",
     "udonsharp",
+    "optimization",
+    "quest",
+    "networking",
     "editor",
     "tools"
   ],
