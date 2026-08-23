@@ -10,6 +10,7 @@ namespace NekoSune.WorldUI.Editor
     internal static class NekoWorldUiData
     {
         const int MaxJsonChars = 8 * 1024 * 1024;
+        const string RuntimeTemplateRoot = "Packages/com.nekosune.world-ui-builder/Templates/Runtime/";
 
         public static NekoWorldUiFeedDocument ParseFeed(string json)
         {
@@ -68,8 +69,7 @@ namespace NekoSune.WorldUI.Editor
             if (feed == null) return null;
             string folder = EnsureFolder("Assets/NekoSune/WorldUI/Data");
             string path = AssetDatabase.GenerateUniqueAssetPath(folder + "/" + SafeFile(suggestedName) + ".json");
-            string projectRoot = Directory.GetParent(Application.dataPath).FullName;
-            string absolute = Path.Combine(projectRoot, path.Replace('/', Path.DirectorySeparatorChar));
+            string absolute = AssetPathToAbsolute(path);
             File.WriteAllText(absolute, JsonUtility.ToJson(feed, true), Encoding.UTF8);
             AssetDatabase.ImportAsset(path);
             return path;
@@ -78,15 +78,50 @@ namespace NekoSune.WorldUI.Editor
         public static void GenerateVrchatStarterPack()
         {
             string folder = EnsureFolder("Assets/NekoSune/WorldUI/Generated");
-            string projectRoot = Directory.GetParent(Application.dataPath).FullName;
-            string jsonPath = folder + "/NekoWorldUiVrchatJsonFeed.cs";
-            string imagePath = folder + "/NekoWorldUiVrchatImageFeed.cs";
-            string jsonAbsolute = Path.Combine(projectRoot, jsonPath.Replace('/', Path.DirectorySeparatorChar));
-            string imageAbsolute = Path.Combine(projectRoot, imagePath.Replace('/', Path.DirectorySeparatorChar));
-            if (!File.Exists(jsonAbsolute)) File.WriteAllText(jsonAbsolute, VrchatJsonSource, Encoding.UTF8);
-            if (!File.Exists(imageAbsolute)) File.WriteAllText(imageAbsolute, VrchatImageSource, Encoding.UTF8);
+            int created = 0;
+            if (CopyRuntimeTemplate("NekoWorldUiVrchatJsonFeed.cs.txt", folder + "/NekoWorldUiVrchatJsonFeed.cs")) created++;
+            if (CopyRuntimeTemplate("NekoWorldUiVrchatImageFeed.cs.txt", folder + "/NekoWorldUiVrchatImageFeed.cs")) created++;
+            if (CopyRuntimeTemplate("NekoWorldUiVrchatActions.cs.txt", folder + "/NekoWorldUiVrchatActions.cs")) created++;
             AssetDatabase.Refresh();
-            EditorUtility.DisplayDialog("NekoSune World UI Builder", "Generated VRChat UdonSharp starter scripts under:\n\n" + folder + "\n\nUnity/UdonSharp will compile them if the VRChat Worlds SDK is installed. Add the generated behaviour to a helper GameObject and assign the row/image slots made by the UI Builder.", "OK");
+
+            EditorUtility.DisplayDialog(
+                "NekoSune World UI Builder",
+                "VRChat runtime starter pack is available under:\n\n" + folder
+                + "\n\nNew files created: " + created
+                + "\n\nExisting generated scripts were left untouched so your edits are not overwritten. UdonSharp will compile these helpers when the VRChat Worlds SDK/UdonSharp is installed.",
+                "OK");
+        }
+
+        [MenuItem("NekoSune/World/UI Builder/Generate VRChat Player Action Starter", false, 30)]
+        public static void GenerateVrchatPlayerActionStarter()
+        {
+            string folder = EnsureFolder("Assets/NekoSune/WorldUI/Generated");
+            bool created = CopyRuntimeTemplate("NekoWorldUiVrchatActions.cs.txt", folder + "/NekoWorldUiVrchatActions.cs");
+            AssetDatabase.Refresh();
+            EditorUtility.DisplayDialog(
+                "NekoSune World UI Builder",
+                (created ? "Generated" : "Already exists") + ":\n\n" + folder + "/NekoWorldUiVrchatActions.cs"
+                + "\n\nAssign the targets you need, then connect generated UI controls to its public Udon events.",
+                "OK");
+        }
+
+        static bool CopyRuntimeTemplate(string templateName, string destinationAssetPath)
+        {
+            string destinationAbsolute = AssetPathToAbsolute(destinationAssetPath);
+            if (File.Exists(destinationAbsolute)) return false;
+
+            TextAsset source = AssetDatabase.LoadAssetAtPath<TextAsset>(RuntimeTemplateRoot + templateName);
+            if (source == null)
+                throw new FileNotFoundException("Runtime template was not found in the installed package: " + templateName);
+
+            File.WriteAllText(destinationAbsolute, source.text, Encoding.UTF8);
+            return true;
+        }
+
+        static string AssetPathToAbsolute(string assetPath)
+        {
+            string projectRoot = Directory.GetParent(Application.dataPath).FullName;
+            return Path.Combine(projectRoot, assetPath.Replace('/', Path.DirectorySeparatorChar));
         }
 
         static string EnsureFolder(string path)
@@ -108,115 +143,5 @@ namespace NekoSune.WorldUI.Editor
             foreach (char c in Path.GetInvalidFileNameChars()) value = value.Replace(c, '_');
             return value.Replace(' ', '_');
         }
-
-        const string VrchatJsonSource = @"using UdonSharp;
-using UnityEngine;
-using UnityEngine.UI;
-using VRC.SDK3.Data;
-using VRC.SDK3.StringLoading;
-using VRC.SDKBase;
-
-public class NekoWorldUiVrchatJsonFeed : UdonSharpBehaviour
-{
-    public VRCUrl jsonUrl;
-    public Text[] rows;
-    public string titleKey = \"title\";
-    public string subtitleKey = \"subtitle\";
-    public string descriptionKey = \"description\";
-
-    public void RefreshJson()
-    {
-        if (VRCUrl.IsNullOrEmpty(jsonUrl)) return;
-        VRCStringDownloader.LoadUrl(jsonUrl, this);
-    }
-
-    public override void OnStringLoadSuccess(IVRCStringDownload result)
-    {
-        DataToken rootToken;
-        if (!VRCJson.TryDeserializeFromJson(result.Result, out rootToken)) return;
-        DataDictionary root = rootToken.DataDictionary;
-        DataToken itemsToken;
-        if (!root.TryGetValue(\"items\", out itemsToken)) return;
-        DataList items = itemsToken.DataList;
-        int count = rows.Length < items.Count ? rows.Length : items.Count;
-        for (int i = 0; i < count; i++)
-        {
-            DataDictionary item = items[i].DataDictionary;
-            string title = GetString(item, titleKey);
-            string subtitle = GetString(item, subtitleKey);
-            string description = GetString(item, descriptionKey);
-            rows[i].text = title + (subtitle == \"\" ? \"\" : \"\\n\" + subtitle) + (description == \"\" ? \"\" : \"\\n\" + description);
-            rows[i].gameObject.SetActive(true);
-        }
-        for (int i = count; i < rows.Length; i++) rows[i].gameObject.SetActive(false);
-    }
-
-    public override void OnStringLoadError(IVRCStringDownload result)
-    {
-        Debug.LogError(\"[NekoSune World UI] JSON download failed: \" + result.ErrorCode + \" - \" + result.Error);
-    }
-
-    private string GetString(DataDictionary item, string key)
-    {
-        DataToken token;
-        if (!item.TryGetValue(key, out token)) return \"\";
-        return token.String;
-    }
-}
-";
-
-        const string VrchatImageSource = @"using UdonSharp;
-using UnityEngine;
-using UnityEngine.UI;
-using VRC.SDK3.Image;
-using VRC.SDKBase;
-using VRC.Udon.Common.Interfaces;
-
-public class NekoWorldUiVrchatImageFeed : UdonSharpBehaviour
-{
-    public VRCUrl[] imageUrls;
-    public RawImage[] slots;
-    private VRCImageDownloader _downloader;
-
-    void Start()
-    {
-        _downloader = new VRCImageDownloader();
-    }
-
-    public void LoadImages()
-    {
-        if (_downloader == null) _downloader = new VRCImageDownloader();
-        int count = imageUrls.Length < slots.Length ? imageUrls.Length : slots.Length;
-        for (int i = 0; i < count; i++)
-        {
-            if (VRCUrl.IsNullOrEmpty(imageUrls[i])) continue;
-            _downloader.DownloadImage(imageUrls[i], null, (IUdonEventReceiver)this, new TextureInfo());
-        }
-    }
-
-    public override void OnImageLoadSuccess(IVRCImageDownload result)
-    {
-        string loaded = result.Url.Get();
-        int count = imageUrls.Length < slots.Length ? imageUrls.Length : slots.Length;
-        for (int i = 0; i < count; i++)
-        {
-            if (imageUrls[i].Get() != loaded) continue;
-            slots[i].texture = result.Result;
-            slots[i].gameObject.SetActive(true);
-            return;
-        }
-    }
-
-    public override void OnImageLoadError(IVRCImageDownload result)
-    {
-        Debug.LogError(\"[NekoSune World UI] Image download failed: \" + result.Error + \" - \" + result.ErrorMessage);
-    }
-
-    void OnDestroy()
-    {
-        if (_downloader != null) _downloader.Dispose();
-    }
-}
-";
     }
 }
