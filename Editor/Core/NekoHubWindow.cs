@@ -4,23 +4,19 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoSune.Avatars.Editor
+namespace NekoSune.Worlds.Editor
 {
-    /// <summary>
-    /// The "NekoSune" root window: lists every registered addon so features can be added
-    /// to the package without touching this file.
-    /// </summary>
-    internal class NekoHubWindow : EditorWindow
+    internal sealed class NekoHubWindow : EditorWindow
     {
         Vector2 _scroll;
         static string _version;
 
-        [MenuItem(NekoPaths.MenuRoot + "Hub", false, 0)]
+        [MenuItem(NekoPaths.MenuRoot + "World/Hub", false, 0)]
         public static void Open()
         {
-            var w = GetWindow<NekoHubWindow>(false, "NekoSune", true);
-            w.minSize = new Vector2(420f, 340f);
-            w.Show();
+            var window = GetWindow<NekoHubWindow>(false, "NekoSune Worlds", true);
+            window.minSize = new Vector2(440f, 340f);
+            window.Show();
         }
 
         void OnEnable()
@@ -33,22 +29,27 @@ namespace NekoSune.Avatars.Editor
             NekoLoc.LanguageChanged -= Repaint;
         }
 
-        public static string Version
+        static string Version
         {
             get
             {
                 if (!string.IsNullOrEmpty(_version)) return _version;
                 _version = "0.0.0";
+
                 try
                 {
-                    string abs = NekoPaths.ToAbsolute(NekoPaths.Root + "/package.json");
-                    if (abs != null && File.Exists(abs))
+                    string path = NekoPaths.ToAbsolute(NekoPaths.Root + "/package.json");
+                    if (!string.IsNullOrEmpty(path) && File.Exists(path))
                     {
-                        Match m = Regex.Match(File.ReadAllText(abs), "\"version\"\\s*:\\s*\"([^\"]+)\"");
-                        if (m.Success) _version = m.Groups[1].Value;
+                        Match match = Regex.Match(File.ReadAllText(path), "\"version\"\\s*:\\s*\"([^\"]+)\"");
+                        if (match.Success) _version = match.Groups[1].Value;
                     }
                 }
-                catch { /* version is cosmetic */ }
+                catch
+                {
+                    // Version display is cosmetic only.
+                }
+
                 return _version;
             }
         }
@@ -56,11 +57,10 @@ namespace NekoSune.Avatars.Editor
         void OnGUI()
         {
             NekoStyles.Ensure();
+            NekoStyles.Header(NekoLoc.T("hub.title"), NekoLoc.T("hub.subtitle"));
+            DrawLanguagePicker();
 
-            NekoStyles.HeaderBar(NekoLoc.T("hub.title"), "NekoSune", NekoLoc.T("hub.subtitle"));
-            DrawLanguageBar();
-            NekoStyles.Rule(2f);
-
+            GUILayout.Space(6f);
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
 
             IList<INekoAddon> addons = NekoAddonRegistry.All;
@@ -70,27 +70,27 @@ namespace NekoSune.Avatars.Editor
             }
             else
             {
-                string lastCategory = null;
+                string previousCategory = null;
                 for (int i = 0; i < addons.Count; i++)
                 {
-                    INekoAddon a = addons[i];
-                    string cat = NekoLoc.T(a.CategoryKey);
-                    if (cat != lastCategory)
+                    INekoAddon addon = addons[i];
+                    string category = NekoLoc.T(addon.CategoryKey);
+                    if (category != previousCategory)
                     {
                         GUILayout.Space(6f);
-                        GUILayout.Label(cat.ToUpperInvariant(), EditorStyles.miniBoldLabel);
-                        lastCategory = cat;
+                        GUILayout.Label(category.ToUpperInvariant(), EditorStyles.miniBoldLabel);
+                        previousCategory = category;
                     }
-                    DrawAddonCard(a);
+
+                    DrawAddon(addon);
                 }
             }
 
-            GUILayout.Space(10f);
             EditorGUILayout.EndScrollView();
+            GUILayout.FlexibleSpace();
 
-            NekoStyles.Rule(2f);
             EditorGUILayout.BeginHorizontal();
-            GUILayout.Label("v" + Version, NekoStyles.Subtitle);
+            GUILayout.Label("NekoSune Worlds v" + Version, NekoStyles.Subtitle);
             GUILayout.FlexibleSpace();
             if (GUILayout.Button(NekoLoc.T("hub.reloadLanguages"), EditorStyles.miniButton))
             {
@@ -98,59 +98,50 @@ namespace NekoSune.Avatars.Editor
                 NekoAddonRegistry.Refresh();
             }
             EditorGUILayout.EndHorizontal();
-            GUILayout.Space(4f);
         }
 
-        void DrawLanguageBar()
+        static void DrawLanguagePicker()
         {
-            List<NekoLanguageInfo> langs = NekoLoc.Languages;
-            if (langs == null || langs.Count == 0) return;
+            List<NekoLanguageInfo> languages = NekoLoc.Languages;
+            if (languages == null || languages.Count <= 1) return;
 
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            GUILayout.Label(NekoLoc.T("common.language"), NekoStyles.Subtitle);
+            GUILayout.Label(NekoLoc.T("common.language"), EditorStyles.miniLabel);
 
-            var names = new string[langs.Count];
+            string[] names = new string[languages.Count];
             int current = 0;
-            for (int i = 0; i < langs.Count; i++)
+            for (int i = 0; i < languages.Count; i++)
             {
-                names[i] = langs[i].Display;
-                if (langs[i].Code == NekoLoc.ActiveCode) current = i;
+                names[i] = languages[i].Display;
+                if (languages[i].Code == NekoLoc.ActiveCode) current = i;
             }
 
-            int picked = EditorGUILayout.Popup(current, names, GUILayout.Width(180f));
-            if (picked != current) NekoLoc.SetLanguage(langs[picked].Code);
+            int selected = EditorGUILayout.Popup(current, names, GUILayout.Width(190f));
+            if (selected != current)
+                NekoLoc.SetLanguage(languages[selected].Code);
+
             EditorGUILayout.EndHorizontal();
         }
 
-        void DrawAddonCard(INekoAddon addon)
+        static void DrawAddon(INekoAddon addon)
         {
-            bool available = addon.IsAvailable;
-
-            Rect card;
             EditorGUILayout.BeginHorizontal(NekoStyles.Card);
-            {
-                GUILayout.Label(addon.Glyph, NekoStyles.IconBig, GUILayout.Width(34f), GUILayout.Height(38f));
-                EditorGUILayout.BeginVertical();
-                GUILayout.Label(NekoLoc.T(addon.TitleKey), NekoStyles.SlotName);
-                GUILayout.Label(NekoLoc.T(addon.DescriptionKey), NekoStyles.SlotMeta);
-                EditorGUILayout.EndVertical();
 
-                GUILayout.FlexibleSpace();
-                using (new EditorGUI.DisabledScope(!available))
-                {
-                    if (GUILayout.Button(NekoLoc.T("hub.open"), NekoStyles.PrimaryButton, GUILayout.Height(28f)))
-                        addon.Open();
-                }
+            GUILayout.Label(addon.Glyph, EditorStyles.boldLabel, GUILayout.Width(28f));
+            EditorGUILayout.BeginVertical();
+            GUILayout.Label(NekoLoc.T(addon.TitleKey), NekoStyles.CardTitle);
+            GUILayout.Label(NekoLoc.T(addon.DescriptionKey), NekoStyles.CardDescription);
+            EditorGUILayout.EndVertical();
+
+            GUILayout.FlexibleSpace();
+            using (new EditorGUI.DisabledScope(!addon.IsAvailable))
+            {
+                if (GUILayout.Button(NekoLoc.T("hub.open"), NekoStyles.PrimaryButton, GUILayout.Width(80f)))
+                    addon.Open();
             }
+
             EditorGUILayout.EndHorizontal();
-            card = GUILayoutUtility.GetLastRect();
-
-            if (!available)
-            {
-                EditorGUI.DrawRect(card, new Color(0f, 0f, 0f, 0.25f));
-                NekoStyles.Outline(card, new Color(NekoStyles.Warn.r, NekoStyles.Warn.g, NekoStyles.Warn.b, 0.5f));
-            }
         }
     }
 }
