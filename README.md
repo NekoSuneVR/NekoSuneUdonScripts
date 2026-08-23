@@ -1,233 +1,240 @@
 # NekoSune VRChat Tools
 
-Unity Editor tooling for VRChat creators, split into separate **Avatar** and **World/Udon** VPM packages.
+A modular VCC/VPM suite for VRChat creators.
 
-`main` is the **VCC/VPM package-listing branch** and project landing page. Package source lives on the `avatar` and `world` branches.
+The repository now uses **feature packages** instead of putting every editor tool into one Avatar or World package. `main` remains the shared VCC listing/landing branch.
 
-## Packages
-
-| Branch | Package ID | For | Status |
-| --- | --- | --- | --- |
-| [`avatar`](../../tree/avatar) | `com.nekosune.avatars` | VRChat avatars | Working — diagnostics, optimization and platform conversion |
-| [`world`](../../tree/world) | `com.nekosune.worlds` | VRChat worlds / Udon | Working — World Doctor + Network Doctor |
-| `main` | `com.nekosune.vrchat-tools` | VCC repository + docs | Active listing |
-
-### Avatar package
-
-The `avatar` branch now contains:
-
-- **Avatar Doctor** — upload/preflight checks for descriptor, menus, parameters, Animator setup, performance, texture/VRAM and Quest compatibility.
-- **PC → Quest Assistant** — creates a separate Quest copy, mobile-material conversions, Android texture overrides and a mobile blocker plan.
-- **PhysBone Doctor** — per-chain transform/collider/collision-check analysis plus unused-collider and overlapping-root detection.
-- **VRAM / Texture Inspector** — texture memory/resolution/import analysis with Android-only maximum-size overrides.
-- **Face Tracking Doctor** — ARKit/Unified Expressions coverage plus core VRCFaceTracking v2 parameter setup.
-- **Expression + Animator Doctor** — menu references, parameter budget/types, transitions, Write Defaults and Parameter Driver diagnostics.
-- **Mesh Compressor** — safe mesh cleanup, material-slot merging, import compression and Quest mesh-readiness guidance.
-- **Rank Advisor** — full PC/Quest performance ranking and blocker targets.
-- **Lip Sync Studio** — audio-to-viseme animation baking.
-- **Export to Resonite** — bridges to the installed experimental Modular Avatar Resonite backend and saves its real `.resonitepackage` output.
-- **Convert to ChilloutVR** — CCK-gated conversion to a `CVRAvatar` copy with Advanced Avatar Settings, Bool toggles, Float sliders, Int dropdowns, viewpoint/visemes/blink and optional Dynamic Bone bridging.
-
-The Resonite, ChilloutVR CCK and Dynamic Bone integrations are optional and are detected at runtime rather than forced into every VRChat avatar project.
-
-See the [`avatar` README](../../tree/avatar) for full feature details and conversion limitations.
-
-### World package
-
-The `world` branch contains the world-focused creator toolbox:
-
-- **World Doctor** — scans the active scene for performance/build-readiness concerns including geometry, materials, textures, estimated texture memory, realtime lighting/shadows, reflection probes, particles, audio loading, cameras, Udon count, scene descriptor, and Android/Quest-specific warnings.
-- **Udon Network Doctor** — analyses attached UdonSharp source for sync modes, `[UdonSynced]`, `RequestSerialization`, direct DataList/DataDictionary sync, network-event compatibility, Continuous-sync payloads, ownership patterns, and multiplayer test reminders.
-- **World Template Guide** — package extension guide for future editor/runtime features.
-
-World findings distinguish VRChat rules/platform restrictions from NekoSune performance advisories so advisory thresholds are not presented as official hard limits.
-
-See the [`world` README](../../tree/world) for full documentation.
-
----
-
-## Install with VRChat Creator Companion
-
-Both packages use the same VCC repository:
+## VCC repository
 
 ```text
 https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
 ```
 
-1. Open **VRChat Creator Companion**.
-2. Open **Settings → Packages**.
-3. Choose **Add Repository**.
-4. Paste the listing URL above.
-5. Open a VRChat project.
-6. Add the package that matches the project:
-   - **NekoSune Avatars** for avatar projects.
-   - **NekoSune Worlds** for world projects.
+## Modular packages
 
-A browser can also launch VCC with:
+| Branch | Package ID | Package | Main purpose |
+| --- | --- | --- | --- |
+| `avatar-tools` | `com.nekosune.avatar-tools` | NekoSune Avatar Tools | Lip Sync Studio + Rank Advisor + shared avatar analysis API |
+| `world-tools` | `com.nekosune.world-tools` | NekoSune World Tools | World framework + Template Guide + shared world UI API |
+| `optimizer` | `com.nekosune.optimizer` | NekoSune Optimizer | Avatar Compressor/Mesh/Quest/VRAM + World Optimizer |
+| `doctors` | `com.nekosune.doctors` | NekoSune Doctors | Avatar/PhysBone/Face/Animator + World/Udon diagnostics |
+| `converters` | `com.nekosune.converters` | NekoSune Converters | ChilloutVR CCK 3/4 Avatar/Prop/World + Resonite export |
 
-```text
-vcc://vpm/addRepo?url=https%3A%2F%2Fnekosunevr.github.io%2FNekoSuneUdonScripts%2Findex.json
-```
+### Compatibility bundles
 
-The `.git#avatar` and `.git#world` URLs are **Unity Package Manager Git URLs**, not VCC repository URLs.
+The original IDs remain available so existing projects are not abandoned:
 
----
+| Branch | Package ID | Behaviour |
+| --- | --- | --- |
+| `avatar` | `com.nekosune.avatars` | Bundle that installs Avatar Tools + Optimizer + Doctors + Converters + VRChat Avatars SDK |
+| `world` | `com.nekosune.worlds` | Bundle that installs World Tools + Optimizer + Doctors + Converters + VRChat Worlds SDK |
 
-## Repository layout
-
-```text
-main
-├── .github/workflows/build-listing.yml
-├── Website/
-├── source.json
-└── README.md
-
-avatar
-├── .github/workflows/release-avatar.yml
-├── Editor/
-│   ├── Core/
-│   ├── Diagnostics/
-│   ├── Converters/
-│   ├── MeshOptimizer/
-│   ├── RankAdvisor/
-│   ├── LipSync/
-│   └── Localization/
-├── package.json        com.nekosune.avatars
-├── CHANGELOG.md
-└── README.md
-
-world
-├── .github/workflows/release-world.yml
-├── Editor/
-│   ├── Core/
-│   ├── Localization/
-│   └── World/
-│       ├── NekoWorldDoctorWindow.cs
-│       ├── NekoUdonNetworkDoctorWindow.cs
-│       └── NekoWorldTemplateWindow.cs
-├── Runtime/Udon/
-├── package.json        com.nekosune.worlds
-├── CHANGELOG.md
-└── README.md
-```
-
-`source.json` lists this GitHub repository as a release source. VRChat's package-list builder scans compatible GitHub Release `.zip` assets, reads the root `package.json` from each ZIP, hashes them, and publishes the combined `index.json`.
+The bundle branches contain **no duplicate editor implementation**. The real source now lives in the modular branches.
 
 ---
 
-## Unity Package Manager / Git installs
+## NekoSune Avatar Tools
 
-### Avatar
+Branch: `avatar-tools`
+
+Package: `com.nekosune.avatar-tools`
+
+Included:
+
+- **Lip Sync Studio**
+- **Rank Advisor**
+- localization/framework used by avatar-facing NekoSune modules
+- shared reflection/performance utilities used by Optimizer, Doctors and Converters
+
+Development Git URL:
 
 ```text
-https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#avatar
+https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#avatar-tools
 ```
-
-### World
-
-```text
-https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#world
-```
-
-These are useful for development. Normal users should use the VCC listing.
 
 ---
 
-## Requirements
+## NekoSune World Tools
 
-### Avatar package
+Branch: `world-tools`
 
-- package ID: `com.nekosune.avatars`
-- VPM dependency: `com.vrchat.avatars`
-- optional Resonite integration: Modular Avatar Resonite/NDMF Resonite platform
-- optional ChilloutVR integration: ChilloutVR CCK
-- optional CVR PhysBone bridge: Dynamic Bone v1.x
+Package: `com.nekosune.world-tools`
 
-### World package
+Included:
 
-- Unity 2022.3+
-- package ID: `com.nekosune.worlds`
-- VPM dependency: `com.vrchat.worlds`
+- **World Hub**
+- **World Template Guide**
+- shared world UI/framework used by Optimizer, Doctors and Converters
 
-VCC resolves the appropriate VRChat SDK package for each package type.
+Development Git URL:
+
+```text
+https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#world-tools
+```
 
 ---
 
-## Unity menus
+## NekoSune Optimizer
 
-Avatar package:
+Branch: `optimizer`
 
-- **NekoSune → Hub**
-- **NekoSune → Avatar → Avatar Doctor**
-- **NekoSune → Avatar → PC to Quest Assistant**
-- **NekoSune → Avatar → PhysBone Doctor**
-- **NekoSune → Avatar → VRAM and Texture Inspector**
-- **NekoSune → Avatar → Face Tracking Doctor**
-- **NekoSune → Avatar → Expression and Animator Doctor**
-- **NekoSune → Avatar → Mesh Compressor**
-- **NekoSune → Avatar → Rank Advisor**
-- **NekoSune → Avatar → Lip Sync Studio**
-- **NekoSune → Avatar → Export to Resonite**
-- **NekoSune → Avatar → Convert to ChilloutVR**
+Package: `com.nekosune.optimizer`
 
-World package:
+### Avatar optimization
 
-- **NekoSune → World → Hub**
-- **NekoSune → World → World Doctor**
-- **NekoSune → World → Udon Network Doctor**
-- **NekoSune → World → Template Guide**
+- Rank-driven **Compressor**
+- safe mesh cleanup/material-slot merging
+- mesh import compression
+- Quest/mobile preparation
+- Android-only texture overrides
+- VRAM / Texture Inspector
+- particle budget controls
+- safe PhysBone-collider cleanup assistance
+
+### World optimization
+
+- **World Optimizer**
+- scene triangle/material estimates
+- unique texture and estimated texture-memory review
+- oversized texture warnings
+- realtime light/shadow review
+- particle/audio counts
+- performance advisories kept separate from build/network diagnostics
+
+Development Git URL:
+
+```text
+https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#optimizer
+```
+
+---
+
+## NekoSune Doctors
+
+Branch: `doctors`
+
+Package: `com.nekosune.doctors`
+
+### Avatar Doctors
+
+- Avatar / Preflight Doctor
+- PhysBone Doctor
+- Face Tracking Doctor
+- Expression + Animator Doctor
+
+### World Doctors
+
+- World Doctor
+- Udon Network Doctor
+
+Optimization belongs to Optimizer; conversion belongs to Converters.
+
+Development Git URL:
+
+```text
+https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#doctors
+```
+
+---
+
+## NekoSune Converters
+
+Branch: `converters`
+
+Package: `com.nekosune.converters`
+
+All cross-platform conversion is isolated here.
+
+### ChilloutVR CCK
+
+Supports runtime detection for:
+
+- **CCK 4 stable**
+- **CCK 3 legacy**
+
+Included conversion paths:
+
+- VRChat Avatar → ChilloutVR Avatar
+- Unity/VRChat hierarchy → ChilloutVR Prop / Spawnable
+- VRChat World → ChilloutVR World
+- Advanced Avatar Settings conversion
+- Bool/Float/Int avatar control conversion where supported
+- pickup/object-sync/interactable conversion for props
+- non-destructive world scene copy with supported spawn/mirror/station/video/sync/toggle conversion
+- optional PhysBone → Dynamic Bone bridge when Dynamic Bone is installed
+
+### Resonite
+
+The Resonite exporter is part of the same cross-platform Converters package. It uses the installed Modular Avatar / NDMF Resonite backend rather than inventing a second incompatible `.resonitepackage` format.
+
+Development Git URL:
+
+```text
+https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#converters
+```
+
+---
+
+## Dependency layout
+
+```text
+Avatar Tools ─────────────┐
+                          ├─ Optimizer
+World Tools ──────────────┤
+                          ├─ Doctors
+                          └─ Converters
+
+Avatar Bundle
+  ├─ VRChat Avatars SDK
+  ├─ Avatar Tools
+  ├─ Optimizer
+  ├─ Doctors
+  └─ Converters
+
+World Bundle
+  ├─ VRChat Worlds SDK
+  ├─ World Tools
+  ├─ Optimizer
+  ├─ Doctors
+  └─ Converters
+```
+
+Avatar Tools and World Tools deliberately do not force the opposite VRChat SDK into the project. The modular feature packages use reflection/runtime detection where practical.
 
 ---
 
 ## Current release families
 
 ```text
-avatars-v0.3.0
-worlds-v0.2.0
+avatar-tools-v1.0.0
+world-tools-v1.0.0
+optimizer-v1.0.0
+doctors-v1.0.0
+converters-v1.0.0
+avatars-v0.6.0
+worlds-v0.4.0
 ```
 
-Each release workflow builds a VPM ZIP with `package.json` directly at the ZIP root and then rebuilds the shared listing.
+Each release ZIP has `package.json` directly at its root so the shared VRChat package listing can index it.
 
----
+## Publishing
 
-## Publishing updates
+Each package branch has its own release workflow. Bumping that branch's `package.json` version creates its package-specific release tag and then triggers the shared `main` listing rebuild.
 
-### Avatar
+`source.json` only needs this repository in `githubRepos`; the package-list builder discovers all compatible release ZIPs and publishes them into one `index.json`.
 
-1. Change source on `avatar`.
-2. Bump `avatar/package.json`.
-3. The workflow creates `avatars-v<version>` with a VPM-compatible ZIP.
-4. The shared VCC listing rebuilds.
+## Main branch
 
-### World
-
-1. Change source on `world`.
-2. Bump `world/package.json`.
-3. The workflow creates `worlds-v<version>` with a VPM-compatible ZIP.
-4. The shared VCC listing rebuilds.
-
-Published versions are immutable: the workflows refuse to replace an existing release version.
-
----
-
-## VCC listing
+`main` contains:
 
 ```text
-https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
+.github/workflows/build-listing.yml
+Website/
+source.json
+README.md
 ```
 
-It is designed to contain both:
-
-```text
-com.nekosune.avatars
-com.nekosune.worlds
-```
-
-## Contributing
-
-- avatar tooling → `avatar`
-- world/Udon tooling → `world`
-- VCC listing / landing page → `main`
+The website renders package cards dynamically from the generated listing, so new modular packages appear automatically when their releases are indexed.
 
 ## License
 
