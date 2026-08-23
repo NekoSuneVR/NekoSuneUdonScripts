@@ -5,7 +5,7 @@
   "entries": [
     { "k": "common.language", "v": "Language" },
     { "k": "hub.title", "v": "NekoSune Worlds" },
-    { "k": "hub.subtitle", "v": "VRChat world performance, build-readiness, and Udon networking tools." },
+    { "k": "hub.subtitle", "v": "VRChat world performance, build-readiness, Udon networking, and cross-platform conversion tools." },
     { "k": "hub.empty", "v": "No world addons are registered yet." },
     { "k": "hub.open", "v": "Open" },
     { "k": "hub.reloadLanguages", "v": "Reload languages" },
@@ -13,12 +13,14 @@
     { "k": "cat.udon", "v": "Udon & Networking" },
     { "k": "doctor.title", "v": "World Doctor" },
     { "k": "doctor.desc", "v": "Scan performance, textures, lighting, particles, audio, scene setup, and Android/Quest readiness." },
+    { "k": "cvrworld.title", "v": "VRChat → ChilloutVR World Converter" },
+    { "k": "cvrworld.desc", "v": "Create a non-destructive CCK 3/4 world scene copy with spawns, pickups, sync, mirrors, stations and Animator toggle controls." },
     { "k": "network.title", "v": "Udon Network Doctor" },
     { "k": "network.desc", "v": "Inspect UdonSharp sync modes, serialization, ownership, and network-event patterns before multiplayer testing." },
     { "k": "template.title", "v": "World Template Guide" },
     { "k": "template.desc", "v": "Package layout and extension guide for adding more world and Udon tools." },
     { "k": "template.ready", "v": "World package development guide" },
-    { "k": "template.ready.desc", "v": "World Doctor and Udon Network Doctor are now the primary tools. Use this guide when extending the package with more editor or runtime features." },
+    { "k": "template.ready.desc", "v": "World Doctor, ChilloutVR World Converter and Udon Network Doctor are the primary tools. Use this guide when extending the package with more editor or runtime features." },
     { "k": "template.packageRoot", "v": "Reveal package folder" },
     { "k": "template.runtimeRoot", "v": "Reveal Runtime folder" }
   ]
