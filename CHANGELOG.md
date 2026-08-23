@@ -13,6 +13,8 @@ First release.
 - **NekoSune menu-bar hub** — a root `NekoSune` menu next to *Tools*, with a Hub window that
   lists every addon as a card grouped by category. Addons register themselves through the
   `[NekoAddon]` attribute and are discovered by reflection, so a new tool needs no registry edit.
+  Shared with any other NekoSune package installed side by side — this package contributes the
+  Avatar category only; world / Udon tooling ships separately.
 - **Lip Sync Studio** — bakes a viseme `.anim` from any AudioClip.
   - Avatar and audio drop slots, waveform strip with editor playback and trim shading.
   - Presets: Default, Song / music, Speech, Anime (exaggerated), Subtle, Noisy recording,

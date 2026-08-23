@@ -1,7 +1,10 @@
 # NekoSune Avatars
 
-A toolbox of VRChat avatar and world addons for the Unity Editor, all reachable from a single
+A toolbox of VRChat **avatar** addons for the Unity Editor, all reachable from a single
 **NekoSune** menu in the menu bar (right next to *Tools*).
+
+World and Udon tooling is not part of this package — it lives in its own branch/package and
+installs alongside this one under the same **NekoSune** menu.
 
 The first addon is **Lip Sync Studio** — drop in an avatar and an audio clip, press one button,
 and get a `.anim` that drives the avatar's mouth in time with the audio. It works with songs
