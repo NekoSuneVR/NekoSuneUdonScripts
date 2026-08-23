@@ -1,19 +1,28 @@
 {
-  "name": "com.nekosune.avatars",
-  "displayName": "NekoSune Avatars",
+  "name": "com.nekosune.worlds",
+  "displayName": "NekoSune Worlds",
   "version": "0.1.0",
-  "unity": "2019.4",
-  "description": "Toolbox of VRChat avatar addons. Ships with Lip Sync Studio: turn any audio clip into a viseme .anim for any avatar (Booth, Gumroad, custom). World tools live in a separate package.",
+  "unity": "2022.3",
+  "description": "NekoSune toolbox and development framework for VRChat Worlds and Udon tooling. Avatar tools are shipped separately in com.nekosune.avatars.",
   "author": {
-    "name": "NekoSune"
+    "name": "NekoSuneVR",
+    "email": "contact@nekosunevr.co.uk",
+    "url": "https://github.com/NekoSuneVR"
   },
-  "keywords": [ "vrchat", "avatar", "avatars", "lipsync", "viseme", "animation" ],
+  "keywords": [
+    "vrchat",
+    "world",
+    "worlds",
+    "udon",
+    "udonsharp",
+    "editor",
+    "tools"
+  ],
   "vpmDependencies": {
-    "com.vrchat.avatars": ">=3.5.0"
+    "com.vrchat.worlds": ">=3.5.0"
   },
   "legacyFolders": {
-    "Assets\\NekoSune\\Avatars": "",
-    "Assets\\NekoSune\\UdonScripts": ""
+    "Assets\\NekoSune\\Worlds": ""
   },
   "hideInEditor": false
 }
