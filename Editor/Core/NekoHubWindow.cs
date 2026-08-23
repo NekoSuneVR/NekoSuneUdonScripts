@@ -132,8 +132,8 @@ namespace NekoSune.Avatars.Editor
             {
                 GUILayout.Label(addon.Glyph, NekoStyles.IconBig, GUILayout.Width(34f), GUILayout.Height(38f));
                 EditorGUILayout.BeginVertical();
-                GUILayout.Label(NekoLoc.T(addon.TitleKey), NekoStyles.SlotName);
-                GUILayout.Label(NekoLoc.T(addon.DescriptionKey), NekoStyles.SlotMeta);
+                GUILayout.Label(NekoAddonText.T(addon.TitleKey), NekoStyles.SlotName);
+                GUILayout.Label(NekoAddonText.T(addon.DescriptionKey), NekoStyles.SlotMeta);
                 EditorGUILayout.EndVertical();
 
                 GUILayout.FlexibleSpace();
