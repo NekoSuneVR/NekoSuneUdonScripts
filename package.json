@@ -1,0 +1,19 @@
+{
+  "name": "com.nekosune.avatars",
+  "displayName": "NekoSune Avatars",
+  "version": "0.1.0",
+  "unity": "2019.4",
+  "description": "Toolbox of VRChat avatar addons. Ships with Lip Sync Studio: turn any audio clip into a viseme .anim for any avatar (Booth, Gumroad, custom). World tools live in a separate package.",
+  "author": {
+    "name": "NekoSune"
+  },
+  "keywords": [ "vrchat", "avatar", "avatars", "lipsync", "viseme", "animation" ],
+  "vpmDependencies": {
+    "com.vrchat.avatars": ">=3.5.0"
+  },
+  "legacyFolders": {
+    "Assets\\NekoSune\\Avatars": "",
+    "Assets\\NekoSune\\UdonScripts": ""
+  },
+  "hideInEditor": false
+}
