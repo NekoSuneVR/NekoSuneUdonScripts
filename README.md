@@ -4,30 +4,85 @@ World and Udon tooling for VRChat, packaged separately from the NekoSune avatar 
 
 **Package ID:** `com.nekosune.worlds`
 
-This branch is now a clean world-development starter. It does **not** contain Lip Sync Studio, avatar binders, visemes, avatar performance tools, or avatar-localization data.
+This branch contains only world-focused tooling. Avatar Lip Sync, avatar binders, visemes, and avatar performance tools remain in `com.nekosune.avatars`.
 
-## Status
+## Included tools
 
-The package framework is ready for world features:
+### World Doctor
 
-- VCC / VPM package manifest
-- VRChat Worlds SDK dependency
-- world-only editor assembly
-- `NekoSune → World → Hub`
-- reflection-based addon registry
-- localization framework with an English starter file
-- `Editor/World/` for world editor tooling
-- `Runtime/Udon/` for UdonSharp and runtime world content
-- GitHub Actions release workflow that creates a VPM-compatible ZIP
-- automatic rebuild of the shared VCC listing after a new world release
+Open **NekoSune → World → World Doctor**.
 
-The included **World Template Guide** is scaffolding, not a finished world feature. It exists so the branch can be installed and used as a clean base for future tools.
+World Doctor scans the active Unity scene and gives creators one place to review common performance and build-readiness problems before opening the VRChat SDK build panel.
+
+It currently reports:
+
+- missing `VRCSceneDescriptor`;
+- GameObject and renderer counts;
+- approximate scene mesh triangle count;
+- material slots and unique materials;
+- unique textures and estimated loaded texture memory;
+- very large textures;
+- large uncompressed textures;
+- additional Android/Quest texture advisories;
+- realtime lights;
+- realtime shadow-casting lights;
+- realtime reflection probes;
+- particle-system capacity;
+- long audio clips using `Decompress On Load`;
+- camera count;
+- collider and Rigidbody count;
+- Udon/UdonSharp behaviour count;
+- Android/Quest post-processing warnings;
+- a copyable diagnostic report.
+
+The scanner distinguishes **VRChat rules/platform restrictions** from **NekoSune advisory thresholds**. Advisory thresholds are deliberately not presented as official VRChat hard limits: they are signals telling you what is worth profiling.
+
+### Udon Network Doctor
+
+Open **NekoSune → World → Udon Network Doctor**.
+
+The networking scanner analyses UdonSharp C# source attached to the active scene and looks for multiplayer mistakes that are easy to miss during ordinary Unity Play Mode.
+
+Checks currently include:
+
+- number of `[UdonSynced]` fields;
+- Manual / Continuous / None / NoVariableSync behaviour modes;
+- Manual sync with no `RequestSerialization()` call in the source;
+- directly synced `DataList` / `DataDictionary` fields;
+- synced variables combined with `NoVariableSync`;
+- network calls combined with `BehaviourSyncMode.None`;
+- many fields in Continuous sync;
+- string/array-like data in Continuous sync;
+- `Networking.SetOwner()` usage without ownership callbacks;
+- network-only behaviours that could use `NoVariableSync`;
+- Udon Graph / compiled Udon count;
+- a reminder to use VRChat multi-client Build & Test for real network testing;
+- a copyable multiplayer diagnostic report.
+
+Deep source checks are designed for UdonSharp. Udon Graph behaviours are counted but their internal graph is not parsed.
+
+### World Template Guide
+
+Open **NekoSune → World → Template Guide** when extending this package. It documents where new editor and runtime features belong.
+
+---
+
+## Why these tools were built first
+
+Recent VRChat creator discussions repeatedly point to two problems:
+
+1. world performance / Android-Quest conversion and figuring out what is actually expensive;
+2. Udon networking, ownership, and synchronization being difficult to debug correctly.
+
+VRChat also documents that ordinary Unity Play Mode does not reproduce synced variables and network events correctly; creators need Build & Test with multiple clients for those systems.
+
+The first NekoSune Worlds release therefore focuses on catching problems *before* that expensive test loop.
 
 ---
 
 ## Install with VRChat Creator Companion
 
-The recommended install method is the shared NekoSune VCC repository:
+Use the shared NekoSune VCC repository:
 
 ```text
 https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
@@ -38,13 +93,11 @@ https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
 3. Choose **Add Repository**.
 4. Paste the listing URL above.
 5. Open a VRChat Worlds project.
-6. Add **NekoSune Worlds** to the project.
-
-VCC installs the release ZIP referenced by the generated VPM listing. The Git branch URL is not a VCC repository URL.
+6. Add **NekoSune Worlds**.
 
 ### Unity Package Manager Git URL
 
-For development, Unity Package Manager can still install the branch directly:
+For development, Unity Package Manager can install the branch directly:
 
 ```text
 https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#world
@@ -67,7 +120,7 @@ git clone -b world https://github.com/NekoSuneVR/NekoSuneUdonScripts.git com.nek
 - VRChat Worlds SDK through VCC / VPM
 - package dependency: `com.vrchat.worlds`
 
-The initial editor template does not directly reference VRChat SDK C# types, so the shared editor framework stays easy to extend. Add direct SDK/UdonSharp API usage inside the world feature that needs it.
+The editor tools intentionally avoid hard compile-time references to most VRChat SDK/UdonSharp classes where reflection/source analysis is enough. This makes the package easier to keep compatible across SDK updates.
 
 ---
 
@@ -76,9 +129,11 @@ The initial editor template does not directly reference VRChat SDK C# types, so 
 After installation:
 
 - **NekoSune → World → Hub**
+- **NekoSune → World → World Doctor**
+- **NekoSune → World → Udon Network Doctor**
 - **NekoSune → World → Template Guide**
 
-The world menu intentionally has its own submenu so installing both `com.nekosune.avatars` and `com.nekosune.worlds` does not create duplicate `NekoSune → Hub` menu entries.
+The world menu intentionally has its own submenu so `com.nekosune.avatars` and `com.nekosune.worlds` can be installed together.
 
 ---
 
@@ -101,6 +156,8 @@ Editor/
     Languages/
       en.json
   World/
+    NekoWorldDoctorWindow.cs
+    NekoUdonNetworkDoctorWindow.cs
     NekoWorldTemplateWindow.cs
 
 Runtime/
@@ -112,84 +169,28 @@ Runtime/
     release-world.yml
 ```
 
-### Where future code goes
-
-Use `Editor/World/` for things that only run inside the Unity Editor, for example:
-
-- world setup builders
-- scene validators
-- Udon configuration helpers
-- prefab installers
-- lighting checks
-- performance checks
-- world upload helpers
-- inspectors and editor windows
-
-Use `Runtime/Udon/` for content that must exist in the built world, for example:
-
-- UdonSharp behaviours
-- runtime helper components
-- reusable prefabs
-- runtime data assets
-
-Do not put avatar-specific tools on this branch. Avatar tooling belongs on the `avatar` branch/package.
+Use `Editor/World/` for editor-only creator utilities and `Runtime/Udon/` for behaviours, prefabs, and assets that must ship inside the built world.
 
 ---
 
-## Adding a world editor addon
+## Planned next areas
 
-The Hub discovers addons automatically. Implement `INekoAddon` and add `[NekoAddon]`:
+Good next additions to this package include:
 
-```csharp
-using UnityEditor;
-
-namespace NekoSune.Worlds.Editor
-{
-    [NekoAddon(Order = 20)]
-    internal sealed class MyWorldToolAddon : INekoAddon
-    {
-        public string Id { get { return "my-world-tool"; } }
-        public string TitleKey { get { return "mytool.title"; } }
-        public string DescriptionKey { get { return "mytool.desc"; } }
-        public string CategoryKey { get { return "cat.world"; } }
-        public string Glyph { get { return "W"; } }
-        public bool IsAvailable { get { return true; } }
-
-        public void Open()
-        {
-            MyWorldToolWindow.Open();
-        }
-    }
-}
-```
-
-Add the corresponding strings to `Editor/Localization/Languages/en.json`. More language files can be added later without changing the localization loader.
-
----
-
-## Adding UdonSharp features
-
-Keep Udon/runtime code separate from editor code. A suggested layout is:
-
-```text
-Runtime/Udon/
-  Behaviours/
-  Prefabs/
-  Data/
-
-Editor/World/
-  Builders/
-  Inspectors/
-  Validators/
-```
-
-If a future feature needs another VPM package, add it to `vpmDependencies` in `package.json` only when it becomes necessary.
+- actionable one-click safe fixes for selected World Doctor findings;
+- build-size / asset-size breakdown;
+- LOD and occlusion auditing;
+- Android/Quest shader and import-override inspection;
+- network bandwidth estimates and congestion diagnostics;
+- prefab-based multiplayer test helpers;
+- world setup wizard for common social-world features;
+- persistence and Creator Economy helpers.
 
 ---
 
 ## Releases and VCC listing
 
-World releases use tags in this form:
+World releases use tags such as:
 
 ```text
 worlds-v0.1.0
@@ -197,20 +198,22 @@ worlds-v0.2.0
 worlds-v1.0.0
 ```
 
-The release workflow:
+The release workflow creates a VPM ZIP with `package.json` at the ZIP root, publishes it as a GitHub Release, and triggers the shared VCC listing rebuild.
 
-1. reads the version from `package.json`;
-2. creates a ZIP with `package.json` at the ZIP root;
-3. publishes that ZIP as a GitHub Release asset;
-4. triggers the `main` branch VCC listing workflow.
+The listing can therefore contain both:
 
-The main listing scans release ZIPs from this repository, so both Avatar and World packages can appear in the same VCC repository:
+```text
+com.nekosune.avatars
+com.nekosune.worlds
+```
+
+from one repository URL:
 
 ```text
 https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
 ```
 
-To publish an update, change the world package version in `package.json`. Existing released versions are never overwritten.
+To publish an update, bump the version in `package.json`. Existing releases are never overwritten.
 
 ---
 
