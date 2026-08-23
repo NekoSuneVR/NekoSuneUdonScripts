@@ -1,28 +1,21 @@
 # NekoSune Converters
 
-**Package ID:** `com.nekosune.converters`
+Cross-platform addon registering itself with both the Avatar Hub and World Hub.
 
-One package owns every cross-platform converter.
+**Package ID:** `com.nekosune.converters`
 
 ## ChilloutVR
 
-- `NekoSune → Avatar → Convert to ChilloutVR`
-- `NekoSune → Avatar → ChilloutVR → Convert to Prop`
-- `NekoSune → World → Convert VRChat World to ChilloutVR`
-- CCK 4 stable + CCK 3 legacy runtime detection
-- Avatar Advanced Avatar Settings conversion
-- Prop pickups/object sync/Animator toggles
-- World scene-copy conversion, spawn points, mirrors, stations, video markers, object sync and Animator toggles where supported
+- CCK 3 legacy + CCK 4 stable detection
+- VRChat Avatar → CVR Avatar
+- Unity/VRChat object → CVR Prop / Spawnable
+- VRChat World → CVR World
+- Animator/toggle interaction conversion where a real CVR equivalent exists
 
 ## Resonite
 
-- `NekoSune → Avatar → Export to Resonite`
-- Uses the installed Modular Avatar / NDMF Resonite exporter backend.
+- VRChat Avatar → Resonite through the installed Modular Avatar / NDMF Resonite backend
 
-The source VRChat avatar/world is not overwritten by the conversion flows.
+Converters own conversion code only; Hub/menu infrastructure lives on the `avatar` and `world` base branches.
 
-Install from the shared VCC repository:
-
-```text
-https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
-```
+VCC repository: `https://nekosunevr.github.io/NekoSuneUdonScripts/index.json`

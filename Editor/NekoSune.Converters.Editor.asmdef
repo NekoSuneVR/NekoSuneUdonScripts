@@ -1,7 +1,7 @@
 {
   "name": "NekoSune.Converters.Editor",
   "rootNamespace": "NekoSune",
-  "references": ["NekoSune.AvatarTools.Editor", "NekoSune.WorldTools.Editor"],
+  "references": ["NekoSune.Avatars.Editor", "NekoSune.Worlds.Editor", "NekoSune.AvatarTools.Editor"],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

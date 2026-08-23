@@ -1,8 +1,12 @@
 # Changelog
 
+## 1.1.0
+
+- Rebased Avatar/Prop/World/Resonite converter cards on the dedicated Avatar and World Hub APIs.
+- Removed the World Tools assembly dependency.
+- Kept shared avatar reflection through Avatar Tools.
+- CCK and Resonite remain optional runtime-detected integrations.
+
 ## 1.0.0
 
-- Moved all ChilloutVR CCK conversion into `com.nekosune.converters`.
-- Includes Avatar, Prop/Spawnable and World conversion under one optional CCK-aware package.
-- Moved the Resonite exporter bridge into the same cross-platform conversion package.
-- Removed optimizer/doctor/tool responsibilities from Converters.
+Initial modular Converters release.

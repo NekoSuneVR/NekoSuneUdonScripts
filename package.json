@@ -1,11 +1,15 @@
 {
   "name": "com.nekosune.converters",
   "displayName": "NekoSune Converters",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "unity": "2022.3",
-  "description": "Cross-platform conversion suite: ChilloutVR CCK 3/4 avatar, prop and world conversion plus Resonite export integration.",
+  "description": "Auto-registering cross-platform addon: ChilloutVR CCK 3/4 Avatar, Prop and World conversion plus Resonite export integration.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
-  "keywords": ["vrchat","converter","chilloutvr","cck3","cck4","avatar","prop","spawnable","world","resonite"],
-  "vpmDependencies": {"com.nekosune.avatar-tools": ">=1.0.0", "com.nekosune.world-tools": ">=1.0.0"},
+  "keywords": ["vrchat","addon","converter","chilloutvr","cck3","cck4","avatar","prop","world","resonite"],
+  "vpmDependencies": {
+    "com.nekosune.avatars": ">=0.7.0",
+    "com.nekosune.worlds": ">=0.5.0",
+    "com.nekosune.avatar-tools": ">=1.1.0"
+  },
   "hideInEditor": false
 }
