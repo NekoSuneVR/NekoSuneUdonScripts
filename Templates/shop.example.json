@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+      "title": "Supporter Membership",
+      "subtitle": "£5 / month",
+      "description": "Example catalog entry. Checkout happens on your external store/support page.",
+      "imageUrl": "https://example.com/item.png",
+      "url": "https://example.com/shop",
+      "value": "supporter"
+    }
+  ]
+}

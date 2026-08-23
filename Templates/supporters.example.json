@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "title": "Neko Supporter",
+      "subtitle": "Gold Tier",
+      "description": "Thank you for helping support the world!",
+      "imageUrl": "https://example.com/supporter.png",
+      "url": "https://patreon.com/example",
+      "value": "gold"
+    },
+    {
+      "title": "Community Member",
+      "subtitle": "Supporter",
+      "description": "Thanks for being part of the community.",
+      "imageUrl": "",
+      "url": "",
+      "value": "supporter"
+    }
+  ]
+}

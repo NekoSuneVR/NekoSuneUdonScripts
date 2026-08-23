@@ -1,14 +1,13 @@
 {
-  "name": "com.nekosune.world-tools",
-  "displayName": "NekoSune World Tools",
-  "version": "1.1.0",
+  "name": "com.nekosune.world-ui-builder",
+  "displayName": "NekoSune World UI Builder",
+  "version": "1.0.0",
   "unity": "2022.3",
-  "description": "World Hub addon with lightweight framework/template helpers for extending NekoSune VRChat world tooling.",
+  "description": "Beginner-friendly, data-driven world-space UI builder for VRChat and ChilloutVR with templates, JSON content feeds, platform setup and UI diagnostics.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
-  "keywords": ["vrchat","world","udon","addon","template","framework"],
+  "keywords": ["vrchat","chilloutvr","world","ui","builder","json","templates","beginner","cck"],
   "vpmDependencies": {
-    "com.nekosune.worlds": ">=0.5.0",
-    "com.vrchat.worlds": ">=3.5.0"
+    "com.nekosune.worlds": ">=0.5.1"
   },
   "hideInEditor": false
 }

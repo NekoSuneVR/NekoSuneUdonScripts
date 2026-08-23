@@ -1,7 +1,7 @@
 {
-  "name": "NekoSune.WorldTools.Editor",
-  "rootNamespace": "NekoSune.Worlds.Editor",
-  "references": ["NekoSune.Worlds.Editor"],
+  "name": "NekoSune.WorldUIBuilder.Editor",
+  "rootNamespace": "NekoSune.WorldUI.Editor",
+  "references": ["NekoSune.Worlds.Editor", "UnityEngine.UI"],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
