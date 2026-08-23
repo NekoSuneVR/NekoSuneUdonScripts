@@ -1,10 +1,14 @@
 {
   "name": "com.nekosune.world-tools",
   "displayName": "NekoSune World Tools",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "unity": "2022.3",
-  "description": "Lightweight NekoSune world creator framework and template utilities shared by the modular Optimizer, Doctors and Converters packages.",
+  "description": "World Hub addon with lightweight framework/template helpers for extending NekoSune VRChat world tooling.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
-  "keywords": ["vrchat","world","tools","udon","template","framework"],
+  "keywords": ["vrchat","world","udon","addon","template","framework"],
+  "vpmDependencies": {
+    "com.nekosune.worlds": ">=0.5.0",
+    "com.vrchat.worlds": ">=3.5.0"
+  },
   "hideInEditor": false
 }

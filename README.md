@@ -1,25 +1,17 @@
 # NekoSune World Tools
 
-Lightweight world authoring framework split from the former all-in-one Worlds package.
+Lightweight addon package for the NekoSune World Hub.
 
 **Package ID:** `com.nekosune.world-tools`
 
-## Included
+## Includes
 
-- `NekoSune → World → Hub`
-- `NekoSune → World → Template Guide`
-- shared world UI/framework APIs used by NekoSune Optimizer, Doctors and Converters.
+- World Template Guide
+- Runtime/Udon starter layout documentation
+- lightweight extension helpers for future world creator tooling
 
-World Doctor/Udon Doctor, world optimization, and VRChat → ChilloutVR world conversion are separate packages.
+Installing this addon pulls in `com.nekosune.worlds`, and its addon card is discovered automatically by the World Hub.
 
-Shared VCC repository:
+The shared Hub/Core/localization implementation stays only on the `world` branch so this package remains a small feature addon.
 
-```text
-https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
-```
-
-Development branch:
-
-```text
-https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#world-tools
-```
+VCC repository: `https://nekosunevr.github.io/NekoSuneUdonScripts/index.json`

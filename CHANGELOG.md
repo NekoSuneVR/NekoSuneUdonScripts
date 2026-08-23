@@ -1,7 +1,12 @@
 # Changelog
 
-## 1.0.0
+## 1.1.0
 
-- Split the lightweight world framework and Template Guide into `com.nekosune.world-tools`.
-- Exposed the world addon/UI framework to the modular Optimizer, Doctors and Converters assemblies.
-- Removed Doctors and ChilloutVR conversion from this package.
+- Converted World Tools into a true addon of `com.nekosune.worlds`.
+- Removed duplicate World Hub/Core/localization files.
+- Added a direct assembly reference to the World Hub API.
+- Kept the Template Guide and lightweight world extension layout here.
+
+## 1.0.1
+
+Localization polish release.
