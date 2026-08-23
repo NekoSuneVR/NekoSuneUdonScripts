@@ -17,7 +17,7 @@ namespace NekoSune.WorldUI.Editor
             if (notes == null) notes = new List<string>();
             _theme = blueprint;
 
-            GameObject root = new GameObject("NekoWorldUI - " + SafeName(blueprint.name));
+            GameObject root = new GameObject("NekoWorldUI - " + SafeName(blueprint.name), typeof(RectTransform));
             Undo.RegisterCreatedObjectUndo(root, "Create NekoSune World UI");
 
             Canvas canvas = root.AddComponent<Canvas>();
@@ -27,7 +27,6 @@ namespace NekoSune.WorldUI.Editor
             CanvasScaler scaler = root.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
             scaler.scaleFactor = 1f;
-
             root.AddComponent<GraphicRaycaster>();
 
             RectTransform canvasRect = root.GetComponent<RectTransform>();
@@ -38,7 +37,7 @@ namespace NekoSune.WorldUI.Editor
             background.color = blueprint.backgroundColor;
 
             GameObject viewport = Child(root, "Viewport");
-            RectTransform viewportRect = viewport.AddComponent<RectTransform>();
+            RectTransform viewportRect = viewport.GetComponent<RectTransform>();
             float pad = Mathf.Max(0f, blueprint.panelPadding);
             Stretch(viewportRect, pad, pad, pad, pad);
             Image viewportImage = viewport.AddComponent<Image>();
@@ -48,12 +47,12 @@ namespace NekoSune.WorldUI.Editor
             mask.showMaskGraphic = false;
 
             GameObject content = Child(viewport, "Content");
-            RectTransform contentRect = content.AddComponent<RectTransform>();
+            RectTransform contentRect = content.GetComponent<RectTransform>();
             contentRect.anchorMin = new Vector2(0f, 1f);
             contentRect.anchorMax = new Vector2(1f, 1f);
             contentRect.pivot = new Vector2(0.5f, 1f);
             contentRect.anchoredPosition = Vector2.zero;
-            contentRect.sizeDelta = new Vector2(0f, 0f);
+            contentRect.sizeDelta = Vector2.zero;
 
             VerticalLayoutGroup layout = content.AddComponent<VerticalLayoutGroup>();
             int innerPad = Mathf.RoundToInt(Mathf.Max(0f, blueprint.panelPadding));
@@ -77,8 +76,7 @@ namespace NekoSune.WorldUI.Editor
             scroll.movementType = ScrollRect.MovementType.Clamped;
             scroll.scrollSensitivity = 32f;
 
-            for (int i = 0; i < blueprint.elements.Count; i++)
-                CreateElement(content, blueprint.elements[i]);
+            for (int i = 0; i < blueprint.elements.Count; i++) CreateElement(content, blueprint.elements[i]);
 
             if (feed != null && feed.items != null && feed.items.Count > 0)
             {
@@ -132,7 +130,6 @@ namespace NekoSune.WorldUI.Editor
                     return;
                 case NekoWorldUiElementType.Spacer:
                     go = Child(parent, "Spacer");
-                    go.AddComponent<RectTransform>();
                     SetPreferredHeight(go, Mathf.Max(8f, e.height));
                     break;
                 default:
@@ -154,7 +151,6 @@ namespace NekoSune.WorldUI.Editor
         static GameObject CreateButton(GameObject parent, NekoWorldUiElement e)
         {
             GameObject go = Child(parent, "Button");
-            go.AddComponent<RectTransform>();
             Image image = go.AddComponent<Image>();
             image.color = Theme.primaryColor;
             Button button = go.AddComponent<Button>();
@@ -173,7 +169,6 @@ namespace NekoSune.WorldUI.Editor
         static GameObject CreateToggle(GameObject parent, NekoWorldUiElement e)
         {
             GameObject go = Child(parent, "Toggle");
-            go.AddComponent<RectTransform>();
             HorizontalLayoutGroup row = go.AddComponent<HorizontalLayoutGroup>();
             row.spacing = Mathf.Max(8f, Theme.spacing);
             row.padding = new RectOffset(10, 10, 6, 6);
@@ -183,7 +178,6 @@ namespace NekoSune.WorldUI.Editor
             SetPreferredHeight(go, Mathf.Max(Theme.buttonHeight, e.height));
 
             GameObject box = Child(go, "Background");
-            box.AddComponent<RectTransform>();
             LayoutElement boxLayout = box.AddComponent<LayoutElement>();
             boxLayout.preferredWidth = 42f;
             boxLayout.preferredHeight = 42f;
@@ -191,7 +185,7 @@ namespace NekoSune.WorldUI.Editor
             boxImage.color = Theme.controlColor;
 
             GameObject mark = Child(box, "Checkmark");
-            RectTransform markRt = mark.AddComponent<RectTransform>();
+            RectTransform markRt = mark.GetComponent<RectTransform>();
             Stretch(markRt, 8f, 8f, 8f, 8f);
             Image markImage = mark.AddComponent<Image>();
             markImage.color = Theme.accentColor;
@@ -210,7 +204,6 @@ namespace NekoSune.WorldUI.Editor
         static GameObject CreateSlider(GameObject parent, NekoWorldUiElement e)
         {
             GameObject container = Child(parent, "Slider Row");
-            container.AddComponent<RectTransform>();
             VerticalLayoutGroup column = container.AddComponent<VerticalLayoutGroup>();
             column.spacing = Mathf.Max(4f, Theme.spacing * 0.5f);
             column.childControlWidth = true;
@@ -221,30 +214,29 @@ namespace NekoSune.WorldUI.Editor
             SetPreferredHeight(label.gameObject, 32f);
 
             GameObject sliderGo = Child(container, "Slider");
-            sliderGo.AddComponent<RectTransform>();
             SetPreferredHeight(sliderGo, 38f);
             Slider slider = sliderGo.AddComponent<Slider>();
 
             GameObject bg = Child(sliderGo, "Background");
-            RectTransform bgRt = bg.AddComponent<RectTransform>();
+            RectTransform bgRt = bg.GetComponent<RectTransform>();
             Stretch(bgRt, 0f, 0f, 12f, 12f);
             Image bgImage = bg.AddComponent<Image>();
             bgImage.color = Theme.controlColor;
 
             GameObject fillArea = Child(sliderGo, "Fill Area");
-            RectTransform fillAreaRt = fillArea.AddComponent<RectTransform>();
+            RectTransform fillAreaRt = fillArea.GetComponent<RectTransform>();
             Stretch(fillAreaRt, 8f, 18f, 12f, 12f);
             GameObject fill = Child(fillArea, "Fill");
-            RectTransform fillRt = fill.AddComponent<RectTransform>();
+            RectTransform fillRt = fill.GetComponent<RectTransform>();
             Stretch(fillRt, 0f, 0f, 0f, 0f);
             Image fillImage = fill.AddComponent<Image>();
             fillImage.color = Theme.primaryColor;
 
             GameObject handleArea = Child(sliderGo, "Handle Slide Area");
-            RectTransform handleAreaRt = handleArea.AddComponent<RectTransform>();
+            RectTransform handleAreaRt = handleArea.GetComponent<RectTransform>();
             Stretch(handleAreaRt, 10f, 10f, 4f, 4f);
             GameObject handle = Child(handleArea, "Handle");
-            RectTransform handleRt = handle.AddComponent<RectTransform>();
+            RectTransform handleRt = handle.GetComponent<RectTransform>();
             handleRt.sizeDelta = new Vector2(28f, 28f);
             Image handleImage = handle.AddComponent<Image>();
             handleImage.color = Theme.textColor;
@@ -261,7 +253,6 @@ namespace NekoSune.WorldUI.Editor
         static GameObject CreateImage(GameObject parent, NekoWorldUiElement e)
         {
             GameObject go = Child(parent, "Image Slot");
-            go.AddComponent<RectTransform>();
             RawImage image = go.AddComponent<RawImage>();
             image.color = Theme.controlColor;
             image.raycastTarget = false;
@@ -276,9 +267,7 @@ namespace NekoSune.WorldUI.Editor
                 }
             }
 
-            if (!string.IsNullOrEmpty(e.imageUrl))
-                go.name = "NUI_REMOTE_IMAGE[" + SanitizeMeta(e.id) + "|" + SanitizeMeta(e.imageUrl) + "]";
-
+            if (!string.IsNullOrEmpty(e.imageUrl)) go.name = "NUI_REMOTE_IMAGE[" + SanitizeMeta(e.id) + "|" + SanitizeMeta(e.imageUrl) + "]";
             SetPreferredHeight(go, Mathf.Max(120f, e.height));
             Text caption = CreateText(go, image.texture == null ? "IMAGE\nChoose a local Texture or assign this slot to the runtime image loader" : "", FontSize(22), FontStyle.Italic, TextAnchor.MiddleCenter);
             caption.color = Theme.mutedTextColor;
@@ -289,7 +278,6 @@ namespace NekoSune.WorldUI.Editor
         static GameObject CreateCard(GameObject parent, string title, string subtitle)
         {
             GameObject card = Child(parent, "Card");
-            card.AddComponent<RectTransform>();
             Image bg = card.AddComponent<Image>();
             bg.color = Theme.panelColor;
             VerticalLayoutGroup layout = card.AddComponent<VerticalLayoutGroup>();
@@ -318,7 +306,6 @@ namespace NekoSune.WorldUI.Editor
             if (!string.IsNullOrEmpty(item.imageUrl))
             {
                 GameObject imageSlot = Child(card, "NUI_REMOTE_IMAGE[feed-" + index + "|" + SanitizeMeta(item.imageUrl) + "]");
-                imageSlot.AddComponent<RectTransform>();
                 RawImage image = imageSlot.AddComponent<RawImage>();
                 image.color = Theme.controlColor;
                 image.raycastTarget = false;
@@ -354,7 +341,6 @@ namespace NekoSune.WorldUI.Editor
         static Text CreateText(GameObject parent, string value, int size, FontStyle style, TextAnchor anchor)
         {
             GameObject go = Child(parent, "Text");
-            go.AddComponent<RectTransform>();
             Text text = go.AddComponent<Text>();
             text.font = Font;
             text.text = value ?? "";
@@ -371,7 +357,6 @@ namespace NekoSune.WorldUI.Editor
         static void CreateDivider(GameObject parent)
         {
             GameObject go = Child(parent, "Divider");
-            go.AddComponent<RectTransform>();
             Image image = go.AddComponent<Image>();
             Color c = Theme.textColor;
             c.a = Mathf.Min(0.22f, c.a * 0.22f);
@@ -382,7 +367,7 @@ namespace NekoSune.WorldUI.Editor
 
         static GameObject Child(GameObject parent, string name)
         {
-            GameObject go = new GameObject(name);
+            GameObject go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent.transform, false);
             return go;
         }
