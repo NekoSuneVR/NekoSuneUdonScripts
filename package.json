@@ -1,9 +1,9 @@
 {
   "name": "com.nekosune.worlds",
   "displayName": "NekoSune Worlds",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "unity": "2022.3",
-  "description": "VRChat Worlds creator toolbox with World Doctor, Udon networking diagnostics, and non-destructive ChilloutVR CCK 3/4 world conversion.",
+  "description": "VRChat Worlds creator toolbox with World Doctor, Udon networking diagnostics, and the world-owned non-destructive ChilloutVR CCK 3/4 world converter.",
   "author": {
     "name": "NekoSuneVR",
     "email": "contact@nekosunevr.co.uk",
@@ -23,6 +23,9 @@
     "cck4",
     "converter",
     "interactable",
+    "mirror",
+    "station",
+    "video-player",
     "editor",
     "tools"
   ],
