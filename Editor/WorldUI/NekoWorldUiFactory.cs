@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEditor.Events;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace NekoSune.WorldUI.Editor
@@ -11,11 +9,13 @@ namespace NekoSune.WorldUI.Editor
     internal static class NekoWorldUiFactory
     {
         static Font _font;
+        static NekoWorldUiBlueprint _theme;
 
         public static GameObject Build(NekoWorldUiBlueprint blueprint, NekoWorldUiFeedDocument feed, List<string> notes)
         {
             if (blueprint == null) throw new ArgumentNullException("blueprint");
             if (notes == null) notes = new List<string>();
+            _theme = blueprint;
 
             GameObject root = new GameObject("NekoWorldUI - " + SafeName(blueprint.name));
             Undo.RegisterCreatedObjectUndo(root, "Create NekoSune World UI");
@@ -35,13 +35,15 @@ namespace NekoSune.WorldUI.Editor
             root.transform.localScale = Vector3.one * Mathf.Clamp(blueprint.worldScale, 0.0001f, 0.02f);
 
             Image background = root.AddComponent<Image>();
-            background.color = new Color(0.055f, 0.065f, 0.085f, 0.97f);
+            background.color = blueprint.backgroundColor;
 
             GameObject viewport = Child(root, "Viewport");
             RectTransform viewportRect = viewport.AddComponent<RectTransform>();
-            Stretch(viewportRect, 26f, 26f, 26f, 26f);
+            float pad = Mathf.Max(0f, blueprint.panelPadding);
+            Stretch(viewportRect, pad, pad, pad, pad);
             Image viewportImage = viewport.AddComponent<Image>();
             viewportImage.color = new Color(0f, 0f, 0f, 0.001f);
+            viewportImage.raycastTarget = false;
             Mask mask = viewport.AddComponent<Mask>();
             mask.showMaskGraphic = false;
 
@@ -54,8 +56,9 @@ namespace NekoSune.WorldUI.Editor
             contentRect.sizeDelta = new Vector2(0f, 0f);
 
             VerticalLayoutGroup layout = content.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(16, 16, 16, 16);
-            layout.spacing = 12f;
+            int innerPad = Mathf.RoundToInt(Mathf.Max(0f, blueprint.panelPadding));
+            layout.padding = new RectOffset(innerPad, innerPad, innerPad, innerPad);
+            layout.spacing = Mathf.Max(0f, blueprint.spacing);
             layout.childAlignment = TextAnchor.UpperCenter;
             layout.childControlHeight = true;
             layout.childControlWidth = true;
@@ -75,36 +78,37 @@ namespace NekoSune.WorldUI.Editor
             scroll.scrollSensitivity = 32f;
 
             for (int i = 0; i < blueprint.elements.Count; i++)
-                CreateElement(content, blueprint.elements[i], root, notes);
+                CreateElement(content, blueprint.elements[i]);
 
             if (feed != null && feed.items != null && feed.items.Count > 0)
             {
                 CreateDivider(content);
-                Text feedHeader = CreateText(content, "JSON / data items", 32, FontStyle.Bold, TextAnchor.MiddleLeft);
+                Text feedHeader = CreateText(content, "JSON / data items", FontSize(32), FontStyle.Bold, TextAnchor.MiddleLeft);
                 SetPreferredHeight(feedHeader.gameObject, 52f);
                 for (int i = 0; i < feed.items.Count; i++) CreateFeedCard(content, feed.items[i], i);
             }
 
-            NekoWorldUiPlatform.ApplyPlatform(root, blueprint.platform, notes);
-            NekoWorldUiPlatform.WireSafeActions(root, notes);
+            NekoWorldUiPlatformBridge.ApplyPlatform(root, blueprint.platform, notes);
+            NekoWorldUiPlatformBridge.WireSafeActions(root, notes);
 
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
             Selection.activeGameObject = root;
             EditorGUIUtility.PingObject(root);
             return root;
         }
 
-        static void CreateElement(GameObject parent, NekoWorldUiElement e, GameObject root, List<string> notes)
+        static void CreateElement(GameObject parent, NekoWorldUiElement e)
         {
             if (e == null) return;
             GameObject go;
             switch (e.type)
             {
                 case NekoWorldUiElementType.Heading:
-                    go = CreateText(parent, e.label, 42, FontStyle.Bold, TextAnchor.MiddleLeft).gameObject;
+                    go = CreateText(parent, e.label, FontSize(42), FontStyle.Bold, TextAnchor.MiddleLeft).gameObject;
                     SetPreferredHeight(go, Mathf.Max(58f, e.height));
                     break;
                 case NekoWorldUiElementType.Text:
-                    go = CreateText(parent, e.label, 26, FontStyle.Normal, TextAnchor.MiddleLeft).gameObject;
+                    go = CreateText(parent, e.label, FontSize(26), FontStyle.Normal, TextAnchor.MiddleLeft).gameObject;
                     SetPreferredHeight(go, Mathf.Max(44f, e.height));
                     break;
                 case NekoWorldUiElementType.Image:
@@ -128,20 +132,20 @@ namespace NekoSune.WorldUI.Editor
                     return;
                 case NekoWorldUiElementType.Spacer:
                     go = Child(parent, "Spacer");
+                    go.AddComponent<RectTransform>();
                     SetPreferredHeight(go, Mathf.Max(8f, e.height));
                     break;
                 default:
-                    go = CreateText(parent, e.label, 26, FontStyle.Normal, TextAnchor.MiddleLeft).gameObject;
+                    go = CreateText(parent, e.label, FontSize(26), FontStyle.Normal, TextAnchor.MiddleLeft).gameObject;
                     break;
             }
 
-            if (go != null)
-                go.name = MetaName(e) + " " + e.label;
+            if (go != null) go.name = MetaName(e) + " " + e.label;
 
             if (e.action == NekoWorldUiAction.OpenLinkCard && !string.IsNullOrEmpty(e.actionValue))
             {
-                Text url = CreateText(parent, e.actionValue, 19, FontStyle.Italic, TextAnchor.MiddleLeft);
-                url.color = new Color(0.65f, 0.82f, 1f, 1f);
+                Text url = CreateText(parent, e.actionValue, FontSize(19), FontStyle.Italic, TextAnchor.MiddleLeft);
+                url.color = Theme.linkColor;
                 url.gameObject.name = "Link URL - " + e.actionValue;
                 SetPreferredHeight(url.gameObject, 34f);
             }
@@ -150,16 +154,18 @@ namespace NekoSune.WorldUI.Editor
         static GameObject CreateButton(GameObject parent, NekoWorldUiElement e)
         {
             GameObject go = Child(parent, "Button");
-            RectTransform rt = go.AddComponent<RectTransform>();
+            go.AddComponent<RectTransform>();
             Image image = go.AddComponent<Image>();
-            image.color = new Color(0.18f, 0.42f, 0.72f, 1f);
+            image.color = Theme.primaryColor;
             Button button = go.AddComponent<Button>();
             ColorBlock colors = button.colors;
-            colors.highlightedColor = new Color(0.26f, 0.52f, 0.86f, 1f);
-            colors.pressedColor = new Color(0.12f, 0.31f, 0.58f, 1f);
+            colors.normalColor = Theme.primaryColor;
+            colors.highlightedColor = Color.Lerp(Theme.primaryColor, Color.white, 0.16f);
+            colors.pressedColor = Color.Lerp(Theme.primaryColor, Color.black, 0.22f);
+            colors.selectedColor = colors.highlightedColor;
             button.colors = colors;
-            SetPreferredHeight(go, Mathf.Max(56f, e.height));
-            Text label = CreateText(go, e.label, 27, FontStyle.Bold, TextAnchor.MiddleCenter);
+            SetPreferredHeight(go, Mathf.Max(Theme.buttonHeight, e.height));
+            Text label = CreateText(go, e.label, FontSize(27), FontStyle.Bold, TextAnchor.MiddleCenter);
             Stretch(label.rectTransform, 8f, 8f, 6f, 6f);
             return go;
         }
@@ -169,28 +175,28 @@ namespace NekoSune.WorldUI.Editor
             GameObject go = Child(parent, "Toggle");
             go.AddComponent<RectTransform>();
             HorizontalLayoutGroup row = go.AddComponent<HorizontalLayoutGroup>();
-            row.spacing = 12f;
+            row.spacing = Mathf.Max(8f, Theme.spacing);
             row.padding = new RectOffset(10, 10, 6, 6);
             row.childAlignment = TextAnchor.MiddleLeft;
             row.childControlHeight = true;
             row.childControlWidth = false;
-            SetPreferredHeight(go, Mathf.Max(58f, e.height));
+            SetPreferredHeight(go, Mathf.Max(Theme.buttonHeight, e.height));
 
             GameObject box = Child(go, "Background");
-            RectTransform boxRt = box.AddComponent<RectTransform>();
+            box.AddComponent<RectTransform>();
             LayoutElement boxLayout = box.AddComponent<LayoutElement>();
             boxLayout.preferredWidth = 42f;
             boxLayout.preferredHeight = 42f;
             Image boxImage = box.AddComponent<Image>();
-            boxImage.color = new Color(0.14f, 0.16f, 0.22f, 1f);
+            boxImage.color = Theme.controlColor;
 
             GameObject mark = Child(box, "Checkmark");
             RectTransform markRt = mark.AddComponent<RectTransform>();
             Stretch(markRt, 8f, 8f, 8f, 8f);
             Image markImage = mark.AddComponent<Image>();
-            markImage.color = new Color(0.32f, 0.78f, 0.58f, 1f);
+            markImage.color = Theme.accentColor;
 
-            Text label = CreateText(go, e.label, 26, FontStyle.Normal, TextAnchor.MiddleLeft);
+            Text label = CreateText(go, e.label, FontSize(26), FontStyle.Normal, TextAnchor.MiddleLeft);
             LayoutElement labelLayout = label.gameObject.AddComponent<LayoutElement>();
             labelLayout.flexibleWidth = 1f;
 
@@ -206,16 +212,16 @@ namespace NekoSune.WorldUI.Editor
             GameObject container = Child(parent, "Slider Row");
             container.AddComponent<RectTransform>();
             VerticalLayoutGroup column = container.AddComponent<VerticalLayoutGroup>();
-            column.spacing = 6f;
+            column.spacing = Mathf.Max(4f, Theme.spacing * 0.5f);
             column.childControlWidth = true;
             column.childForceExpandHeight = false;
             SetPreferredHeight(container, Mathf.Max(86f, e.height));
 
-            Text label = CreateText(container, e.label, 24, FontStyle.Normal, TextAnchor.MiddleLeft);
+            Text label = CreateText(container, e.label, FontSize(24), FontStyle.Normal, TextAnchor.MiddleLeft);
             SetPreferredHeight(label.gameObject, 32f);
 
             GameObject sliderGo = Child(container, "Slider");
-            RectTransform sliderRt = sliderGo.AddComponent<RectTransform>();
+            sliderGo.AddComponent<RectTransform>();
             SetPreferredHeight(sliderGo, 38f);
             Slider slider = sliderGo.AddComponent<Slider>();
 
@@ -223,7 +229,7 @@ namespace NekoSune.WorldUI.Editor
             RectTransform bgRt = bg.AddComponent<RectTransform>();
             Stretch(bgRt, 0f, 0f, 12f, 12f);
             Image bgImage = bg.AddComponent<Image>();
-            bgImage.color = new Color(0.12f, 0.13f, 0.18f, 1f);
+            bgImage.color = Theme.controlColor;
 
             GameObject fillArea = Child(sliderGo, "Fill Area");
             RectTransform fillAreaRt = fillArea.AddComponent<RectTransform>();
@@ -232,7 +238,7 @@ namespace NekoSune.WorldUI.Editor
             RectTransform fillRt = fill.AddComponent<RectTransform>();
             Stretch(fillRt, 0f, 0f, 0f, 0f);
             Image fillImage = fill.AddComponent<Image>();
-            fillImage.color = new Color(0.22f, 0.58f, 0.88f, 1f);
+            fillImage.color = Theme.primaryColor;
 
             GameObject handleArea = Child(sliderGo, "Handle Slide Area");
             RectTransform handleAreaRt = handleArea.AddComponent<RectTransform>();
@@ -241,7 +247,7 @@ namespace NekoSune.WorldUI.Editor
             RectTransform handleRt = handle.AddComponent<RectTransform>();
             handleRt.sizeDelta = new Vector2(28f, 28f);
             Image handleImage = handle.AddComponent<Image>();
-            handleImage.color = Color.white;
+            handleImage.color = Theme.textColor;
 
             slider.fillRect = fillRt;
             slider.handleRect = handleRt;
@@ -254,22 +260,28 @@ namespace NekoSune.WorldUI.Editor
 
         static GameObject CreateImage(GameObject parent, NekoWorldUiElement e)
         {
-            GameObject go = Child(parent, "Image");
+            GameObject go = Child(parent, "Image Slot");
             go.AddComponent<RectTransform>();
-            Image image = go.AddComponent<Image>();
-            image.color = new Color(0.14f, 0.16f, 0.22f, 1f);
-            image.preserveAspect = true;
+            RawImage image = go.AddComponent<RawImage>();
+            image.color = Theme.controlColor;
+            image.raycastTarget = false;
+
             if (!string.IsNullOrEmpty(e.actionValue))
             {
-                Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(e.actionValue);
-                if (sprite != null)
+                Texture texture = AssetDatabase.LoadAssetAtPath<Texture>(e.actionValue);
+                if (texture != null)
                 {
-                    image.sprite = sprite;
+                    image.texture = texture;
                     image.color = Color.white;
                 }
             }
+
+            if (!string.IsNullOrEmpty(e.imageUrl))
+                go.name = "NUI_REMOTE_IMAGE[" + SanitizeMeta(e.id) + "|" + SanitizeMeta(e.imageUrl) + "]";
+
             SetPreferredHeight(go, Mathf.Max(120f, e.height));
-            Text caption = CreateText(go, image.sprite == null ? "IMAGE\nDrag a Sprite here or choose one in the Builder" : "", 22, FontStyle.Italic, TextAnchor.MiddleCenter);
+            Text caption = CreateText(go, image.texture == null ? "IMAGE\nChoose a local Texture or assign this slot to the runtime image loader" : "", FontSize(22), FontStyle.Italic, TextAnchor.MiddleCenter);
+            caption.color = Theme.mutedTextColor;
             Stretch(caption.rectTransform, 10f, 10f, 10f, 10f);
             return go;
         }
@@ -279,18 +291,19 @@ namespace NekoSune.WorldUI.Editor
             GameObject card = Child(parent, "Card");
             card.AddComponent<RectTransform>();
             Image bg = card.AddComponent<Image>();
-            bg.color = new Color(0.09f, 0.105f, 0.14f, 0.98f);
+            bg.color = Theme.panelColor;
             VerticalLayoutGroup layout = card.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(14, 14, 10, 10);
-            layout.spacing = 4f;
+            int pad = Mathf.RoundToInt(Mathf.Max(8f, Theme.panelPadding * 0.8f));
+            layout.padding = new RectOffset(pad, pad, pad, pad);
+            layout.spacing = Mathf.Max(4f, Theme.spacing * 0.45f);
             layout.childControlWidth = true;
             layout.childForceExpandHeight = false;
-            Text heading = CreateText(card, title, 27, FontStyle.Bold, TextAnchor.MiddleLeft);
+            Text heading = CreateText(card, title, FontSize(27), FontStyle.Bold, TextAnchor.MiddleLeft);
             SetPreferredHeight(heading.gameObject, 36f);
             if (!string.IsNullOrEmpty(subtitle))
             {
-                Text sub = CreateText(card, subtitle, 20, FontStyle.Normal, TextAnchor.MiddleLeft);
-                sub.color = new Color(0.72f, 0.76f, 0.84f, 1f);
+                Text sub = CreateText(card, subtitle, FontSize(20), FontStyle.Normal, TextAnchor.MiddleLeft);
+                sub.color = Theme.mutedTextColor;
                 SetPreferredHeight(sub.gameObject, 30f);
             }
             return card;
@@ -301,17 +314,26 @@ namespace NekoSune.WorldUI.Editor
             if (item == null) return;
             GameObject card = CreateCard(parent, string.IsNullOrEmpty(item.title) ? "Item " + (index + 1) : item.title, item.subtitle);
             card.name = "JSON Item " + (index + 1) + " - " + item.title;
-            if (!string.IsNullOrEmpty(item.description))
-            {
-                Text desc = CreateText(card, item.description, 21, FontStyle.Normal, TextAnchor.UpperLeft);
-                SetPreferredHeight(desc.gameObject, 54f);
-            }
+
             if (!string.IsNullOrEmpty(item.imageUrl))
             {
-                Text img = CreateText(card, "Image URL: " + item.imageUrl, 17, FontStyle.Italic, TextAnchor.MiddleLeft);
-                img.color = new Color(0.62f, 0.75f, 0.9f, 1f);
-                SetPreferredHeight(img.gameObject, 30f);
+                GameObject imageSlot = Child(card, "NUI_REMOTE_IMAGE[feed-" + index + "|" + SanitizeMeta(item.imageUrl) + "]");
+                imageSlot.AddComponent<RectTransform>();
+                RawImage image = imageSlot.AddComponent<RawImage>();
+                image.color = Theme.controlColor;
+                image.raycastTarget = false;
+                SetPreferredHeight(imageSlot, 180f);
+                Text hint = CreateText(imageSlot, "REMOTE IMAGE SLOT", FontSize(18), FontStyle.Italic, TextAnchor.MiddleCenter);
+                hint.color = Theme.mutedTextColor;
+                Stretch(hint.rectTransform, 8f, 8f, 8f, 8f);
             }
+
+            if (!string.IsNullOrEmpty(item.description))
+            {
+                Text desc = CreateText(card, item.description, FontSize(21), FontStyle.Normal, TextAnchor.UpperLeft);
+                SetPreferredHeight(desc.gameObject, 54f);
+            }
+
             if (!string.IsNullOrEmpty(item.url))
             {
                 NekoWorldUiElement link = new NekoWorldUiElement();
@@ -322,8 +344,8 @@ namespace NekoSune.WorldUI.Editor
                 link.actionValue = item.url;
                 GameObject button = CreateButton(card, link);
                 button.name = MetaName(link) + " View Link";
-                Text url = CreateText(card, item.url, 17, FontStyle.Italic, TextAnchor.MiddleLeft);
-                url.color = new Color(0.65f, 0.82f, 1f, 1f);
+                Text url = CreateText(card, item.url, FontSize(17), FontStyle.Italic, TextAnchor.MiddleLeft);
+                url.color = Theme.linkColor;
                 SetPreferredHeight(url.gameObject, 28f);
             }
             LayoutRebuilder.ForceRebuildLayoutImmediate(card.GetComponent<RectTransform>());
@@ -332,16 +354,17 @@ namespace NekoSune.WorldUI.Editor
         static Text CreateText(GameObject parent, string value, int size, FontStyle style, TextAnchor anchor)
         {
             GameObject go = Child(parent, "Text");
-            RectTransform rt = go.AddComponent<RectTransform>();
+            go.AddComponent<RectTransform>();
             Text text = go.AddComponent<Text>();
             text.font = Font;
             text.text = value ?? "";
-            text.fontSize = size;
+            text.fontSize = Mathf.Max(10, size);
             text.fontStyle = style;
             text.alignment = anchor;
-            text.color = Color.white;
+            text.color = Theme.textColor;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.raycastTarget = false;
             return text;
         }
 
@@ -350,7 +373,10 @@ namespace NekoSune.WorldUI.Editor
             GameObject go = Child(parent, "Divider");
             go.AddComponent<RectTransform>();
             Image image = go.AddComponent<Image>();
-            image.color = new Color(1f, 1f, 1f, 0.13f);
+            Color c = Theme.textColor;
+            c.a = Mathf.Min(0.22f, c.a * 0.22f);
+            image.color = c;
+            image.raycastTarget = false;
             SetPreferredHeight(go, 2f);
         }
 
@@ -377,16 +403,40 @@ namespace NekoSune.WorldUI.Editor
             l.minHeight = Mathf.Min(height, 30f);
         }
 
+        static int FontSize(int nominal)
+        {
+            float ratio = Mathf.Max(12, Theme.baseFontSize) / 26f;
+            return Mathf.RoundToInt(nominal * ratio);
+        }
+
         static string MetaName(NekoWorldUiElement e)
         {
-            string value = (e.actionValue ?? "").Replace("|", "/").Replace("]", ")");
-            return "NUI[" + e.id + "|" + e.action + "|" + value + "]";
+            return "NUI[" + SanitizeMeta(e.id) + "|" + e.action + "|" + SanitizeMeta(e.actionValue) + "]";
+        }
+
+        static string SanitizeMeta(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return "";
+            return value.Replace("|", "/").Replace("]", ")");
         }
 
         static string SafeName(string value)
         {
             if (string.IsNullOrEmpty(value)) return "UI";
             return value.Replace("/", "-").Replace("\\", "-").Replace(":", "-");
+        }
+
+        static NekoWorldUiBlueprint Theme
+        {
+            get
+            {
+                if (_theme == null)
+                {
+                    _theme = new NekoWorldUiBlueprint();
+                    NekoWorldUiThemePresets.Apply(_theme, NekoWorldUiTheme.NekoDark);
+                }
+                return _theme;
+            }
         }
 
         static Font Font
