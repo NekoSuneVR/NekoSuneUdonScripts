@@ -29,18 +29,20 @@ namespace NekoSune.Avatars.Editor
         bool _stripVrcComponents = true;
         bool _convertPhysBones = true;
         string _status = "Ready";
-        Vector2 _scroll;
 
-        Type CvrAvatarType { get { return NekoAvatarDiagnosticsUtil.FindType("ABI.CCK.Components.CVRAvatar"); } }
+        Type CvrAvatarType { get { return NekoCckCompatibility.AvatarType; } }
         Type DynamicBoneType { get { return NekoAvatarDiagnosticsUtil.FindType("DynamicBone"); } }
 
         [MenuItem(NekoPaths.MenuRoot + "Avatar/Convert to ChilloutVR", false, 45)]
         public static void Open()
         {
             var w = GetWindow<NekoChilloutVRConverterWindow>(false, "ChilloutVR Converter", true);
-            w.minSize = new Vector2(680f, 520f);
+            w.minSize = new Vector2(700f, 550f);
             w.Show();
         }
+
+        [MenuItem(NekoPaths.MenuRoot + "Avatar/ChilloutVR/Convert Avatar", false, 45)]
+        static void OpenFromCvrMenu() { Open(); }
 
         void OnEnable()
         {
@@ -50,12 +52,13 @@ namespace NekoSune.Avatars.Editor
         void OnGUI()
         {
             NekoStyles.Ensure();
-            NekoStyles.HeaderBar("Converter", "ChilloutVR", "Create a CCK avatar copy with VRChat parameters, toggles, sliders, dropdowns, viewpoint and visemes");
+            NekoStyles.HeaderBar("Converter", "ChilloutVR", "CCK 3 legacy + CCK 4 stable avatar conversion with AAS, toggles, sliders, dropdowns, viewpoint and visemes");
+            NekoCckCompatibility.DrawStatusBox();
             _avatar = (GameObject)EditorGUILayout.ObjectField("VRChat avatar", _avatar, typeof(GameObject), true);
 
-            if (CvrAvatarType == null)
+            if (!NekoCckCompatibility.Installed || CvrAvatarType == null)
             {
-                EditorGUILayout.HelpBox("ChilloutVR CCK/SDK was not detected. This converter intentionally requires CCK because it creates real CVRAvatar and Advanced Avatar Settings components rather than placeholder data.", MessageType.Warning);
+                EditorGUILayout.HelpBox("ChilloutVR CCK was not detected. Install CCK 4 stable (recommended) or CCK 3 legacy. NekoSune creates real CVRAvatar/Advanced Avatar Settings data and does not emit placeholder components.", MessageType.Warning);
                 if (GUILayout.Button("Open ChilloutVR CCK setup documentation")) Application.OpenURL("https://docs.chilloutvr.net/cck/setup/");
                 return;
             }
@@ -65,8 +68,7 @@ namespace NekoSune.Avatars.Editor
             int parameters = descriptor == null ? 0 : NekoAvatarDiagnosticsUtil.ReadExpressionParameters(descriptor).Count;
 
             EditorGUILayout.BeginVertical(NekoStyles.Card);
-            GUILayout.Label("Detected", NekoStyles.SlotName);
-            EditorGUILayout.LabelField("ChilloutVR CCK", "Yes");
+            GUILayout.Label("Detected source", NekoStyles.SlotName);
             EditorGUILayout.LabelField("VRChat descriptor", descriptor == null ? "Missing" : "Yes");
             EditorGUILayout.LabelField("Expression parameters", parameters.ToString());
             EditorGUILayout.LabelField("PhysBones", physBones.ToString());
@@ -76,19 +78,19 @@ namespace NekoSune.Avatars.Editor
 
             GUILayout.Label("Conversion", EditorStyles.boldLabel);
             _convertAdvancedSettings = EditorGUILayout.ToggleLeft("Convert VRChat expression parameters/menu labels to CVR Advanced Avatar Settings", _convertAdvancedSettings);
-            _generateAasAnimator = EditorGUILayout.ToggleLeft("Ask CCK to generate/update its AAS Animator after conversion", _generateAasAnimator);
-            _stripVrcComponents = EditorGUILayout.ToggleLeft("Strip VRChat-only components from the ChilloutVR copy", _stripVrcComponents);
+            _generateAasAnimator = EditorGUILayout.ToggleLeft("Ask installed CCK to generate/update its AAS Animator after conversion", _generateAasAnimator);
+            _stripVrcComponents = EditorGUILayout.ToggleLeft("Strip VRChat-only components from the generated ChilloutVR copy", _stripVrcComponents);
             using (new EditorGUI.DisabledScope(DynamicBoneType == null))
                 _convertPhysBones = EditorGUILayout.ToggleLeft("Convert PhysBone roots/settings to Dynamic Bone when possible", _convertPhysBones && DynamicBoneType != null);
 
             if (physBones > 0 && DynamicBoneType == null)
-                EditorGUILayout.HelpBox("This avatar has PhysBones but Dynamic Bone is not installed. ChilloutVR supports a client-side Dynamic Bone implementation, but the Dynamic Bone authoring component is a separate third-party asset. If you strip VRChat components now, those PhysBones will not have physics until you add a CVR-supported solution.", MessageType.Warning);
+                EditorGUILayout.HelpBox("This avatar has PhysBones but Dynamic Bone v1.x is not installed. If you strip VRChat components, those PhysBones will not have replacement physics until you configure a CVR-supported dynamics solution.", MessageType.Warning);
 
-            EditorGUILayout.HelpBox("Bool parameters become GameObject Toggles, Float parameters become Sliders, and Int parameters become Dropdowns when multiple integer states can be discovered from Animator transitions. Menu control names are used as the friendly CVR setting names. A generated ChilloutVR copy is created; the VRChat source is not modified.", MessageType.Info);
+            EditorGUILayout.HelpBox("Bool parameters become CVR toggles, Float parameters become sliders, and Int parameters become dropdowns where multiple values can be discovered. Menu control names are reused as friendly labels. The VRChat source hierarchy is never modified.", MessageType.Info);
 
             using (new EditorGUI.DisabledScope(_avatar == null || descriptor == null))
             {
-                if (GUILayout.Button("Create ChilloutVR Copy", NekoStyles.PrimaryButton, GUILayout.Height(34f))) ConvertAvatar();
+                if (GUILayout.Button("Create ChilloutVR Avatar Copy", NekoStyles.PrimaryButton, GUILayout.Height(34f))) ConvertAvatar();
             }
         }
 
@@ -98,7 +100,7 @@ namespace NekoSune.Avatars.Editor
             if (sourceDescriptor == null) return;
             if (_stripVrcComponents && NekoAvatarDiagnosticsUtil.FindComponentsByTypeName(_avatar, "VRCPhysBone", "VRCPhysBoneBase").Count > 0 && DynamicBoneType == null)
             {
-                if (!EditorUtility.DisplayDialog("NekoSune ChilloutVR Converter", "Dynamic Bone is not installed. Continuing with 'Strip VRChat-only components' will remove PhysBone components from the CVR copy without replacing their physics. Continue?", "Continue", "Cancel")) return;
+                if (!EditorUtility.DisplayDialog("NekoSune ChilloutVR Converter", "Dynamic Bone is not installed. Continuing with Strip VRChat components removes PhysBones from the CVR copy without replacing their physics. Continue?", "Continue", "Cancel")) return;
             }
 
             try
@@ -109,8 +111,8 @@ namespace NekoSune.Avatars.Editor
                 copy.SetActive(true);
                 Undo.RegisterCreatedObjectUndo(copy, "Create ChilloutVR avatar copy");
 
-                Component cvrAvatar = copy.GetComponent(CvrAvatarType);
-                if (cvrAvatar == null) cvrAvatar = copy.AddComponent(CvrAvatarType);
+                Component cvrAvatar = NekoCckCompatibility.EnsureComponent(copy, CvrAvatarType);
+                if (cvrAvatar == null) throw new InvalidOperationException("Could not add CVRAvatar from " + NekoCckCompatibility.DisplayName + ".");
                 PopulateCvrAvatar(sourceDescriptor, copy, cvrAvatar);
 
                 AnimatorController baseController = CreateCvrBaseController(sourceDescriptor, copy);
@@ -123,8 +125,8 @@ namespace NekoSune.Avatars.Editor
                 AssetDatabase.SaveAssets();
                 Selection.activeGameObject = copy;
                 EditorGUIUtility.PingObject(copy);
-                _status = "Conversion complete — review CCK Avatar and AAS before upload";
-                Debug.Log("[NekoSune ChilloutVR Converter] Created " + copy.name);
+                _status = "Conversion complete — review the CVR Avatar/AAS in " + NekoCckCompatibility.DisplayName;
+                Debug.Log("[NekoSune ChilloutVR Converter] Created " + copy.name + " using " + NekoCckCompatibility.DisplayName);
             }
             catch (Exception e)
             {
@@ -142,6 +144,7 @@ namespace NekoSune.Avatars.Editor
                 NekoAvatarDiagnosticsUtil.SetMember(cvrAvatar, view, "viewPosition", "ViewPosition");
                 NekoAvatarDiagnosticsUtil.SetMember(cvrAvatar, view, "voicePosition", "VoicePosition");
             }
+
             Animator animator = copy.GetComponent<Animator>();
             if (animator != null)
             {
@@ -150,17 +153,16 @@ namespace NekoSune.Avatars.Editor
             }
 
             SkinnedMeshRenderer sourceFace = NekoAvatarDiagnosticsUtil.GetMember(sourceDescriptor, "VisemeSkinnedMesh", "visemeSkinnedMesh") as SkinnedMeshRenderer;
-            SkinnedMeshRenderer copyFace = sourceFace == null ? null : FindEquivalent(copy.transform, _avatar.transform, sourceFace.transform).GetComponent<SkinnedMeshRenderer>();
+            Transform equivalent = sourceFace == null ? null : FindEquivalent(copy.transform, _avatar.transform, sourceFace.transform);
+            SkinnedMeshRenderer copyFace = equivalent == null ? null : equivalent.GetComponent<SkinnedMeshRenderer>();
             if (copyFace == null) copyFace = FindFaceMesh(copy);
             if (copyFace != null) NekoAvatarDiagnosticsUtil.SetMember(cvrAvatar, copyFace, "bodyMesh", "BodyMesh");
 
-            object shapesObject = NekoAvatarDiagnosticsUtil.GetMember(sourceDescriptor, "VisemeBlendShapes", "visemeBlendShapes");
-            string[] shapes = ToStringArray(shapesObject);
+            string[] shapes = ToStringArray(NekoAvatarDiagnosticsUtil.GetMember(sourceDescriptor, "VisemeBlendShapes", "visemeBlendShapes"));
             if (shapes.Length > 0)
             {
                 NekoAvatarDiagnosticsUtil.SetMember(cvrAvatar, true, "useVisemeLipsync", "UseVisemeLipsync");
-                object targetShapesObject = NekoAvatarDiagnosticsUtil.GetMember(cvrAvatar, "visemeBlendshapes", "VisemeBlendshapes");
-                Array targetShapes = targetShapesObject as Array;
+                Array targetShapes = NekoAvatarDiagnosticsUtil.GetMember(cvrAvatar, "visemeBlendshapes", "VisemeBlendshapes") as Array;
                 if (targetShapes != null)
                 {
                     int n = Math.Min(targetShapes.Length, shapes.Length);
@@ -192,8 +194,7 @@ namespace NekoSune.Avatars.Editor
                 fx = animator == null ? null : animator.runtimeAnimatorController;
             }
             AnimatorOverrideController over = fx as AnimatorOverrideController;
-            RuntimeAnimatorController source = over == null ? fx : over.runtimeAnimatorController;
-            AnimatorController sourceController = source as AnimatorController;
+            AnimatorController sourceController = (over == null ? fx : over.runtimeAnimatorController) as AnimatorController;
             if (sourceController == null) return null;
 
             string folder = EnsureFolder("Assets/NekoSune/Avatars/ChilloutVR/" + SafeName(copy.name));
@@ -212,8 +213,7 @@ namespace NekoSune.Avatars.Editor
 
         RuntimeAnimatorController FindFxController(Component descriptor)
         {
-            object layersObject = NekoAvatarDiagnosticsUtil.GetMember(descriptor, "baseAnimationLayers", "BaseAnimationLayers");
-            IEnumerable layers = layersObject as IEnumerable;
+            IEnumerable layers = NekoAvatarDiagnosticsUtil.GetMember(descriptor, "baseAnimationLayers", "BaseAnimationLayers") as IEnumerable;
             if (layers == null) return null;
             foreach (object layer in layers)
             {
@@ -226,16 +226,16 @@ namespace NekoSune.Avatars.Editor
 
         void ConvertAdvancedSettings(Component sourceDescriptor, Component cvrAvatar, AnimatorController baseController)
         {
-            Type entryType = NekoAvatarDiagnosticsUtil.FindType("ABI.CCK.Scripts.CVRAdvancedSettingsEntry");
-            Type toggleType = NekoAvatarDiagnosticsUtil.FindType("ABI.CCK.Scripts.CVRAdvancesAvatarSettingGameObjectToggle");
-            Type sliderType = NekoAvatarDiagnosticsUtil.FindType("ABI.CCK.Scripts.CVRAdvancesAvatarSettingSlider");
-            Type dropdownType = NekoAvatarDiagnosticsUtil.FindType("ABI.CCK.Scripts.CVRAdvancesAvatarSettingGameObjectDropdown");
-            Type dropdownEntryType = NekoAvatarDiagnosticsUtil.FindType("ABI.CCK.Scripts.CVRAdvancedSettingsDropDownEntry");
+            Type entryType = NekoCckCompatibility.FindType("ABI.CCK.Scripts.CVRAdvancedSettingsEntry", "CVR.CCK.Scripts.CVRAdvancedSettingsEntry");
+            Type toggleType = NekoCckCompatibility.FindType("ABI.CCK.Scripts.CVRAdvancesAvatarSettingGameObjectToggle", "CVR.CCK.Scripts.CVRAdvancesAvatarSettingGameObjectToggle");
+            Type sliderType = NekoCckCompatibility.FindType("ABI.CCK.Scripts.CVRAdvancesAvatarSettingSlider", "CVR.CCK.Scripts.CVRAdvancesAvatarSettingSlider");
+            Type dropdownType = NekoCckCompatibility.FindType("ABI.CCK.Scripts.CVRAdvancesAvatarSettingGameObjectDropdown", "CVR.CCK.Scripts.CVRAdvancesAvatarSettingGameObjectDropdown");
+            Type dropdownEntryType = NekoCckCompatibility.FindType("ABI.CCK.Scripts.CVRAdvancedSettingsDropDownEntry", "CVR.CCK.Scripts.CVRAdvancedSettingsDropDownEntry");
             if (entryType == null || toggleType == null || sliderType == null || dropdownType == null || dropdownEntryType == null)
-                throw new InvalidOperationException("The installed ChilloutVR CCK does not expose the expected Advanced Avatar Settings types. Update NekoSune/CCK or configure AAS manually.");
+                throw new InvalidOperationException("The installed " + NekoCckCompatibility.DisplayName + " does not expose the expected Advanced Avatar Settings types. Configure AAS manually or update NekoSune for that CCK build.");
 
             object avatarSettings = NekoAvatarDiagnosticsUtil.GetMember(cvrAvatar, "avatarSettings", "AvatarSettings");
-            if (avatarSettings == null) throw new InvalidOperationException("CVRAvatar.avatarSettings could not be read from this CCK version.");
+            if (avatarSettings == null) throw new InvalidOperationException("CVRAvatar.avatarSettings could not be read from this CCK generation.");
             if (baseController != null) NekoAvatarDiagnosticsUtil.SetMember(avatarSettings, baseController, "baseController", "BaseController");
 
             IDictionary friendlyNames = BuildFriendlyMenuNames(sourceDescriptor);
@@ -297,15 +297,14 @@ namespace NekoSune.Avatars.Editor
             }
 
             if (!NekoAvatarDiagnosticsUtil.SetMember(avatarSettings, settingsList, "settings", "Settings"))
-                throw new InvalidOperationException("Could not assign generated CCK Advanced Avatar Settings.");
+                throw new InvalidOperationException("Could not assign generated Advanced Avatar Settings to this CCK generation.");
             NekoAvatarDiagnosticsUtil.SetMember(cvrAvatar, avatarSettings, "avatarSettings", "AvatarSettings");
         }
 
         IDictionary BuildFriendlyMenuNames(Component descriptor)
         {
             var map = new Dictionary<string, string>(StringComparer.Ordinal);
-            object menu = NekoAvatarDiagnosticsUtil.ExpressionsMenu(descriptor);
-            CollectFriendlyNames(menu, map, new HashSet<int>());
+            CollectFriendlyNames(NekoAvatarDiagnosticsUtil.ExpressionsMenu(descriptor), map, new HashSet<int>());
             return map;
         }
 
@@ -401,14 +400,11 @@ namespace NekoSune.Avatars.Editor
             for (int i = components.Length - 1; i >= 0; i--)
             {
                 Component c = components[i];
-                if (c == null || c == keep) continue;
-                Type t = c.GetType();
-                string full = t.FullName ?? t.Name;
-                if (!(full.StartsWith("VRC.", StringComparison.Ordinal) || t.Name.StartsWith("VRC", StringComparison.Ordinal))) continue;
+                if (c == null || c == keep || !NekoCckCompatibility.IsVrcComponent(c)) continue;
                 Undo.DestroyObjectImmediate(c);
                 removed++;
             }
-            Debug.Log("[NekoSune ChilloutVR Converter] Removed " + removed + " VRChat-only component(s) from the CVR copy.");
+            Debug.Log("[NekoSune ChilloutVR Converter] Removed " + removed + " VRChat/Udon component(s) from the CVR copy.");
         }
 
         void TryGenerateAasAnimator(Component cvrAvatar)
@@ -424,11 +420,11 @@ namespace NekoSune.Avatars.Editor
                     create.Invoke(editor, null);
                     return;
                 }
-                Debug.LogWarning("[NekoSune ChilloutVR Converter] This CCK version does not expose the AAS CreateAnimator method through the CVRAvatar inspector. Open the CVR Avatar component and press Create Animator manually.");
+                Debug.LogWarning("[NekoSune ChilloutVR Converter] " + NekoCckCompatibility.DisplayName + " does not expose the legacy AAS CreateAnimator inspector method. Open CVR Avatar/AAS and generate/update its Animator manually if needed.");
             }
             catch (Exception e)
             {
-                Debug.LogWarning("[NekoSune ChilloutVR Converter] AAS generation could not be invoked automatically: " + (e.InnerException == null ? e.Message : e.InnerException.Message));
+                Debug.LogWarning("[NekoSune ChilloutVR Converter] AAS Animator generation could not be invoked automatically: " + (e.InnerException == null ? e.Message : e.InnerException.Message));
             }
             finally
             {
@@ -440,8 +436,7 @@ namespace NekoSune.Avatars.Editor
         {
             object settings = NekoAvatarDiagnosticsUtil.GetMember(descriptor, "customEyeLookSettings", "CustomEyeLookSettings");
             if (settings == null || sourceFace == null || sourceFace.sharedMesh == null) return null;
-            object arrayObject = NekoAvatarDiagnosticsUtil.GetMember(settings, "eyelidsBlendshapes", "EyelidsBlendshapes");
-            Array indexes = arrayObject as Array;
+            Array indexes = NekoAvatarDiagnosticsUtil.GetMember(settings, "eyelidsBlendshapes", "EyelidsBlendshapes") as Array;
             if (indexes == null || indexes.Length == 0) return null;
             try
             {
