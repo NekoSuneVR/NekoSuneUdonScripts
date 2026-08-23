@@ -1,0 +1,14 @@
+using NekoSune.Worlds.Editor;
+using UnityEditor;
+
+[NekoAddon(Order = 100)]
+public sealed class MyWorldAddon : INekoAddon
+{
+    public string Id => "my-world-addon";
+    public string TitleKey => "My World Addon";
+    public string DescriptionKey => "Describe what this addon does.";
+    public string CategoryKey => "cat.world";
+    public string Glyph => "+";
+    public bool IsAvailable => true;
+    public void Open() => EditorApplication.ExecuteMenuItem("NekoSune/World/My Addon");
+}

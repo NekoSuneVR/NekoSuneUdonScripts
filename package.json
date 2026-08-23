@@ -1,17 +1,10 @@
 {
   "name": "com.nekosune.worlds",
-  "displayName": "NekoSune Worlds Bundle",
-  "version": "0.4.0",
+  "displayName": "NekoSune World Hub",
+  "version": "0.5.0",
   "unity": "2022.3",
-  "description": "Compatibility bundle for the modular NekoSune world suite. Installs World Tools, Optimizer, Doctors and Converters while preserving the original package ID.",
+  "description": "Base/template World Hub for NekoSune VRChat creator addons. Provides the shared menu, About page, localization and automatic addon discovery API.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
-  "keywords": ["vrchat","world","bundle","udon","nekosune"],
-  "vpmDependencies": {
-    "com.vrchat.worlds": ">=3.5.0",
-    "com.nekosune.world-tools": ">=1.0.0",
-    "com.nekosune.optimizer": ">=1.0.0",
-    "com.nekosune.doctors": ">=1.0.0",
-    "com.nekosune.converters": ">=1.0.0"
-  },
+  "keywords": ["vrchat","world","udon","hub","template","addon","nekosune"],
   "hideInEditor": false
 }
