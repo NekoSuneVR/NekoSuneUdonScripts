@@ -27,8 +27,10 @@ namespace NekoSune.Avatars.Editor
                 case "exprdoctor.desc": return "Audit expression menus, parameter types/budget, Animator states, transitions and Parameter Drivers";
                 case "resonite.title": return "Export to Resonite";
                 case "resonite.desc": return "Build a .resonitepackage through the installed Modular Avatar Resonite backend";
-                case "cvr.title": return "Convert to ChilloutVR";
-                case "cvr.desc": return "Create a CCK avatar copy with CVR Advanced Avatar Settings, toggles, sliders and dropdowns";
+                case "cvr.title": return "Convert Avatar to ChilloutVR";
+                case "cvr.desc": return "CCK 3/4 avatar conversion with CVR Advanced Avatar Settings, toggles, sliders and dropdowns";
+                case "cvrprop.title": return "Convert to ChilloutVR Prop";
+                case "cvrprop.desc": return "Turn a Unity/VRChat object into a CCK 3/4 CVR Spawnable with pickup and object-sync conversion";
                 default: return key;
             }
         }
