@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "title": "Website",
+      "subtitle": "Official site",
+      "description": "Show this URL in-world or pair it with a QR image.",
+      "imageUrl": "https://example.com/qr/website.png",
+      "url": "https://example.com",
+      "value": "website"
+    },
+    {
+      "title": "Support Page",
+      "subtitle": "Patreon / membership / donations",
+      "description": "The world displays the link; checkout remains on the external service.",
+      "imageUrl": "https://example.com/qr/support.png",
+      "url": "https://patreon.com/example",
+      "value": "support"
+    }
+  ]
+}
