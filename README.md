@@ -9,12 +9,12 @@ Unity Editor tooling for VRChat creators, split into separate **Avatar** and **W
 | Branch | Package ID | For | Status |
 | --- | --- | --- | --- |
 | [`avatar`](../../tree/avatar) | `com.nekosune.avatars` | VRChat avatars | Working |
-| [`world`](../../tree/world) | `com.nekosune.worlds` | VRChat worlds / Udon | World template ready |
+| [`world`](../../tree/world) | `com.nekosune.worlds` | VRChat worlds / Udon | Working — World Doctor + Network Doctor |
 | `main` | `com.nekosune.vrchat-tools` | VCC repository + docs | Active listing |
 
 ### Avatar package
 
-The `avatar` branch contains the avatar-focused editor tools, including:
+The `avatar` branch contains:
 
 - **Lip Sync Studio**
 - **Rank Advisor**
@@ -24,22 +24,15 @@ See the [`avatar` README](../../tree/avatar) for full documentation.
 
 ### World package
 
-The `world` branch is now a clean package of its own rather than a copy of the avatar branch.
+The `world` branch contains the world-focused creator toolbox:
 
-It contains:
+- **World Doctor** — scans the active scene for performance/build-readiness concerns including geometry, materials, textures, estimated texture memory, realtime lighting/shadows, reflection probes, particles, audio loading, cameras, Udon count, scene descriptor, and Android/Quest-specific warnings.
+- **Udon Network Doctor** — analyses attached UdonSharp source for sync modes, `[UdonSynced]`, `RequestSerialization`, direct DataList/DataDictionary sync, network-event compatibility, Continuous-sync payloads, ownership patterns, and multiplayer test reminders.
+- **World Template Guide** — package extension guide for future editor/runtime features.
 
-- package ID `com.nekosune.worlds`
-- dependency on `com.vrchat.worlds`
-- `NekoSune.Worlds.Editor` editor assembly
-- **NekoSune → World → Hub**
-- a starter **World Template Guide**
-- `Editor/World/` for editor-side world tooling
-- `Runtime/Udon/` for future UdonSharp/runtime content
-- a dedicated VPM release workflow using `worlds-v<version>` tags
+World findings distinguish VRChat rules/platform restrictions from NekoSune performance advisories so advisory thresholds are not presented as official hard limits.
 
-Avatar Lip Sync/viseme/binder code has been removed from the `world` branch.
-
-See the [`world` README](../../tree/world) for the package layout and contributor guide.
+See the [`world` README](../../tree/world) for full documentation.
 
 ---
 
@@ -74,9 +67,7 @@ The `.git#avatar` and `.git#world` URLs are **Unity Package Manager Git URLs**, 
 
 ```text
 main
-├── .github/
-│   └── workflows/
-│       └── build-listing.yml
+├── .github/workflows/build-listing.yml
 ├── Website/
 ├── source.json
 └── README.md
@@ -94,36 +85,16 @@ world
 │   ├── Core/
 │   ├── Localization/
 │   └── World/
-├── Runtime/
-│   └── Udon/
+│       ├── NekoWorldDoctorWindow.cs
+│       ├── NekoUdonNetworkDoctorWindow.cs
+│       └── NekoWorldTemplateWindow.cs
+├── Runtime/Udon/
 ├── package.json        com.nekosune.worlds
 ├── CHANGELOG.md
 └── README.md
 ```
 
 `source.json` lists this GitHub repository as a release source. VRChat's package-list builder scans compatible GitHub Release `.zip` assets, reads the root `package.json` from each ZIP, hashes them, and publishes the combined `index.json`.
-
-That means the same VCC repository can expose multiple package IDs from the same GitHub repository.
-
----
-
-## Current VPM release families
-
-Avatar releases use tags such as:
-
-```text
-avatars-v0.1.0
-```
-
-World releases use tags such as:
-
-```text
-worlds-v0.1.0
-```
-
-Each release ZIP has `package.json` directly at the ZIP root, which is required by the listing builder.
-
-A normal GitHub branch archive is not used as the VPM package because GitHub wraps branch downloads in an extra top-level directory.
 
 ---
 
@@ -135,24 +106,10 @@ A normal GitHub branch archive is not used as the VPM package because GitHub wra
 https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#avatar
 ```
 
-or:
-
-```bash
-cd YourUnityProject/Packages
-git clone -b avatar https://github.com/NekoSuneVR/NekoSuneUdonScripts.git com.nekosune.avatars
-```
-
 ### World
 
 ```text
 https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#world
-```
-
-or:
-
-```bash
-cd YourUnityProject/Packages
-git clone -b world https://github.com/NekoSuneVR/NekoSuneUdonScripts.git com.nekosune.worlds
 ```
 
 These are useful for development. Normal users should use the VCC listing.
@@ -187,9 +144,9 @@ Avatar package:
 World package:
 
 - **NekoSune → World → Hub**
+- **NekoSune → World → World Doctor**
+- **NekoSune → World → Udon Network Doctor**
 - **NekoSune → World → Template Guide**
-
-The world Hub uses its own submenu so both packages can be installed without defining the same `NekoSune → Hub` menu command twice.
 
 ---
 
@@ -197,16 +154,16 @@ The world Hub uses its own submenu so both packages can be installed without def
 
 ### Avatar
 
-1. Change the avatar source on `avatar`.
-2. Bump the version in `avatar/package.json`.
-3. The Avatar release workflow creates a `avatars-v<version>` release and VPM ZIP.
+1. Change source on `avatar`.
+2. Bump `avatar/package.json`.
+3. The workflow creates `avatars-v<version>` with a VPM-compatible ZIP.
 4. The shared VCC listing rebuilds.
 
 ### World
 
-1. Change the world/Udon source on `world`.
-2. Bump the version in `world/package.json`.
-3. The World release workflow creates a `worlds-v<version>` release and VPM ZIP.
+1. Change source on `world`.
+2. Bump `world/package.json`.
+3. The workflow creates `worlds-v<version>` with a VPM-compatible ZIP.
 4. The shared VCC listing rebuilds.
 
 Published versions are immutable: the workflows refuse to replace an existing release version.
@@ -214,8 +171,6 @@ Published versions are immutable: the workflows refuse to replace an existing re
 ---
 
 ## VCC listing
-
-The shared generated repository is:
 
 ```text
 https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
@@ -228,11 +183,7 @@ com.nekosune.avatars
 com.nekosune.worlds
 ```
 
-The listing is rebuilt after package releases and when the listing configuration on `main` changes.
-
 ## Contributing
-
-Open changes against the branch that owns the code:
 
 - avatar tooling → `avatar`
 - world/Udon tooling → `world`
