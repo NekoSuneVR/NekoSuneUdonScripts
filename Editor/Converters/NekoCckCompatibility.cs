@@ -88,6 +88,7 @@ namespace NekoSune.Avatars.Editor
             return null;
         }
 
+        public static Type AssetInfoType { get { return FindType("ABI.CCK.Components.CVRAssetInfo", "CVR.CCK.Components.CVRAssetInfo"); } }
         public static Type AvatarType { get { return FindType("ABI.CCK.Components.CVRAvatar", "CVR.CCK.Components.CVRAvatar"); } }
         public static Type WorldType { get { return FindType("ABI.CCK.Components.CVRWorld", "CVR.CCK.Components.CVRWorld"); } }
         public static Type SpawnableType { get { return FindType("ABI.CCK.Components.CVRSpawnable", "CVR.CCK.Components.CVRSpawnable"); } }
