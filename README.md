@@ -1,272 +1,215 @@
-# NekoSune Avatars
+# NekoSune VRChat Tools
 
-A toolbox of VRChat **avatar** addons for the Unity Editor, all reachable from a single
-**NekoSune** menu in the menu bar (right next to *Tools*).
+Unity Editor tooling for VRChat creators, split into two installable packages that share one
+**NekoSune** menu in the Unity menu bar (right next to *Tools*).
 
-World and Udon tooling is not part of this package — it lives in its own branch/package and
-installs alongside this one under the same **NekoSune** menu.
+**This `main` branch holds no code.** It is the landing page. All the actual tooling lives on the
+two branches below, and which one you install depends on what you are making. You can install
+both into the same project — they are designed to sit side by side and merge into a single menu.
 
-**Lip Sync Studio** — drop in an avatar and an audio clip, press one button, and get a `.anim`
-that drives the avatar's mouth in time with the audio. It works with songs (backing music and
-all), with plain speech, and with avatars from Booth, Gumroad, VRoid, CATS exports,
-ARKit-blendshape avatars, or anything you rigged yourself.
+---
 
-**Rank Advisor** — drop in an avatar and see its VRChat performance rank for PC *and* Quest,
-every statistic behind it, and the exact list of things that have to come down before the rank
-moves. Read-only; the one change it will make for you is opt-in.
+## The two branches
+
+| Branch | Package id | For | Status |
+| --- | --- | --- | --- |
+| [`avatar`](../../tree/avatar) | `com.nekosune.avatars` | VRChat **avatars** | Working — 2 tools |
+| [`world`](../../tree/world) | *(to be assigned)* | VRChat **worlds** and Udon | Placeholder, not started |
+| `main` | — | This README | Documentation only |
+
+### `avatar` — NekoSune Avatars
+
+The branch that is actually finished and usable today. Two tools:
+
+**Lip Sync Studio.** Drop in an avatar and an audio clip, press one button, get a `.anim` that
+drives the avatar's mouth in time with the audio. It handles full songs with backing music (no
+separate vocal stem needed), plain speech, and avatars from Booth, Gumroad, VRoid, CATS exports,
+ARKit-blendshape avatars, or anything you rigged yourself. It can drive the 15 VRC visemes, a jaw
+bone, a single mouth-open blendshape, or work it out automatically.
+
+**Rank Advisor.** Drop in an avatar and see its VRChat performance rank for PC *and* Quest side by
+side, all 29 statistics behind it, and the exact list of what has to come down before the rank
+moves. It catches the things that quietly sink an upload: Mesh Read/Write being off (an automatic
+Very Poor *and* a hard upload block), disabled objects that still count towards every statistic,
+and a missing avatar descriptor. Read-only — the single change it will make is opt-in.
+
+Both are localized into 12 languages (English, Русский, Español, Polski, Deutsch, Français,
+Italiano, Português (Brasil), Українська, 日本語, 한국어, 简体中文).
+
+Full documentation is in the README **on that branch**.
+
+### `world` — worlds and Udon
+
+Reserved for world and Udon tooling. **Nothing is built yet** — the branch currently just holds a
+copy of the avatar package as a starting point. Don't install it expecting world features. This
+row exists so the split is visible; watch the repo if you want to know when it becomes real.
+
+### Why two branches instead of one package
+
+Avatar creators and world creators need completely different dependencies. The avatar package
+depends on `com.vrchat.avatars`; world tooling will depend on `com.vrchat.worlds` and UdonSharp.
+Shipping one package would force every avatar creator to pull in the worlds SDK and vice versa.
+Splitting them keeps each install to only what you actually need, while the shared **NekoSune**
+menu means a project with both installed still gets one tidy menu instead of two.
+
+---
+
+## Requirements
+
+- **Unity 2019.4 or newer.**
+- **Git** installed and on your `PATH` — only if you use the Package Manager git-URL method below.
+- **The VRChat SDK is optional for the avatar package.** Every SDK type is reached by reflection,
+  so it compiles and runs in a project with no VRChat SDK installed at all. When the SDK *is*
+  present, the avatar descriptor is read first and used directly.
+
+Everything ships inside an Editor-only assembly definition, so none of it ends up in a build and
+none of it touches your runtime code.
 
 ---
 
 ## Install
 
-### Via the VRChat Creator Companion (VPM)
+Four ways, easiest first. **You only ever install a branch, never `main`** — `main` has no
+`package.json`, so every method below will fail against it.
 
-1. Copy this folder into your project's `Packages/` directory as
-   `Packages/com.nekosune.avatars`, **or** add it as a local package from VCC.
-2. VCC / the package manager resolves `com.vrchat.avatars` for you.
+### 1. Download a ZIP (no Git needed)
 
-### Via the Unity Package Manager (UPM)
+1. Go to the branch you want: [`avatar`](../../tree/avatar) or [`world`](../../tree/world).
+2. Green **Code** button → **Download ZIP**.
+3. Unzip it. You get a folder like `NekoSuneUdonScripts-avatar`.
+4. Copy that folder into your Unity project. Either location works:
+   - `Packages/com.nekosune.avatars` — treated as a real package, stays out of your Assets.
+   - `Assets/NekoSune/Avatars` — plain drop-in, shows up in the Project window.
+5. Switch back to Unity and let it compile. The **NekoSune** menu appears in the menu bar.
 
-*Window → Package Manager → + → Add package from disk…* and pick this folder's `package.json`.
+Renaming the folder is fine — nothing depends on the folder name.
 
-### Drop-in (no package manager)
+### 2. Unity Package Manager, from a Git URL
 
-Copy the whole folder into `Assets/NekoSune/Avatars`. Everything lives under an
-Editor-only assembly definition, so it never ships in a build and never touches runtime code.
+This is the cleanest option if you have Git installed, because updating is one click later.
 
-**The VRChat SDK is optional.** Every SDK type is reached by reflection, so the package
-compiles and runs in a project with no VRChat SDK at all. When the SDK *is* present, the
-avatar descriptor is read first and its viseme mapping is used verbatim.
-
-Unity 2019.4 or newer.
-
----
-
-## Using Lip Sync Studio
-
-Open it from **NekoSune → Avatar → Lip Sync Studio**, from the **NekoSune → Hub** window,
-or by right-clicking an AudioClip in the Project window and choosing
-**NekoSune → Lip Sync from this audio**.
-
-1. **Drop an avatar** into the top slot — a scene object or a prefab.
-2. **Drop an audio clip** into the second slot. The waveform strip appears with play/stop.
-3. Optionally pick a **preset** (Song / music, Speech, Anime, Subtle, Noisy recording) and
-   tweak the sliders.
-4. Press **Make lip sync**. The clip is written to the output folder and the green banner
-   links straight to it in the Project window.
-
-Then drop that `.anim` into an animator layer, a timeline, or wherever you drive it from.
-
-### What the settings do
-
-Every slider has a tooltip; the short version:
-
-| Setting | Effect |
-| --- | --- |
-| Volume → mouth | How much loudness drives how wide the mouth opens. At 0, every viseme plays at full size. |
-| Clarity | High values commit to one crisp viseme per frame instead of blending several. |
-| Consonants close mouth | How hard consonant frames pull the mouth shut. |
-| Strength | Overall amplitude of the whole animation. |
-| Offset, ms | Shifts the animation in time. Negative = mouth moves early. |
-| Attack / Release, ms | How fast the mouth reaches a new shape and relaxes back. |
-| Silence threshold | Anything quieter becomes the `sil` viseme. |
-| Liveliness | A small, deterministic wobble so held vowels don't look frozen. |
-| Frames per second | Keyframe rate of the baked clip. 30 is plenty. |
-| Quality | Analysis resolution. Higher separates consonants better and bakes slower. |
-| Clean vocal, no music | Turn on for an isolated voice track. **Leave it off for songs** — backing music is then suppressed before analysis. |
-| Reduce keyframes / tolerance | Drops keys a straight line already covers. Typical saving is 60–90% with no visible difference. |
-| Write the sil viseme | Turn off if the silence shape fights another animation layer. |
-| Normalize weights | Keeps the sum of all viseme weights at 100 or below. |
-| Start / End, s | Bake only a section of the clip. |
-
-### Targets
-
-The **Targets and output** section decides what actually gets animated:
-
-- **Automatic** — visemes if the avatar has them, otherwise the jaw bone, otherwise a single
-  mouth-open blendshape.
-- **VRC viseme blendshapes** — the 15 standard visemes (`sil, PP, FF, TH, DD, kk, CH, SS, nn,
-  RR, aa, E, ih, oh, ou`).
-- **Jaw bone** — rotates a bone on a chosen axis up to a chosen maximum angle.
-- **Single mouth-open shape** — for avatars with just one "mouth open" blendshape.
-
-The jaw bone and the single shape can also be driven *alongside* visemes with the
-**Also drive…** toggles.
-
-### How it finds the mouth on any avatar
-
-The **Avatar binding** section shows exactly what was found, in this order:
-
-1. **VRChat avatar descriptor** — read by reflection, including its viseme blendshape list,
-   its lip sync mode, and its jaw bone.
-2. **Blendshape name matching** — a fuzzy matcher that understands Booth, Gumroad, VRoid,
-   CATS and ARKit naming, common prefixes (`vrc.v_aa`, `Fcl_MTH_A`, `viseme_aa`, …), and
-   Japanese kana shapes (`あ い う え お`).
-3. **Humanoid jaw bone**, then a name search for a jaw-ish bone.
-4. **A single mouth-open blendshape** from a list of common names.
-
-Anything it gets wrong you can override by hand in that same section — each viseme has its own
-picker, and the green/red chips tell you at a glance what is mapped.
-
-### Why one preset works on every voice
-
-The analyzer measures the clip's own median first formant and rescales its vowel prototypes to
-that voice's vocal tract. A deep male voice, a high anime voice and a pitched-up song all land
-on the same vowel decisions without you touching a slider.
-
----
-
-## Using Rank Advisor
-
-Open it from **NekoSune → Avatar → Rank Advisor**, from the **NekoSune → Hub** window, or by
-right-clicking an avatar in the Hierarchy and choosing **NekoSune → Rank Advisor**.
-
-Drop an avatar in and you get, for the platform tab you are on:
-
-- **The overall rank.** VRChat takes the *worst single statistic* and makes that the rank of the
-  whole avatar, so the badge shows what that worst statistic dragged you down to. The other
-  platform's rank is shown underneath, because an avatar that is Good on PC is frequently Very
-  Poor on Quest.
-- **Biggest wins.** Every statistic currently sitting at or below the overall rank, sorted by how
-  far over the line it is, each with its exact target: *Triangles: 94,312 → 70,000 or less*.
-  Because the rank is worst-wins, **all** of them have to come down before the rank moves — the
-  list is the complete job, not a menu.
-- **The full table**, grouped into mesh/material, rig, PhysBones and contacts, particles and
-  dynamics, and everything else. Each row has the value, a bar showing where it sits between
-  Excellent and Poor, its own rank chip, and a **Select** button that pings the offending object
-  in the Hierarchy.
-- **Copy report** puts both platforms' numbers on the clipboard as plain text — useful for a
-  commission thread or a bug report.
-
-### The silent killers it catches
-
-- **Mesh Read/Write off** is an automatic Very Poor *and* a hard upload block, and the SDK's own
-  message about it is easy to miss. This is the one thing the window will fix for you: **Turn
-  Read/Write on** flips `isReadable` on the affected *model importers* and reimports them. It
-  edits import settings only — never the mesh, never the scene. Meshes that are not from a model
-  file are counted and reported rather than touched.
-- **Disabled objects and components still count.** Everything in the table includes them, exactly
-  as VRChat does. Hiding a particle system in the Hierarchy does not hide it from the ranking.
-- **No avatar descriptor** — the numbers are still correct, but the object cannot be uploaded.
-- **The Quest tab strips six statistics** (lights, cloth, cloth vertices, physics colliders,
-  physics rigidbodies, audio sources) because mobile removes those components outright. They are
-  shown greyed as *not counted here* rather than hidden, so you can see why the two ranks differ.
-
-### What it estimates, and what it does not measure
-
-Honesty is built into the display rather than left to the README:
-
-- Values marked **~** are estimated, not the SDK's own number: texture memory, PhysBone
-  transforms, PhysBone collision checks, constraint depth, and bounds size. They are close enough
-  to plan against and are called out in the window whenever any are in play.
-- **Raycasts are not measured at all.** The stat is shown as *not measured* and is deliberately
-  not allowed to contribute a rank, so the window can never invent a rank the avatar has not
-  earned — instead it warns that the real rank could be one step worse than shown.
-
-Treat the result as a very good guide, not as a substitute for the SDK build panel.
-
----
-
-## Adding a language
-
-Languages live one file per language in `Editor/Localization/Languages/`. To add one, copy
-`en.json`, rename it to the language code, translate the `v` values, and press
-**Reload languages** in the Hub — no recompile, no code change.
-
-```json
-{
-  "code": "nl",
-  "name": "Dutch",
-  "nativeName": "Nederlands",
-  "entries": [
-    { "k": "common.language", "v": "Taal" }
-  ]
-}
-```
-
-You only need the keys you actually translated. Anything missing falls back to English, and
-anything missing from English falls back to the raw key, so a partial translation can never
-break the UI.
-
-Shipping now: English, Русский, Español, Polski, Deutsch, Français, Italiano,
-Português (Brasil), Українська, 日本語, 한국어, 简体中文 — 190 keys each.
-
-The language is picked from Unity's system language on first run and remembered in
-`EditorPrefs` after that.
-
----
-
-## Adding an addon
-
-Every window in the Hub is discovered by reflection. Implement `INekoAddon`, tag it, done —
-it shows up in the Hub grid under its category with no registry to edit:
-
-```csharp
-[NekoAddon(Order = 20)]
-internal class MyToolAddon : INekoAddon
-{
-    public string Id           { get { return "mytool"; } }
-    public string TitleKey     { get { return "mytool.title"; } }
-    public string DescriptionKey { get { return "mytool.desc"; } }
-    public string CategoryKey  { get { return "cat.avatar"; } }
-    public string Glyph        { get { return "✦"; } }
-    public bool   IsAvailable  { get { return true; } }
-    public void   Open()       { MyToolWindow.Open(); }
-}
-```
-
-Add `mytool.title` and `mytool.desc` to `en.json` and the card is fully localized.
-
----
-
-## Layout
+*Window → Package Manager → **+** → **Add package from git URL…*** and paste:
 
 ```
-package.json                     VPM / UPM manifest
-Editor/
-  NekoSune.Avatars.Editor.asmdef    Editor-only assembly, no external references
-  Core/
-    NekoPaths.cs                 Finds the package root under Packages/ or Assets/
-    NekoAddon.cs                 [NekoAddon] attribute + reflection registry
-    NekoHubWindow.cs             The NekoSune menu-bar hub
-    NekoStyles.cs                Shared look and feel, runtime-generated textures
-  Localization/
-    NekoLoc.cs                   Loader, fallback chain, language switching
-    Languages/*.json             One file per language
-  LipSync/
-    NekoFFT.cs                   Allocation-free radix-2 FFT
-    NekoAudioReader.cs           Reads samples from compressed clips safely
-    NekoLipSyncAnalyzer.cs       Formants, consonants, music suppression, envelopes
-    NekoVisemes.cs               The 15 VRC visemes and their openness values
-    NekoAvatarBinder.cs          Descriptor → name matching → jaw → single shape
-    NekoAnimClipBuilder.cs       Curve building, key reduction, saving the .anim
-    NekoAudioPreview.cs          Editor audio preview
-    NekoLipSyncSettings.cs       Settings, presets, preset assets
-    NekoLipSyncWindow.cs         The Lip Sync Studio UI
-  RankAdvisor/
-    NekoPerfTable.cs             The official PC / Quest limits and the ranking rules
-    NekoAvatarStats.cs           Walks the avatar and counts every statistic
-    NekoRankAdvisor.cs           Worst-wins verdict, blocker list, the Read/Write fix
-    NekoRankWindow.cs            The Rank Advisor UI
+https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#avatar
 ```
+
+The `#avatar` on the end is what picks the branch — without it, UPM lands on `main`, finds no
+`package.json`, and errors out. For the world branch use `#world` once it has real content.
+
+To pin to a specific commit instead of following the branch, put the commit SHA after the `#`:
+
+```
+https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#f490b0e
+```
+
+Unity records the URL in your project's `Packages/manifest.json`, so anyone else opening the
+project gets it automatically.
+
+### 3. Clone with Git
+
+Best if you want to pull updates from the command line, or contribute back.
+
+```bash
+cd YourUnityProject/Packages
+git clone -b avatar https://github.com/NekoSuneVR/NekoSuneUdonScripts.git com.nekosune.avatars
+```
+
+To update later:
+
+```bash
+cd YourUnityProject/Packages/com.nekosune.avatars
+git pull
+```
+
+### 4. VRChat Creator Companion (VCC)
+
+**A note on how VCC actually works**, because this trips people up: VCC does not install packages
+from a plain GitHub URL. It installs from a *VPM listing* — a JSON index served over HTTP that
+lists package versions and where to download them. **This repository does not publish a VPM
+listing yet**, so there is no listing URL to paste into *Settings → Packages → Add Repository*.
+
+Until one exists, use VCC like this:
+
+1. Get the package onto disk with method **1** or **3** above, placing it in your project's
+   `Packages/` folder.
+2. Open the project through VCC as normal.
+
+VCC and the Unity Package Manager both read the `Packages/` folder directly, so the package loads
+and resolves its dependencies (`com.vrchat.avatars`) exactly as if VCC had installed it. The only
+thing you give up is VCC's update button — you update with `git pull` or by re-downloading.
+
+If a VPM listing is published later, this section will be replaced with the one-line
+*Add Repository* URL.
 
 ---
 
-## Notes and limits
+## After installing
 
-- Reading a compressed clip temporarily flips its importer to `DecompressOnLoad` and reimports
-  it. The original import settings are always restored, including if the bake throws.
-- Baking is synchronous with a cancellable progress bar. A three-minute song at quality 6 takes
-  a few seconds.
-- The analyzer is a signal-processing estimator, not a phoneme recognizer. It reads clean vocals
-  extremely well, dense mixes reasonably well, and screamed or heavily distorted vocals poorly.
-  For a dense mix, leave **Clean vocal** off and raise **Clarity**.
-- Key reduction is lossy within the tolerance you set. Set the tolerance to 0 to keep every key.
-- Rank Advisor reads the scene; it never edits the avatar. The single exception is the opt-in
-  Read/Write fix, which changes model *import settings* and triggers a reimport.
-- The limits in `NekoPerfTable.cs` are transcribed from VRChat's published avatar performance
-  ranking tables. If VRChat changes them, that one file is the only thing that needs updating.
+Everything is reachable from the **NekoSune** menu in the menu bar:
+
+- **NekoSune → Hub** — one window listing every installed tool as a card, grouped by category.
+  If you install both the avatar and world packages, they both feed cards into this same Hub.
+- **NekoSune → Avatar → Lip Sync Studio**
+- **NekoSune → Avatar → Rank Advisor**
+
+There are also right-click shortcuts: right-click an AudioClip in the Project window for
+**NekoSune → Lip Sync from this audio**, or an avatar in the Hierarchy for
+**NekoSune → Rank Advisor**.
+
+The UI language is picked from your Unity system language on first run and remembered after that;
+you can change it from the dropdown in any window.
+
+---
+
+## Uninstalling
+
+- **Installed by ZIP or clone** — delete the folder from `Packages/` or `Assets/`.
+- **Installed by git URL** — *Window → Package Manager*, select **NekoSune Avatars**, **Remove**.
+
+Nothing is written outside the package folder except a handful of `EditorPrefs` keys prefixed
+`NekoSune.` (your chosen language, last used settings). Those are harmless to leave behind.
+
+---
+
+## Troubleshooting
+
+**"Cannot perform upm operation: Unable to add package"** — you almost certainly pointed UPM at
+`main`, or forgot the `#avatar` suffix. `main` deliberately contains no `package.json`.
+
+**"No 'git' executable was found"** — the git-URL method needs Git installed and on your `PATH`.
+Install Git, restart Unity, try again. Or just use the ZIP method, which needs nothing.
+
+**The NekoSune menu does not appear** — check the Console for compile errors. A compile error
+anywhere in the project stops *all* editor menus from registering, including ones from unrelated
+packages. Fix the error and the menu comes back.
+
+**Rank Advisor numbers differ slightly from the SDK build panel** — expected for a few statistics.
+Texture memory, PhysBone transforms, PhysBone collision checks, constraint depth and bounds size
+are estimates and are marked with a `~` in the window. Raycasts are not measured at all and are
+shown as *not measured*; they are deliberately barred from affecting the rank so the tool can
+never report a better rank than your avatar has actually earned. Treat it as a very good guide,
+not as a replacement for the SDK panel.
+
+---
+
+## Contributing
+
+Pull requests go to the branch the code lives on — `avatar` for avatar tooling, `world` for world
+tooling. Please do not open PRs against `main`; it is documentation only.
+
+**Translations are the easiest way to help.** Languages are one JSON file per language in
+`Editor/Localization/Languages/`. Copy `en.json`, rename it to the language code, translate the
+`v` values, and press **Reload languages** in the Hub — no recompile, no code change. Partial
+translations are fine: anything missing falls back to English, and anything missing from English
+falls back to the raw key, so an incomplete file can never break the UI.
+
+**Adding a tool** requires no registry edit. Implement `INekoAddon`, tag the class with
+`[NekoAddon]`, and it is discovered by reflection and appears in the Hub automatically. The
+avatar branch README has the full example.
+
+---
 
 ## License
 
-See `LICENSE` if present; otherwise all rights reserved by NekoSune.
+See `LICENSE` on the branch you installed if present; otherwise all rights reserved by NekoSune.
