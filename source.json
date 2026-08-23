@@ -7,7 +7,7 @@
     "email": "contact@nekosunevr.co.uk",
     "url": "https://github.com/NekoSuneVR"
   },
-  "description": "VCC/VPM listing for NekoSune Avatars with Avatar Doctor, Quest Assistant, mesh/VRAM/PhysBone/VRCFT diagnostics and Resonite/ChilloutVR conversion, plus NekoSune Worlds with World Doctor and Udon networking diagnostics.",
+  "description": "VCC/VPM listing for NekoSune Avatars with diagnostics, Compressor, Quest/Resonite tools and ChilloutVR CCK 3/4 avatar + prop conversion, plus NekoSune Worlds with World Doctor, Udon diagnostics and VRChat-to-ChilloutVR CCK 3/4 world conversion.",
   "infoLink": {
     "url": "https://github.com/NekoSuneVR/NekoSuneUdonScripts",
     "text": "View on GitHub"
