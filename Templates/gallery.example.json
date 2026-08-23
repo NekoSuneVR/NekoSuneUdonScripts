@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "title": "World Screenshot",
+      "subtitle": "Main Hall",
+      "description": "A screenshot or poster shown in the world gallery.",
+      "imageUrl": "https://example.com/gallery/main-hall.png",
+      "url": "https://example.com/gallery",
+      "value": "main-hall"
+    },
+    {
+      "title": "Event Poster",
+      "subtitle": "Community Night",
+      "description": "Example event artwork loaded into an image slot.",
+      "imageUrl": "https://example.com/gallery/event.png",
+      "url": "",
+      "value": "event"
+    }
+  ]
+}
