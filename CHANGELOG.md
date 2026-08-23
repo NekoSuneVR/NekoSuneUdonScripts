@@ -4,6 +4,97 @@ All notable changes to this package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] — 2026-08-23
+
+Major avatar diagnostics, Quest preparation, face-tracking, and cross-platform conversion update.
+
+### Added
+
+- **Avatar Doctor / Preflight Doctor** — `NekoSune → Avatar → Avatar Doctor`.
+  - Missing descriptor, Animator/rig/viewpoint and upload-readiness checks.
+  - Expression Parameters duplicate-name, synced-bit budget, total-count and menu-reference checks.
+  - Recursive submenu validation and the eight-controls-per-menu rule.
+  - Expression ↔ Animator parameter type mismatches and mixed Write Defaults warnings.
+  - Reuses Rank Advisor for PC/Quest performance, Mesh Read/Write and blocker information.
+  - Large texture/VRAM and Quest mobile-shader checks.
+  - Optional PC ↔ Quest parameter-order/type comparison.
+  - Copyable plain-text preflight report.
+
+- **PC → Quest Avatar Assistant** — `NekoSune → Avatar → PC to Quest Assistant`.
+  - Generates a mobile conversion plan from the existing Rank Advisor mobile assessment.
+  - Creates a separate `<avatar> [Quest]` hierarchy; the PC source hierarchy is not edited.
+  - Duplicates unsupported materials and converts the duplicates to an available VRChat Mobile avatar shader.
+  - Preserves common main texture, colour and emission data when the target shader supports them.
+  - Applies Android-only texture maximum-size overrides at 512 / 1024 / 2048.
+  - Optional removal of mobile-disabled/irrelevant components from the generated copy.
+  - PC ↔ Quest Expression Parameter order/type check.
+  - Deliberately reports topology/retopology blockers instead of using destructive blind decimation.
+
+- **PhysBone Doctor** — `NekoSune → Avatar → PhysBone Doctor`.
+  - Per-chain affected-transform and collider counts.
+  - Estimated collision-check cost per chain.
+  - Mobile Good/Poor budget guidance.
+  - Detects unused PhysBone colliders.
+  - Detects several PhysBones using the same root as review/merge candidates.
+
+- **VRAM / Texture Inspector** — `NekoSune → Avatar → VRAM and Texture Inspector`.
+  - Sorts unique avatar textures by estimated loaded memory.
+  - Shows dimensions, importer compression, maximum size, mipmaps and unique material use count.
+  - Estimates the memory impact of 2048/1024 limits.
+  - Per-texture and bulk Android-only maximum-size overrides.
+
+- **Face Tracking Doctor** — `NekoSune → Avatar → Face Tracking Doctor`.
+  - Scans blendshapes for ARKit / Unified Expressions-style eye, brow, cheek/nose, mouth/jaw and tongue coverage.
+  - Reports an ARKit-style coverage count.
+  - Detects core VRCFaceTracking v2 parameters.
+  - Can add missing core VRCFT v2 entries to the assigned Expression Parameters asset as local, unsynced Float parameters.
+  - Does not fabricate missing blendshapes or silently generate face-animation mappings.
+
+- **Expression + Animator Doctor** — `NekoSune → Avatar → Expression and Animator Doctor`.
+  - Expression Parameter budget and duplicate-name checks.
+  - Recursive menu, submenu and puppet parameter validation.
+  - Animator/Expression type mismatch checks.
+  - Missing transition-parameter checks.
+  - Mixed Write Defaults detection.
+  - Unconditional Any State and potential unreachable-state review hints.
+  - Detects Parameter Driver states that write the same parameter multiple times.
+  - Reports apparently unused parameters while accounting for OSC/contact/build-time false positives.
+
+- **VRChat → Resonite exporter bridge** — `NekoSune → Avatar → Export to Resonite`.
+  - Detects the experimental Modular Avatar - Resonite / NDMF Resonite backend at runtime.
+  - Drives that backend's real avatar build path and saves its generated `.resonitepackage` rather than creating a competing file format.
+  - Uses the upstream converter for the avatar hierarchy/common data, supported mesh/material/texture conversion, viewpoint/visemes and supported PhysBone-to-Resonite dynamics.
+  - Falls back to opening the NDMF Console if the experimental upstream private build API changes.
+  - Clearly documents that Animator/toggle/animation conversion is limited by the current upstream Resonite exporter.
+
+- **VRChat → ChilloutVR converter** — `NekoSune → Avatar → Convert to ChilloutVR`.
+  - Runtime-gated on the ChilloutVR CCK; NekoSune keeps no hard CCK assembly reference.
+  - Creates a separate `<avatar> [ChilloutVR]` copy with a real CCK `CVRAvatar` component.
+  - Copies viewpoint/voice position, face/body mesh, viseme names and detected blink shape.
+  - Duplicates the VRChat FX Animator Controller and uses it as the CVR Advanced Avatar Settings base controller.
+  - Converts VRChat Expression Parameters to CCK Advanced Avatar Settings.
+  - Uses VRChat Expressions Menu names as CVR friendly setting labels.
+  - Bool → GameObject Toggle, Float → Slider, and Int → Dropdown when multiple transition values can be discovered (with simple toggle fallback).
+  - Can invoke the installed CCK's AAS Animator generation where the editor API is available.
+  - Optional removal of VRChat-only components from the generated CVR copy.
+  - Optional PhysBone → Dynamic Bone root/settings bridge when Dynamic Bone v1.x is installed.
+  - Warns before stripping PhysBones when no replacement Dynamic Bone authoring component is installed.
+
+- **Shared diagnostic utilities** for SDK-reflection access, expression parameter accounting, Animator discovery, texture/material collection, Android texture overrides and PhysBone hierarchy estimates.
+- **Addon fallback labels** so the new cards display useful English text even before all twelve localization JSON files receive translations.
+
+### Conversion limitations
+
+- Modular Avatar's Resonite platform is experimental; its current upstream conversion does not fully translate VRChat Animator/menu toggle behaviour. NekoSune does not claim otherwise.
+- ChilloutVR conversion targets normal parameter-driven FX/AAS workflows. VRChat-only StateMachineBehaviours, specialised Parameter Drivers, unusual gesture/contact systems and platform-specific shader behaviour can require manual CVR equivalents.
+- PhysBone → Dynamic Bone conversion copies a conservative subset of root/settings data; PhysBone collider geometry is not automatically recreated.
+- All converter/optimizer outputs should be reviewed in the target SDK before publishing.
+
+### Changed
+
+- The NekoSune Hub now supports built-in English fallback labels for newly introduced addons while keeping existing JSON localization overrides.
+- README reorganized around diagnostics, Quest workflow, cross-platform conversion and non-destructive behaviour.
+
 ## [0.2.0] — 2026-08-23
 
 Avatar optimization update focused on safe mesh compression and Quest/mobile readiness.
@@ -103,5 +194,6 @@ First release.
   `GameObject → NekoSune → Lip Sync Studio` and `GameObject → NekoSune → Rank Advisor` in the
   hierarchy.
 
+[0.3.0]: #
 [0.2.0]: #
 [0.1.0]: #
