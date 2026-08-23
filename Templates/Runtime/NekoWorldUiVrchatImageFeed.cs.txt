@@ -1,0 +1,52 @@
+using UdonSharp;
+using UnityEngine;
+using UnityEngine.UI;
+using VRC.SDK3.Image;
+using VRC.SDKBase;
+using VRC.Udon.Common.Interfaces;
+
+public class NekoWorldUiVrchatImageFeed : UdonSharpBehaviour
+{
+    public VRCUrl[] imageUrls;
+    public RawImage[] slots;
+    private VRCImageDownloader _downloader;
+
+    void Start()
+    {
+        _downloader = new VRCImageDownloader();
+    }
+
+    public void LoadImages()
+    {
+        if (_downloader == null) _downloader = new VRCImageDownloader();
+        int count = imageUrls.Length < slots.Length ? imageUrls.Length : slots.Length;
+        for (int i = 0; i < count; i++)
+        {
+            if (VRCUrl.IsNullOrEmpty(imageUrls[i])) continue;
+            _downloader.DownloadImage(imageUrls[i], null, (IUdonEventReceiver)this, new TextureInfo());
+        }
+    }
+
+    public override void OnImageLoadSuccess(IVRCImageDownload result)
+    {
+        string loaded = result.Url.Get();
+        int count = imageUrls.Length < slots.Length ? imageUrls.Length : slots.Length;
+        for (int i = 0; i < count; i++)
+        {
+            if (imageUrls[i].Get() != loaded) continue;
+            slots[i].texture = result.Result;
+            slots[i].gameObject.SetActive(true);
+            return;
+        }
+    }
+
+    public override void OnImageLoadError(IVRCImageDownload result)
+    {
+        Debug.LogError("[NekoSune World UI] Image download failed: " + result.Error + " - " + result.ErrorMessage);
+    }
+
+    void OnDestroy()
+    {
+        if (_downloader != null) _downloader.Dispose();
+    }
+}
