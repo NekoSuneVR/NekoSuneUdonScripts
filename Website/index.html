@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ listingInfo.Name }}</title>
+  <meta name="description" content="{{ listingInfo.Description }}">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">VRChat Creator Companion Repository</p>
+      <h1>{{ listingInfo.Name }}</h1>
+      <p>{{ listingInfo.Description }}</p>
+      <div class="repo-box">
+        <input id="repo-url" type="text" value="{{ listingInfo.Url }}" readonly aria-label="VCC repository URL">
+        <button id="copy-repo" type="button">Copy URL</button>
+        <button id="add-vcc" type="button">Add to VCC</button>
+      </div>
+      {{ if listingInfo.InfoLink.Url }}
+      <p><a href="{{ listingInfo.InfoLink.Url }}">{{ listingInfo.InfoLink.Text }}</a></p>
+      {{ end }}
+    </header>
+
+    <section>
+      <h2>Packages</h2>
+      <div class="packages">
+        {{ for package in packages }}
+        <article class="package-card">
+          <div>
+            <h3>{{ package.DisplayName }}</h3>
+            <code>{{ package.Name }}</code>
+          </div>
+          <p>{{ package.Description }}</p>
+          <dl>
+            <div><dt>Version</dt><dd>{{ package.Version }}</dd></div>
+            <div><dt>Type</dt><dd>{{ package.Type }}</dd></div>
+          </dl>
+          <div class="actions">
+            <button class="add-package-repo" type="button">Add repository to VCC</button>
+            <a href="{{ package.ZipUrl }}">Download release ZIP</a>
+          </div>
+        </article>
+        {{ end }}
+      </div>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
