@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "title": "Player One",
+      "subtitle": "1st place",
+      "description": "12,500 points",
+      "imageUrl": "",
+      "url": "",
+      "value": "12500"
+    },
+    {
+      "title": "Player Two",
+      "subtitle": "2nd place",
+      "description": "10,900 points",
+      "imageUrl": "",
+      "url": "",
+      "value": "10900"
+    }
+  ]
+}
