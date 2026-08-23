@@ -36,19 +36,19 @@ jobs:
 
     steps:
       - name: Checkout listing branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: main
 
       - name: Checkout VRChat package-list builder
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: vrchat-community/package-list-action
           path: ${{ env.pathToCi }}
           clean: false
 
       - name: Restore builder cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ${{ env.pathToCi }}/.nuke/temp
@@ -60,11 +60,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # GitHub Pages must be enabled once under Settings -> Pages -> Source: GitHub Actions.
+      # configure-pages cannot self-enable Pages with the workflow's built-in GITHUB_TOKEN.
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ${{ env.listPublishDirectory }}
 
