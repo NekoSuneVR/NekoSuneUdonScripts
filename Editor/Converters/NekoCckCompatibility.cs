@@ -26,8 +26,6 @@ namespace NekoSune.Avatars.Editor
 #if CVR_CCK_4_OR_NEWER
                 return NekoCckGeneration.Cck4Stable;
 #elif CVR_CCK_EXISTS
-                // CCK 4 also defines CVR_CCK_EXISTS, therefore this branch is only reached when
-                // the CCK 4 specific symbol is absent.
                 return NekoCckGeneration.Cck3Legacy;
 #else
                 if (AssetDatabase.IsValidFolder("Assets/CVR.CCK")) return NekoCckGeneration.Cck4Stable;
@@ -75,9 +73,6 @@ namespace NekoSune.Avatars.Editor
         {
             Type t = NekoAvatarDiagnosticsUtil.FindType(names);
             if (t != null) return t;
-
-            // CCK 4 moved its package from ABI.CCK to CVR.CCK. Keep namespace aliases so this
-            // remains useful if a stable release also moves public component namespaces.
             for (int i = 0; i < names.Length; i++)
             {
                 if (string.IsNullOrEmpty(names[i])) continue;
@@ -99,6 +94,8 @@ namespace NekoSune.Avatars.Editor
         public static Type PickupType { get { return FindType("ABI.CCK.Components.CVRPickupObject", "CVR.CCK.Components.CVRPickupObject"); } }
         public static Type ObjectSyncType { get { return FindType("ABI.CCK.Components.CVRObjectSync", "CVR.CCK.Components.CVRObjectSync"); } }
         public static Type InteractableType { get { return FindType("ABI.CCK.Components.CVRInteractable", "CVR.CCK.Components.CVRInteractable"); } }
+        public static Type InteractableActionType { get { return FindType("ABI.CCK.Components.CVRInteractableAction", "CVR.CCK.Components.CVRInteractableAction"); } }
+        public static Type InteractableOperationType { get { return FindType("ABI.CCK.Components.CVRInteractableActionOperation", "CVR.CCK.Components.CVRInteractableActionOperation"); } }
 
         public static Component EnsureComponent(GameObject root, Type type)
         {
