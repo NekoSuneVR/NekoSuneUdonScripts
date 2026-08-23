@@ -15,7 +15,8 @@ namespace NekoSune.Avatars.Editor
 
     /// <summary>
     /// Runtime/reflection compatibility layer for ChilloutVR CCK 3 legacy and CCK 4 stable.
-    /// The avatar package never takes a hard assembly dependency on either CCK generation.
+    /// This avatar package only exposes avatar + prop/spawnable APIs.
+    /// World-specific CCK APIs live exclusively in com.nekosune.worlds.
     /// </summary>
     internal static class NekoCckCompatibility
     {
@@ -30,7 +31,7 @@ namespace NekoSune.Avatars.Editor
 #else
                 if (AssetDatabase.IsValidFolder("Assets/CVR.CCK")) return NekoCckGeneration.Cck4Stable;
                 if (AssetDatabase.IsValidFolder("Assets/ABI.CCK")) return NekoCckGeneration.Cck3Legacy;
-                if (FindType("ABI.CCK.Components.CVRAvatar", "CVR.CCK.Components.CVRAvatar") != null)
+                if (AvatarType != null || SpawnableType != null)
                     return NekoCckGeneration.CompatibleUnknown;
                 return NekoCckGeneration.Missing;
 #endif
@@ -57,8 +58,7 @@ namespace NekoSune.Avatars.Editor
         {
             get
             {
-                Type t = FindType("ABI.CCK.Components.CVRAvatar", "CVR.CCK.Components.CVRAvatar",
-                                  "ABI.CCK.Components.CVRWorld", "CVR.CCK.Components.CVRWorld");
+                Type t = AvatarType ?? SpawnableType;
                 if (t == null || t.Assembly == null) return "";
                 try
                 {
@@ -88,10 +88,12 @@ namespace NekoSune.Avatars.Editor
             return null;
         }
 
+        // Avatar-only CCK surface.
         public static Type AssetInfoType { get { return FindType("ABI.CCK.Components.CVRAssetInfo", "CVR.CCK.Components.CVRAssetInfo"); } }
         public static Type AvatarType { get { return FindType("ABI.CCK.Components.CVRAvatar", "CVR.CCK.Components.CVRAvatar"); } }
         public static Type AdvancedAvatarSettingsType { get { return FindType("ABI.CCK.Scripts.CVRAdvancedAvatarSettings", "CVR.CCK.Scripts.CVRAdvancedAvatarSettings"); } }
-        public static Type WorldType { get { return FindType("ABI.CCK.Components.CVRWorld", "CVR.CCK.Components.CVRWorld"); } }
+
+        // Prop/spawnable CCK surface. Props remain part of the Avatar package as requested.
         public static Type SpawnableType { get { return FindType("ABI.CCK.Components.CVRSpawnable", "CVR.CCK.Components.CVRSpawnable"); } }
         public static Type PickupType { get { return FindType("ABI.CCK.Components.CVRPickupObject", "CVR.CCK.Components.CVRPickupObject"); } }
         public static Type ObjectSyncType { get { return FindType("ABI.CCK.Components.CVRObjectSync", "CVR.CCK.Components.CVRObjectSync"); } }
@@ -150,10 +152,8 @@ namespace NekoSune.Avatars.Editor
                 }
             }
 
-            // CCK uses this flag to indicate that the serialized AAS container is ready.
             NekoAvatarDiagnosticsUtil.SetMember(settings, true, "initialized", "Initialized");
             NekoAvatarDiagnosticsUtil.SetMember(cvrAvatar, true, "avatarUsesAdvancedSettings", "AvatarUsesAdvancedSettings");
-            EditorUtility.SetDirty(cvrAvatar);
             return settings;
         }
 
@@ -174,9 +174,9 @@ namespace NekoSune.Avatars.Editor
             string version = AssemblyVersion;
             if (!string.IsNullOrEmpty(version)) EditorGUILayout.LabelField("Assembly version", version);
             if (Generation == NekoCckGeneration.Cck3Legacy)
-                EditorGUILayout.HelpBox("CCK 3 is supported as a legacy target. ChilloutVR recommends CCK 4 for active development.", MessageType.Info);
+                EditorGUILayout.HelpBox("CCK 3 is supported as a legacy avatar/prop target. ChilloutVR recommends CCK 4 for active development.", MessageType.Info);
             else if (Generation == NekoCckGeneration.Cck4Stable)
-                EditorGUILayout.HelpBox("CCK 4 stable detected. NekoSune uses the current CCK component model and does not rely on the removed legacy upload panel.", MessageType.Info);
+                EditorGUILayout.HelpBox("CCK 4 stable detected for avatar/prop conversion. World conversion is provided by the separate NekoSune Worlds package.", MessageType.Info);
             EditorGUILayout.EndVertical();
         }
     }
