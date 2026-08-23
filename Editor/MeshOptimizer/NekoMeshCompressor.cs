@@ -8,18 +8,6 @@ using UnityEngine.Rendering;
 
 namespace NekoSune.Avatars.Editor
 {
-    [NekoAddon(Order = 30)]
-    internal sealed class NekoMeshCompressorAddon : INekoAddon
-    {
-        public string Id { get { return "mesh-compressor"; } }
-        public string TitleKey { get { return "mesh.title"; } }
-        public string DescriptionKey { get { return "mesh.desc"; } }
-        public string CategoryKey { get { return "cat.avatar"; } }
-        public string Glyph { get { return "M"; } }
-        public bool IsAvailable { get { return true; } }
-        public void Open() { NekoMeshCompressorWindow.Open(); }
-    }
-
     internal sealed class NekoMeshCompressorWindow : EditorWindow
     {
         enum CompressionPreset
@@ -65,24 +53,32 @@ namespace NekoSune.Avatars.Editor
         int _duplicateMaterialSlots;
         int _degenerateTriangles;
 
-        [MenuItem(NekoPaths.MenuRoot + "Avatar/Mesh Compressor", false, 25)]
+        [MenuItem(NekoPaths.MenuRoot + "Avatar/Compressor/Meshes", false, 26)]
         public static void Open()
         {
-            var window = GetWindow<NekoMeshCompressorWindow>(false, "Mesh Compressor", true);
+            var window = GetWindow<NekoMeshCompressorWindow>(false, "Mesh Compression", true);
             window.minSize = new Vector2(720f, 520f);
             window.Show();
         }
 
+        public static void OpenFor(GameObject avatar)
+        {
+            Open();
+            var window = GetWindow<NekoMeshCompressorWindow>();
+            window._avatarRoot = avatar;
+            window.Scan();
+        }
+
         void OnEnable()
         {
-            TryUseSelection();
+            if (_avatarRoot == null) TryUseSelection();
             Scan();
         }
 
         void OnGUI()
         {
             NekoStyles.Ensure();
-            NekoStyles.HeaderBar("Mesh Compressor", "NekoSune", "Non-destructive mesh cleanup, import compression, and Quest readiness");
+            NekoStyles.HeaderBar("Mesh Compression", "Compressor", "Non-destructive mesh cleanup, material-slot merging, import compression, and Quest readiness");
 
             GUILayout.Space(6f);
             EditorGUI.BeginChangeCheck();
@@ -139,7 +135,7 @@ namespace NekoSune.Avatars.Editor
 
             EditorGUILayout.HelpBox(text, MessageType.None);
             EditorGUILayout.HelpBox(
-                "This tool never performs blind topology decimation. Blendshape/facial meshes are preserved. Use the report to identify meshes that need real retopology or a dedicated quality-preserving decimator.",
+                "This tool never performs blind topology decimation. Blendshape/facial meshes are preserved. Use the main Compressor + Rank Advisor to identify meshes that need real retopology, renderer merging, or a dedicated quality-preserving decimator.",
                 MessageType.Info);
         }
 
@@ -167,7 +163,7 @@ namespace NekoSune.Avatars.Editor
                 if (_skinnedMeshes > 2)
                     EditorGUILayout.HelpBox("Quest/mobile: more than 2 skinned meshes exceeds the current Poor-rank maximum. Merge compatible clothing/accessory meshes where practical.", MessageType.Warning);
                 if (_totalMaterialSlots > 4)
-                    EditorGUILayout.HelpBox("Quest/mobile: more than 4 material slots exceeds the current Poor-rank maximum. The Safe Cleanup action can merge submeshes that already use the exact same material.", MessageType.Warning);
+                    EditorGUILayout.HelpBox("Quest/mobile: more than 4 material slots exceeds the current Poor-rank maximum. Safe optimized copies can merge submeshes that already use the exact same material.", MessageType.Warning);
             }
         }
 
@@ -448,7 +444,7 @@ namespace NekoSune.Avatars.Editor
             AssetDatabase.Refresh();
             Scan();
 
-            EditorUtility.DisplayDialog("NekoSune Mesh Compressor",
+            EditorUtility.DisplayDialog("NekoSune Compressor — Meshes",
                 "Created " + changed + " optimized mesh copy/copies.\n\n" +
                 "Removed degenerate triangles: " + removedTriangles + "\n" +
                 "Removed duplicate/unused material slots: " + removedSlots + "\n\n" +
@@ -555,7 +551,7 @@ namespace NekoSune.Avatars.Editor
 
             if (paths.Count == 0)
             {
-                EditorUtility.DisplayDialog("NekoSune Mesh Compressor", "No imported model files were found under this avatar. Generated .asset meshes can still use Safe Cleanup.", "OK");
+                EditorUtility.DisplayDialog("NekoSune Compressor — Meshes", "No imported model files were found under this avatar. Generated .asset meshes can still use Safe Cleanup.", "OK");
                 return;
             }
 
@@ -577,7 +573,7 @@ namespace NekoSune.Avatars.Editor
                 foreach (KeyValuePair<string, bool> item in paths)
                 {
                     index++;
-                    EditorUtility.DisplayProgressBar("NekoSune Mesh Compressor", "Reimporting " + Path.GetFileName(item.Key), index / (float)paths.Count);
+                    EditorUtility.DisplayProgressBar("NekoSune Compressor", "Reimporting " + Path.GetFileName(item.Key), index / (float)paths.Count);
                     ModelImporter importer = AssetImporter.GetAtPath(item.Key) as ModelImporter;
                     if (importer == null) continue;
 
@@ -601,7 +597,7 @@ namespace NekoSune.Avatars.Editor
             }
 
             Scan();
-            EditorUtility.DisplayDialog("NekoSune Mesh Compressor",
+            EditorUtility.DisplayDialog("NekoSune Compressor — Meshes",
                 "Updated " + changed + " model importer(s).\n" +
                 (vertexOptimizationProtected > 0
                     ? vertexOptimizationProtected + " model(s) contained blendshapes, so vertex-order optimization was left unchanged for safety."
@@ -645,7 +641,7 @@ namespace NekoSune.Avatars.Editor
         string BuildReport()
         {
             var sb = new StringBuilder();
-            sb.AppendLine("NekoSune Avatar Mesh Compressor report");
+            sb.AppendLine("NekoSune Compressor / Mesh report");
             sb.AppendLine("Avatar: " + (_avatarRoot != null ? _avatarRoot.name : "None"));
             sb.AppendLine("Preset: " + _preset);
             sb.AppendLine("Meshes: " + _meshes.Count + " (" + _skinnedMeshes + " skinned / " + _basicMeshes + " basic)");
@@ -672,7 +668,7 @@ namespace NekoSune.Avatars.Editor
             }
 
             sb.AppendLine();
-            sb.AppendLine("Note: Unity mesh compression reduces stored mesh precision/size; it does not reduce triangle count. Safe Cleanup preserves vertex topology and blendshapes.");
+            sb.AppendLine("Note: Unity mesh compression reduces stored mesh precision/size; it does not reduce triangle count. Safe cleanup preserves vertex topology and blendshapes.");
             return sb.ToString();
         }
     }
