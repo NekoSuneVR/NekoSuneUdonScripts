@@ -1,215 +1,171 @@
 # NekoSune VRChat Tools
 
-Unity Editor tooling for VRChat creators, split into two installable packages that share one
-**NekoSune** menu in the Unity menu bar (right next to *Tools*).
+Unity Editor tooling for VRChat creators, split into separate avatar and world packages while sharing one **NekoSune** menu inside Unity.
 
-**This `main` branch holds no code.** It is the landing page. All the actual tooling lives on the
-two branches below, and which one you install depends on what you are making. You can install
-both into the same project — they are designed to sit side by side and merge into a single menu.
+`main` is the **VCC/VPM package-listing branch** and documentation landing page. The actual package source lives on the package branches.
 
----
+## Packages
 
-## The two branches
-
-| Branch | Package id | For | Status |
+| Branch | Package ID | For | Status |
 | --- | --- | --- | --- |
-| [`avatar`](../../tree/avatar) | `com.nekosune.avatars` | VRChat **avatars** | Working — 2 tools |
-| [`world`](../../tree/world) | *(to be assigned)* | VRChat **worlds** and Udon | Placeholder, not started |
-| `main` | — | This README | Documentation only |
+| [`avatar`](../../tree/avatar) | `com.nekosune.avatars` | VRChat avatars | Working |
+| [`world`](../../tree/world) | To be assigned | VRChat worlds / Udon | Placeholder |
+| `main` | `com.nekosune.vrchat-tools` listing | VCC repository + docs | Listing infrastructure |
 
-### `avatar` — NekoSune Avatars
+### Avatar package
 
-The branch that is actually finished and usable today. Two tools:
+The `avatar` branch currently contains:
 
-**Lip Sync Studio.** Drop in an avatar and an audio clip, press one button, get a `.anim` that
-drives the avatar's mouth in time with the audio. It handles full songs with backing music (no
-separate vocal stem needed), plain speech, and avatars from Booth, Gumroad, VRoid, CATS exports,
-ARKit-blendshape avatars, or anything you rigged yourself. It can drive the 15 VRC visemes, a jaw
-bone, a single mouth-open blendshape, or work it out automatically.
+- **Lip Sync Studio** — creates mouth/viseme animation clips from speech or music.
+- **Rank Advisor** — analyses PC and Quest avatar performance statistics and highlights what is holding the avatar rank back.
+- Localization for multiple languages.
 
-**Rank Advisor.** Drop in an avatar and see its VRChat performance rank for PC *and* Quest side by
-side, all 29 statistics behind it, and the exact list of what has to come down before the rank
-moves. It catches the things that quietly sink an upload: Mesh Read/Write being off (an automatic
-Very Poor *and* a hard upload block), disabled objects that still count towards every statistic,
-and a missing avatar descriptor. Read-only — the single change it will make is opt-in.
+See the [`avatar` README](../../tree/avatar) for the full tool documentation.
 
-Both are localized into 12 languages (English, Русский, Español, Polski, Deutsch, Français,
-Italiano, Português (Brasil), Українська, 日本語, 한국어, 简体中文).
+## Install with VRChat Creator Companion
 
-Full documentation is in the README **on that branch**.
+VCC does **not** install a package from:
 
-### `world` — worlds and Udon
-
-Reserved for world and Udon tooling. **Nothing is built yet** — the branch currently just holds a
-copy of the avatar package as a starting point. Don't install it expecting world features. This
-row exists so the split is visible; watch the repo if you want to know when it becomes real.
-
-### Why two branches instead of one package
-
-Avatar creators and world creators need completely different dependencies. The avatar package
-depends on `com.vrchat.avatars`; world tooling will depend on `com.vrchat.worlds` and UdonSharp.
-Shipping one package would force every avatar creator to pull in the worlds SDK and vice versa.
-Splitting them keeps each install to only what you actually need, while the shared **NekoSune**
-menu means a project with both installed still gets one tidy menu instead of two.
-
----
-
-## Requirements
-
-- **Unity 2019.4 or newer.**
-- **Git** installed and on your `PATH` — only if you use the Package Manager git-URL method below.
-- **The VRChat SDK is optional for the avatar package.** Every SDK type is reached by reflection,
-  so it compiles and runs in a project with no VRChat SDK installed at all. When the SDK *is*
-  present, the avatar descriptor is read first and used directly.
-
-Everything ships inside an Editor-only assembly definition, so none of it ends up in a build and
-none of it touches your runtime code.
-
----
-
-## Install
-
-Four ways, easiest first. **You only ever install a branch, never `main`** — `main` has no
-`package.json`, so every method below will fail against it.
-
-### 1. Download a ZIP (no Git needed)
-
-1. Go to the branch you want: [`avatar`](../../tree/avatar) or [`world`](../../tree/world).
-2. Green **Code** button → **Download ZIP**.
-3. Unzip it. You get a folder like `NekoSuneUdonScripts-avatar`.
-4. Copy that folder into your Unity project. Either location works:
-   - `Packages/com.nekosune.avatars` — treated as a real package, stays out of your Assets.
-   - `Assets/NekoSune/Avatars` — plain drop-in, shows up in the Project window.
-5. Switch back to Unity and let it compile. The **NekoSune** menu appears in the menu bar.
-
-Renaming the folder is fine — nothing depends on the folder name.
-
-### 2. Unity Package Manager, from a Git URL
-
-This is the cleanest option if you have Git installed, because updating is one click later.
-
-*Window → Package Manager → **+** → **Add package from git URL…*** and paste:
-
-```
+```text
 https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#avatar
 ```
 
-The `#avatar` on the end is what picks the branch — without it, UPM lands on `main`, finds no
-`package.json`, and errors out. For the world branch use `#world` once it has real content.
+and it does not use the package branch's `package.json` as a repository URL.
 
-To pin to a specific commit instead of following the branch, put the commit SHA after the `#`:
+VCC expects a **VPM repository listing**: an HTTP-served `index.json` containing package versions and release ZIP URLs.
 
+The NekoSune listing URL is:
+
+```text
+https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
 ```
-https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#f490b0e
+
+Once GitHub Pages has deployed the listing:
+
+1. Open **VRChat Creator Companion**.
+2. Open **Settings**.
+3. Open **Packages**.
+4. Under **User Repositories / Community Repositories**, choose **Add Repository**.
+5. Paste the listing URL above.
+6. Open your avatar project and add **NekoSune Avatars**.
+
+A browser can also launch VCC directly with this URI:
+
+```text
+vcc://vpm/addRepo?url=https%3A%2F%2Fnekosunevr.github.io%2FNekoSuneUdonScripts%2Findex.json
 ```
 
-Unity records the URL in your project's `Packages/manifest.json`, so anyone else opening the
-project gets it automatically.
+### How the VCC publishing layout works
 
-### 3. Clone with Git
+This repository now follows the same package-listing model as VRChat's `template-package-listing`:
 
-Best if you want to pull updates from the command line, or contribute back.
+```text
+main
+├── .github/
+│   └── workflows/
+│       └── build-listing.yml
+├── Website/
+│   ├── app.js
+│   ├── index.html
+│   └── styles.css
+├── source.json
+└── README.md
+
+avatar
+├── .github/
+│   └── workflows/
+│       └── release-avatar.yml
+├── Editor/
+├── package.json
+├── CHANGELOG.md
+└── README.md
+```
+
+`source.json` tells the VRChat package-list action which GitHub repositories contain compatible releases. The listing builder scans GitHub Release `.zip` assets, reads the VPM `package.json` from the root of each ZIP, adds the release URL and hash, and publishes the resulting `index.json`.
+
+The `avatar` branch therefore remains the **package source**, while `main` is the **repository listing** VCC consumes.
+
+## Release format
+
+VCC-compatible releases must have the package manifest at the root of the ZIP:
+
+```text
+com.nekosune.avatars-0.1.0.zip
+├── package.json
+├── CHANGELOG.md
+└── Editor/
+    └── ...
+```
+
+A normal GitHub branch archive is not used as the VPM release artifact because GitHub wraps branch archives in an extra directory. The avatar release workflow builds the ZIP from the package root instead.
+
+## Unity Package Manager / Git install
+
+The Git branch URL is still useful for **Unity Package Manager**, just not as a VCC repository URL.
+
+In Unity use **Window → Package Manager → + → Add package from git URL…** and enter:
+
+```text
+https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#avatar
+```
+
+That directly installs the `avatar` branch through UPM.
+
+You can also clone it into your project's `Packages` folder:
 
 ```bash
 cd YourUnityProject/Packages
 git clone -b avatar https://github.com/NekoSuneVR/NekoSuneUdonScripts.git com.nekosune.avatars
 ```
 
-To update later:
+## Manual install
 
-```bash
-cd YourUnityProject/Packages/com.nekosune.avatars
-git pull
+Download the `avatar` branch or a compatible release ZIP and put the package in either:
+
+```text
+Packages/com.nekosune.avatars
 ```
 
-### 4. VRChat Creator Companion (VCC)
+or, for a plain Assets-based installation:
 
-**A note on how VCC actually works**, because this trips people up: VCC does not install packages
-from a plain GitHub URL. It installs from a *VPM listing* — a JSON index served over HTTP that
-lists package versions and where to download them. **This repository does not publish a VPM
-listing yet**, so there is no listing URL to paste into *Settings → Packages → Add Repository*.
+```text
+Assets/NekoSune/Avatars
+```
 
-Until one exists, use VCC like this:
+## Requirements
 
-1. Get the package onto disk with method **1** or **3** above, placing it in your project's
-   `Packages/` folder.
-2. Open the project through VCC as normal.
+- Unity 2019.4 or newer for the current avatar package.
+- VRChat Creator Companion for VPM installation.
+- Git only when using the UPM Git URL or clone methods.
 
-VCC and the Unity Package Manager both read the `Packages/` folder directly, so the package loads
-and resolves its dependencies (`com.vrchat.avatars`) exactly as if VCC had installed it. The only
-thing you give up is VCC's update button — you update with `git pull` or by re-downloading.
-
-If a VPM listing is published later, this section will be replaced with the one-line
-*Add Repository* URL.
-
----
+The avatar package uses `com.vrchat.avatars` as a VPM dependency.
 
 ## After installing
 
-Everything is reachable from the **NekoSune** menu in the menu bar:
+Available from the Unity menu:
 
-- **NekoSune → Hub** — one window listing every installed tool as a card, grouped by category.
-  If you install both the avatar and world packages, they both feed cards into this same Hub.
+- **NekoSune → Hub**
 - **NekoSune → Avatar → Lip Sync Studio**
 - **NekoSune → Avatar → Rank Advisor**
 
-There are also right-click shortcuts: right-click an AudioClip in the Project window for
-**NekoSune → Lip Sync from this audio**, or an avatar in the Hierarchy for
-**NekoSune → Rank Advisor**.
+## Updating a VCC release
 
-The UI language is picked from your Unity system language on first run and remembered after that;
-you can change it from the dropdown in any window.
+1. Make package changes on `avatar`.
+2. Bump `version` in `avatar/package.json` using semantic versioning.
+3. Push the `package.json` change to `avatar`, or run **Build Avatar Release** manually from GitHub Actions.
+4. The release workflow creates a root-correct VPM ZIP and GitHub Release.
+5. The package listing is rebuilt so VCC can see the new version.
 
----
-
-## Uninstalling
-
-- **Installed by ZIP or clone** — delete the folder from `Packages/` or `Assets/`.
-- **Installed by git URL** — *Window → Package Manager*, select **NekoSune Avatars**, **Remove**.
-
-Nothing is written outside the package folder except a handful of `EditorPrefs` keys prefixed
-`NekoSune.` (your chosen language, last used settings). Those are harmless to leave behind.
-
----
-
-## Troubleshooting
-
-**"Cannot perform upm operation: Unable to add package"** — you almost certainly pointed UPM at
-`main`, or forgot the `#avatar` suffix. `main` deliberately contains no `package.json`.
-
-**"No 'git' executable was found"** — the git-URL method needs Git installed and on your `PATH`.
-Install Git, restart Unity, try again. Or just use the ZIP method, which needs nothing.
-
-**The NekoSune menu does not appear** — check the Console for compile errors. A compile error
-anywhere in the project stops *all* editor menus from registering, including ones from unrelated
-packages. Fix the error and the menu comes back.
-
-**Rank Advisor numbers differ slightly from the SDK build panel** — expected for a few statistics.
-Texture memory, PhysBone transforms, PhysBone collision checks, constraint depth and bounds size
-are estimates and are marked with a `~` in the window. Raycasts are not measured at all and are
-shown as *not measured*; they are deliberately barred from affecting the rank so the tool can
-never report a better rank than your avatar has actually earned. Treat it as a very good guide,
-not as a replacement for the SDK panel.
-
----
+Do not delete old package versions after publishing them. Existing VRChat projects can depend on those exact versions.
 
 ## Contributing
 
-Pull requests go to the branch the code lives on — `avatar` for avatar tooling, `world` for world
-tooling. Please do not open PRs against `main`; it is documentation only.
+Open package-code pull requests against the branch that owns that package:
 
-**Translations are the easiest way to help.** Languages are one JSON file per language in
-`Editor/Localization/Languages/`. Copy `en.json`, rename it to the language code, translate the
-`v` values, and press **Reload languages** in the Hub — no recompile, no code change. Partial
-translations are fine: anything missing falls back to English, and anything missing from English
-falls back to the raw key, so an incomplete file can never break the UI.
-
-**Adding a tool** requires no registry edit. Implement `INekoAddon`, tag the class with
-`[NekoAddon]`, and it is discovered by reflection and appears in the Hub automatically. The
-avatar branch README has the full example.
-
----
+- avatar tooling → `avatar`
+- world/Udon tooling → `world`
+- VCC listing / landing page → `main`
 
 ## License
 
-See `LICENSE` on the branch you installed if present; otherwise all rights reserved by NekoSune.
+See the relevant package branch for licensing information; otherwise all rights reserved by NekoSune.
