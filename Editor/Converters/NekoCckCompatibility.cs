@@ -90,6 +90,7 @@ namespace NekoSune.Avatars.Editor
 
         public static Type AssetInfoType { get { return FindType("ABI.CCK.Components.CVRAssetInfo", "CVR.CCK.Components.CVRAssetInfo"); } }
         public static Type AvatarType { get { return FindType("ABI.CCK.Components.CVRAvatar", "CVR.CCK.Components.CVRAvatar"); } }
+        public static Type AdvancedAvatarSettingsType { get { return FindType("ABI.CCK.Scripts.CVRAdvancedAvatarSettings", "CVR.CCK.Scripts.CVRAdvancedAvatarSettings"); } }
         public static Type WorldType { get { return FindType("ABI.CCK.Components.CVRWorld", "CVR.CCK.Components.CVRWorld"); } }
         public static Type SpawnableType { get { return FindType("ABI.CCK.Components.CVRSpawnable", "CVR.CCK.Components.CVRSpawnable"); } }
         public static Type PickupType { get { return FindType("ABI.CCK.Components.CVRPickupObject", "CVR.CCK.Components.CVRPickupObject"); } }
@@ -101,10 +102,59 @@ namespace NekoSune.Avatars.Editor
         public static Component EnsureComponent(GameObject root, Type type)
         {
             if (root == null || type == null || !typeof(Component).IsAssignableFrom(type)) return null;
+
             Component c = root.GetComponent(type);
-            if (c != null) return c;
-            try { return Undo.AddComponent(root, type); }
-            catch { return root.AddComponent(type); }
+            if (c == null)
+            {
+                try { c = Undo.AddComponent(root, type); }
+                catch { c = root.AddComponent(type); }
+            }
+
+            if (c != null && string.Equals(type.Name, "CVRAvatar", StringComparison.Ordinal))
+                EnsureAvatarSettings(c);
+
+            return c;
+        }
+
+        /// <summary>
+        /// Newly-created CVRAvatar components can have a null avatarSettings container.
+        /// CCK's editor normally initializes this before AAS editing, but converters create
+        /// the component and use it immediately. Create the same serializable container here
+        /// so both CCK 3 legacy and CCK 4 stable can be populated safely.
+        /// </summary>
+        public static object EnsureAvatarSettings(Component cvrAvatar)
+        {
+            if (cvrAvatar == null) return null;
+
+            object settings = NekoAvatarDiagnosticsUtil.GetMember(cvrAvatar, "avatarSettings", "AvatarSettings");
+            if (settings == null)
+            {
+                Type settingsType = AdvancedAvatarSettingsType;
+                if (settingsType == null)
+                {
+                    Debug.LogWarning("[NekoSune ChilloutVR] Could not locate CVRAdvancedAvatarSettings in " + DisplayName + ".");
+                    return null;
+                }
+
+                try { settings = Activator.CreateInstance(settingsType); }
+                catch (Exception e)
+                {
+                    Debug.LogWarning("[NekoSune ChilloutVR] Could not create CVRAdvancedAvatarSettings: " + e.Message);
+                    return null;
+                }
+
+                if (!NekoAvatarDiagnosticsUtil.SetMember(cvrAvatar, settings, "avatarSettings", "AvatarSettings"))
+                {
+                    Debug.LogWarning("[NekoSune ChilloutVR] CVRAvatar exposes an AAS type but NekoSune could not assign avatarSettings.");
+                    return null;
+                }
+            }
+
+            // CCK uses this flag to indicate that the serialized AAS container is ready.
+            NekoAvatarDiagnosticsUtil.SetMember(settings, true, "initialized", "Initialized");
+            NekoAvatarDiagnosticsUtil.SetMember(cvrAvatar, true, "avatarUsesAdvancedSettings", "AvatarUsesAdvancedSettings");
+            EditorUtility.SetDirty(cvrAvatar);
+            return settings;
         }
 
         public static bool IsVrcComponent(Component c)
