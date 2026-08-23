@@ -1,5 +1,6 @@
 using NekoSune.Avatars.Editor;
 using UnityEditor;
+using UnityEngine;
 
 [NekoAddon(Order = 100)]
 public sealed class MyAvatarAddon : INekoAddon
@@ -10,5 +11,22 @@ public sealed class MyAvatarAddon : INekoAddon
     public string CategoryKey => "cat.avatar";
     public string Glyph => "+";
     public bool IsAvailable => true;
-    public void Open() => EditorApplication.ExecuteMenuItem("NekoSune/Avatar/My Addon");
+    public void Open() => MyAvatarAddonWindow.Open();
+}
+
+public sealed class MyAvatarAddonWindow : EditorWindow
+{
+    [MenuItem("NekoSune/Avatar/My Addon", false, 100)]
+    public static void Open()
+    {
+        var window = GetWindow<MyAvatarAddonWindow>(false, "My Avatar Addon", true);
+        window.minSize = new Vector2(420f, 260f);
+        window.Show();
+    }
+
+    void OnGUI()
+    {
+        GUILayout.Label("My Avatar Addon", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox("Replace this window with your feature. The Hub card and NekoSune menu entry are already wired.", MessageType.Info);
+    }
 }
