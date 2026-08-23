@@ -4,6 +4,45 @@ All notable changes to this package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] — 2026-08-23
+
+Avatar-wide compression update driven directly by Rank Advisor categories.
+
+### Added
+
+- **Compressor** — `NekoSune → Avatar → Compressor`.
+  - Uses the same PC / Quest performance measurements and blocker logic as Rank Advisor.
+  - Shows triangles, material slots, skinned/basic mesh counts, texture memory, bones, Animator count, PhysBones, PhysBone transforms/colliders/checks and particles in one optimization view.
+  - Splits automatic/import-safe work from behaviour-changing/manual work so the optimizer does not silently break avatars.
+- **Texture / VRAM compression module**.
+  - Bulk Android-only max-size overrides at 512 / 1024 / 2048.
+  - PC texture settings stay untouched.
+  - Links to the detailed VRAM / Texture Inspector for per-texture review.
+- **PhysBone cleanup module**.
+  - Detects PhysBone collider components that are not referenced by any detected PhysBone chain.
+  - Offers Undoable removal of those unreferenced colliders.
+  - Sends long/overlapping/collider-heavy chains to PhysBone Doctor rather than auto-merging their behaviour.
+- **Particle budget module**.
+  - Displays total configured `ParticleSystem.main.maxParticles` from the avatar.
+  - Can proportionally scale max-particle values to a user-selected total cap.
+  - Explicitly marked as behaviour-changing and fully Undoable.
+- **Compression plan export** for sharing the current blocker values and recommended actions.
+- Detailed Compressor documentation under `Editor/Compressor/README.md`.
+
+### Changed
+
+- The Hub card previously named **Mesh Compressor** is now **Compressor**.
+- Mesh-specific tools now live as the **Meshes** section of Compressor and can be opened with the current avatar already selected.
+- The mesh window is retitled **Mesh Compression** and remains non-destructive for topology/blendshapes.
+- Rank-sensitive categories that cannot be safely auto-compressed — bones, Animator/controller structure, constraints, contacts, renderer merging, true triangle reduction, Cloth and physics components — are clearly routed to the relevant Doctor/Assistant instead of receiving unsafe automatic edits.
+
+### Safety
+
+- Android texture compression changes platform import overrides, not PC texture settings.
+- Unreferenced PhysBone collider removal uses Unity Undo and requires confirmation.
+- Particle capping requires confirmation and uses Unity Undo.
+- Compressor still does not claim Unity mesh compression lowers triangle count.
+
 ## [0.3.0] — 2026-08-23
 
 Major avatar diagnostics, Quest preparation, face-tracking, and cross-platform conversion update.
@@ -194,6 +233,7 @@ First release.
   `GameObject → NekoSune → Lip Sync Studio` and `GameObject → NekoSune → Rank Advisor` in the
   hierarchy.
 
+[0.4.0]: #
 [0.3.0]: #
 [0.2.0]: #
 [0.1.0]: #
