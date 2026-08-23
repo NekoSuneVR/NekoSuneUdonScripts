@@ -1,17 +1,10 @@
 {
   "name": "com.nekosune.avatars",
-  "displayName": "NekoSune Avatars Bundle",
-  "version": "0.6.0",
+  "displayName": "NekoSune Avatar Hub",
+  "version": "0.7.0",
   "unity": "2019.4",
-  "description": "Compatibility bundle for the modular NekoSune avatar suite. Installs Avatar Tools, Optimizer, Doctors and Converters while keeping the original package ID for existing users.",
+  "description": "Base/template Avatar Hub for NekoSune VRChat creator addons. Provides the shared menu, About page, localization and automatic addon discovery API.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
-  "keywords": ["vrchat","avatar","bundle","nekosune"],
-  "vpmDependencies": {
-    "com.vrchat.avatars": ">=3.5.0",
-    "com.nekosune.avatar-tools": ">=1.0.0",
-    "com.nekosune.optimizer": ">=1.0.0",
-    "com.nekosune.doctors": ">=1.0.0",
-    "com.nekosune.converters": ">=1.0.0"
-  },
+  "keywords": ["vrchat","avatar","hub","template","addon","nekosune"],
   "hideInEditor": false
 }

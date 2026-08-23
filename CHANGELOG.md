@@ -1,9 +1,13 @@
 # Changelog
 
+## 0.7.0
+
+- Restored `avatar` as the lightweight Avatar Hub/template branch.
+- Added Avatar Hub and About pages.
+- Made the addon interface/attribute public so independent packages auto-register without editing the Hub.
+- Moved feature ownership to separate Avatar Tools, Optimizer, Doctors and Converters packages.
+- Added a starter addon template.
+
 ## 0.6.0
 
-- Converted `com.nekosune.avatars` into a compatibility bundle.
-- Editor implementation moved into Avatar Tools, Optimizer, Doctors and Converters packages.
-- Removes duplicate code when modular packages are installed together.
-
-Earlier 0.x releases contained the monolithic avatar implementation.
+Temporary modular compatibility-bundle release; superseded by the Hub/template architecture.

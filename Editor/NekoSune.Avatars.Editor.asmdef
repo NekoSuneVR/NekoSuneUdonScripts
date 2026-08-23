@@ -1,0 +1,14 @@
+{
+  "name": "NekoSune.Avatars.Editor",
+  "rootNamespace": "NekoSune.Avatars.Editor",
+  "references": [],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

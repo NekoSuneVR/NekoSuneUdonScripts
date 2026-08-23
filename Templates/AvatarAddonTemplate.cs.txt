@@ -1,0 +1,14 @@
+using NekoSune.Avatars.Editor;
+using UnityEditor;
+
+[NekoAddon(Order = 100)]
+public sealed class MyAvatarAddon : INekoAddon
+{
+    public string Id => "my-avatar-addon";
+    public string TitleKey => "My Avatar Addon";
+    public string DescriptionKey => "Describe what this addon does.";
+    public string CategoryKey => "cat.avatar";
+    public string Glyph => "+";
+    public bool IsAvailable => true;
+    public void Open() => EditorApplication.ExecuteMenuItem("NekoSune/Avatar/My Addon");
+}
