@@ -1,9 +1,9 @@
 {
   "name": "com.nekosune.avatars",
   "displayName": "NekoSune Avatars",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "unity": "2019.4",
-  "description": "VRChat avatar creation, diagnostics and conversion toolbox with Avatar Doctor, Rank-driven Compressor, Quest Assistant, VRCFT checks, Resonite export and ChilloutVR conversion.",
+  "description": "VRChat avatar creation, diagnostics and conversion toolbox with Rank-driven Compressor, Quest tools, Resonite export, and ChilloutVR CCK 3/4 avatar + prop conversion.",
   "author": {
     "name": "NekoSuneVR",
     "email": "contact@nekosunevr.co.uk",
@@ -29,6 +29,10 @@
     "expressions",
     "resonite",
     "chilloutvr",
+    "cck3",
+    "cck4",
+    "prop",
+    "spawnable",
     "mesh",
     "optimizer",
     "lipsync",
