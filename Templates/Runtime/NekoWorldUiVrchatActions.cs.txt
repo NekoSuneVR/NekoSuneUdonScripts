@@ -1,0 +1,61 @@
+using UdonSharp;
+using UnityEngine;
+using VRC.SDKBase;
+
+public class NekoWorldUiVrchatActions : UdonSharpBehaviour
+{
+    [Header("Optional targets")]
+    public GameObject targetObject;
+    public Transform teleportTarget;
+    public Animator targetAnimator;
+    public AudioSource targetAudio;
+    public string animatorBoolParameter = "Enabled";
+    public string animatorTriggerParameter = "Trigger";
+
+    public void ToggleObject()
+    {
+        if (targetObject != null) targetObject.SetActive(!targetObject.activeSelf);
+    }
+
+    public void EnableObject()
+    {
+        if (targetObject != null) targetObject.SetActive(true);
+    }
+
+    public void DisableObject()
+    {
+        if (targetObject != null) targetObject.SetActive(false);
+    }
+
+    public void RespawnPlayer()
+    {
+        if (Networking.LocalPlayer != null) Networking.LocalPlayer.Respawn();
+    }
+
+    public void TeleportPlayer()
+    {
+        if (Networking.LocalPlayer == null || teleportTarget == null) return;
+        Networking.LocalPlayer.TeleportTo(teleportTarget.position, teleportTarget.rotation);
+    }
+
+    public void ToggleAnimatorBool()
+    {
+        if (targetAnimator == null || animatorBoolParameter == "") return;
+        targetAnimator.SetBool(animatorBoolParameter, !targetAnimator.GetBool(animatorBoolParameter));
+    }
+
+    public void TriggerAnimator()
+    {
+        if (targetAnimator != null && animatorTriggerParameter != "") targetAnimator.SetTrigger(animatorTriggerParameter);
+    }
+
+    public void PlayAudio()
+    {
+        if (targetAudio != null) targetAudio.Play();
+    }
+
+    public void StopAudio()
+    {
+        if (targetAudio != null) targetAudio.Stop();
+    }
+}
