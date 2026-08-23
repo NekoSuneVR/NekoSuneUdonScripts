@@ -1,0 +1,18 @@
+{
+  "name": "NekoSune VRChat Tools",
+  "id": "com.nekosune.vrchat-tools",
+  "url": "https://nekosunevr.github.io/NekoSuneUdonScripts/index.json",
+  "author": {
+    "name": "NekoSuneVR",
+    "email": "contact@nekosunevr.co.uk",
+    "url": "https://github.com/NekoSuneVR"
+  },
+  "description": "VCC/VPM package listing for NekoSune VRChat avatar and world creation tools.",
+  "infoLink": {
+    "url": "https://github.com/NekoSuneVR/NekoSuneUdonScripts",
+    "text": "View on GitHub"
+  },
+  "githubRepos": [
+    "NekoSuneVR/NekoSuneUdonScripts"
+  ]
+}
