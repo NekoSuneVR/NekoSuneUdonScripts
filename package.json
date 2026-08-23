@@ -1,7 +1,7 @@
 {
   "name": "com.nekosune.worlds",
   "displayName": "NekoSune World Hub",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "unity": "2022.3",
   "description": "Base/template World Hub for NekoSune VRChat creator addons. Provides the shared menu, About page, localization and automatic addon discovery API.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
