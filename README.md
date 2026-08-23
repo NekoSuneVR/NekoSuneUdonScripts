@@ -1,8 +1,8 @@
 # NekoSune VRChat Tools
 
-A modular VCC/VPM suite for VRChat creators.
+A modular VCC/VPM suite for VRChat and social-VR creators.
 
-The repository is built around **two lightweight base Hub/template packages** and a set of separately installable feature addons. The base branches stay small so new features can be added on new branches without copying the whole toolbox.
+The repository is built around **two lightweight base Hub/template packages** and separately installable feature addons. The base branches stay small so new features can be created on new branches without copying the whole toolbox.
 
 ## VCC repository
 
@@ -32,12 +32,13 @@ world
 Installable addons
 ├─ avatar-tools
 ├─ world-tools
+├─ world-ui-builder
 ├─ optimizer
 ├─ doctors
 └─ converters
 ```
 
-The Hub branches are **not bundles anymore**. They are the stable menu/template layer. Addons register themselves through the public `INekoAddon` + `[NekoAddon]` contract and are discovered by reflection when Unity loads their assemblies.
+The Hub branches are **not bundles**. They are the stable menu/template layer. Addons register themselves through the public `INekoAddon` + `[NekoAddon]` contract and are discovered by reflection when Unity loads their assemblies.
 
 That means adding a new addon does not require editing a central registry or changing the Hub source.
 
@@ -47,6 +48,8 @@ That means adding a new addon does not require editing a central registry or cha
 | --- | --- | --- |
 | `avatar` | `com.nekosune.avatars` | Avatar Hub, About page, localization/styles and addon API |
 | `world` | `com.nekosune.worlds` | World Hub, About page, localization/styles and addon API |
+
+The World Hub uses a Unity 2021.3 minimum so lightweight World-Hub addons can also be used with ChilloutVR CCK 3 legacy projects while remaining usable in newer VRChat/CCK 4 projects.
 
 ### Avatar Hub menu
 
@@ -110,6 +113,37 @@ Development Git URL:
 
 ```text
 https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#world-tools
+```
+
+### NekoSune World UI Builder
+
+Branch: `world-ui-builder`
+
+Package: `com.nekosune.world-ui-builder`
+
+A beginner-first visual/data-driven World UI authoring addon for **VRChat, ChilloutVR, both platforms, or generic Unity world-space UI**.
+
+Included:
+
+- editable JSON UI blueprints instead of one hard-coded layout
+- templates for world settings, mirrors, teleports, media controls, image galleries, supporter/Patreon-style walls, shops/catalogs, links, credits, player controls, admin/debug, rules and event schedules
+- Heading, Text, Button, Toggle, Slider, Image, Card, Divider and Spacer elements
+- editable **Neko Dark, Light, Neon, Glass, Pastel, Terminal and Custom** themes
+- local images plus runtime `RawImage` slots
+- local JSON, Editor-downloaded JSON snapshots and VRChat runtime JSON starter support
+- example JSON feeds for supporters, shops, events, galleries, staff/creators, leaderboards and links
+- safe Unity action wiring for simple object/page/audio actions
+- generated VRChat UdonSharp starter helpers for JSON, remote images, teleport, respawn, object toggles, Animator actions and audio
+- optional VRChat `VRCUiShape` / ChilloutVR `CVRCanvasWrapper` setup through reflection
+- **UI Doctor** for Canvas, raycaster, platform wrapper, navigation, target size, text size and unfinished runtime-action checks
+- built-in beginner learning explanations for Canvas/RectTransform/layout/UI events/JSON/platform differences
+
+Patreon/shop templates are informational catalog/support UIs; the package does not pretend to process external payments inside a world or invent a browser API where the runtime does not expose one.
+
+Development Git URL:
+
+```text
+https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#world-ui-builder
 ```
 
 ### NekoSune Optimizer
@@ -257,6 +291,7 @@ Avatar Hub ────────────┬─ Avatar Tools
                        └─ Converters
 
 World Hub ─────────────┬─ World Tools
+                       ├─ World UI Builder
                        ├─ Optimizer
                        ├─ Doctors
                        └─ Converters
@@ -266,6 +301,19 @@ Avatar Tools
 ```
 
 The Hub packages themselves do not force the opposite VRChat SDK into a project. Cross-platform/mixed addons use reflection/runtime detection where practical.
+
+## Current release families
+
+```text
+avatars-v0.7.1
+worlds-v0.5.2
+avatar-tools-v1.1.1
+world-tools-v1.1.0
+world-ui-builder-v1.0.0
+optimizer-v1.1.0
+doctors-v1.1.0
+converters-v1.1.0
+```
 
 ## Publishing / listing
 
