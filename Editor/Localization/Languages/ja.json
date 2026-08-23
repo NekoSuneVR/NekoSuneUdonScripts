@@ -134,6 +134,89 @@
     { "k": "err.analysisFailed", "v": "解析が中止されたか、クリップが短すぎます。" },
     { "k": "err.noCurves", "v": "animate 対象がありません。ビセーム・顎ボーン・口シェイプのいずれも割り当てられていません。" },
     { "k": "err.notAnAvatar", "v": "このオブジェクトには SkinnedMesh も Animator もないため、アバターとして使えません。" },
-    { "k": "err.folderOutsideProject", "v": "この Unity プロジェクト内のフォルダーを選んでください。" }
+    { "k": "err.folderOutsideProject", "v": "この Unity プロジェクト内のフォルダーを選んでください。" },
+
+    { "k": "rank.title", "v": "ランクアドバイザー" },
+    { "k": "rank.desc", "v": "パフォーマンスランクと、何を直せばよいかを表示します" },
+    { "k": "rank.header", "v": "ランクアドバイザー" },
+    { "k": "rank.tagline", "v": "パフォーマンスランクと、それを動かすもの" },
+
+    { "k": "rank.platform.pc", "v": "PC" },
+    { "k": "rank.platform.mobile", "v": "Quest / モバイル" },
+
+    { "k": "rank.excellent", "v": "Excellent" },
+    { "k": "rank.good", "v": "Good" },
+    { "k": "rank.medium", "v": "Medium" },
+    { "k": "rank.poor", "v": "Poor" },
+    { "k": "rank.veryPoor", "v": "Very Poor" },
+    { "k": "rank.on", "v": "オン" },
+    { "k": "rank.off", "v": "オフ" },
+
+    { "k": "rank.otherPlatform", "v": "{0}: {1}" },
+    { "k": "rank.worstWins", "v": "VRChat は一番悪い項目ひとつでランクを決めます。つまり 1 つのカテゴリが悪いだけで、アバター全体のランクがそれになります。" },
+    { "k": "rank.noAvatar", "v": "アバターをドロップするとパフォーマンスランクが表示されます。" },
+
+    { "k": "rank.rescan", "v": "再スキャン" },
+    { "k": "rank.copy", "v": "レポートをコピー" },
+    { "k": "rank.copied", "v": "レポートをコピーしました。" },
+    { "k": "rank.select", "v": "選択" },
+    { "k": "rank.table", "v": "すべての項目" },
+    { "k": "rank.notRanked", "v": "ここでは数えません" },
+    { "k": "rank.notMeasured", "v": "未計測" },
+
+    { "k": "rank.wins", "v": "効果が大きい順" },
+    { "k": "rank.winsNone", "v": "直すところはありません。最高ランクです。" },
+    { "k": "rank.toReach", "v": "{0} にするには、次のすべてを下げる必要があります:" },
+    { "k": "rank.blockerRow", "v": "{0}: {1} → {2} 以下" },
+    { "k": "rank.blockerBounds", "v": "{0}: {1} — {2} に収める必要があります" },
+
+    { "k": "rank.group.mesh", "v": "メッシュとマテリアル" },
+    { "k": "rank.group.rig", "v": "リグ" },
+    { "k": "rank.group.physbones", "v": "PhysBone とコンタクト" },
+    { "k": "rank.group.dynamics", "v": "パーティクルとダイナミクス" },
+    { "k": "rank.group.misc", "v": "その他" },
+
+    { "k": "rank.warn.readWrite", "v": "{0} 個のメッシュで Read/Write がオフです。VRChat は Very Poor を強制し、直すまでアップロードできません。" },
+    { "k": "rank.fix.readWrite", "v": "Read/Write をオンにする" },
+    { "k": "rank.fix.readWriteDone", "v": "{0} 個のモデルで Read/Write を有効にしました。" },
+    { "k": "rank.fix.readWriteSkipped", "v": "{0} 個のメッシュはモデルファイル由来ではないため、手動で直す必要があります。" },
+    { "k": "rank.warn.noDescriptor", "v": "VRChat アバターディスクリプタが見つかりません。数値は正しいですが、このオブジェクトはアバターとしてアップロードできません。" },
+    { "k": "rank.warn.unmeasured", "v": "Raycast コンポーネントは計測していないため、実際のランクは表示より 1 段階低い可能性があります。" },
+    { "k": "rank.warn.estimates", "v": "~ が付いた値は推定で、SDK 自身の数値ではありません。目安として見てください。" },
+    { "k": "rank.warn.disabled", "v": "無効になっているオブジェクトやコンポーネントもすべて数に入ります。ここでは何も除外していません。" },
+
+    { "k": "rank.stat.triangles", "v": "三角形" },
+    { "k": "rank.stat.textureMemory", "v": "テクスチャメモリ" },
+    { "k": "rank.stat.skinnedMeshes", "v": "Skinned Mesh" },
+    { "k": "rank.stat.basicMeshes", "v": "通常メッシュ" },
+    { "k": "rank.stat.materialSlots", "v": "マテリアルスロット" },
+    { "k": "rank.stat.bounds", "v": "バウンズのサイズ" },
+
+    { "k": "rank.stat.bones", "v": "ボーン" },
+    { "k": "rank.stat.animators", "v": "Animator" },
+    { "k": "rank.stat.constraints", "v": "コンストレイント" },
+    { "k": "rank.stat.constraintDepth", "v": "コンストレイントの深さ" },
+
+    { "k": "rank.stat.pbComponents", "v": "PhysBone コンポーネント" },
+    { "k": "rank.stat.pbTransforms", "v": "PhysBone の Transform" },
+    { "k": "rank.stat.pbColliders", "v": "PhysBone コライダー" },
+    { "k": "rank.stat.pbChecks", "v": "PhysBone の衝突判定数" },
+    { "k": "rank.stat.contacts", "v": "コンタクト" },
+
+    { "k": "rank.stat.particleSystems", "v": "パーティクルシステム" },
+    { "k": "rank.stat.particlesActive", "v": "アクティブなパーティクル" },
+    { "k": "rank.stat.meshParticlePolys", "v": "メッシュパーティクルのポリゴン" },
+    { "k": "rank.stat.particleTrails", "v": "パーティクルのトレイル" },
+    { "k": "rank.stat.particleCollision", "v": "パーティクルの衝突" },
+    { "k": "rank.stat.trailRenderers", "v": "Trail Renderer" },
+    { "k": "rank.stat.lineRenderers", "v": "Line Renderer" },
+
+    { "k": "rank.stat.lights", "v": "ライト" },
+    { "k": "rank.stat.audioSources", "v": "オーディオソース" },
+    { "k": "rank.stat.cloths", "v": "Cloth" },
+    { "k": "rank.stat.clothVertices", "v": "Cloth の頂点" },
+    { "k": "rank.stat.physColliders", "v": "物理コライダー" },
+    { "k": "rank.stat.physRigidbodies", "v": "Rigidbody" },
+    { "k": "rank.stat.raycasts", "v": "Raycast" }
   ]
 }

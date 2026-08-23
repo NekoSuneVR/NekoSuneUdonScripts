@@ -40,12 +40,35 @@ First release.
 - **Clip output** — exact piecewise-linear tangents so fast consonants do not ease, greedy
   linear key reduction with a reported saving percentage, unique asset paths, and a
   *Show in Project* link in the result banner.
+- **Rank Advisor** — the full VRChat avatar performance ranking, computed for PC and Quest side
+  by side, with the concrete work needed to move the rank.
+  - All 29 ranked statistics: triangles, texture memory, skinned and basic meshes, material
+    slots, bounds size, bones, animators, constraints and constraint depth, PhysBone components /
+    transforms / colliders / collision checks, contacts, particle systems / active particles /
+    mesh particle polygons / trails / collision, trail and line renderers, lights, audio sources,
+    cloths and cloth vertices, physics colliders and rigidbodies, and raycasts.
+  - Worst-stat-wins verdict matching VRChat's own rule, with the six statistics that mobile
+    strips shown greyed rather than hidden, so the PC/Quest difference is visible.
+  - **Biggest wins** list: every blocking statistic sorted by how far over the line it is, each
+    with the exact value it has to reach for the next rank, and a Select button that pings the
+    offending object.
+  - Catches the silent killers: Mesh Read/Write off (an automatic Very Poor *and* an upload
+    block), disabled objects and components that still count, and a missing avatar descriptor.
+  - One opt-in fix — **Turn Read/Write on** — which flips `isReadable` on the affected model
+    importers and reimports them. Import settings only; it never touches the mesh or the scene,
+    and meshes that are not from a model file are reported rather than modified.
+  - Estimated values are marked `~` and raycasts are reported as *not measured* and barred from
+    contributing a rank, so the window can never claim a better rank than the avatar has earned.
+  - **Copy report** puts both platforms' full numbers on the clipboard as plain text.
+  - VRChat SDK components (PhysBones, colliders, contacts, the avatar descriptor) are found by
+    type name, so the whole addon works with no SDK assembly reference.
 - **Localization** — a `NekoLoc` layer with one JSON file per language in
   `Editor/Localization/Languages/`, hot-reloadable from the Hub. Missing keys fall back to
   English and then to the raw key, so partial translations never break the UI.
-  Shipping with 12 languages at 120 keys each: English, Русский, Español, Polski, Deutsch,
+  Shipping with 12 languages at 190 keys each: English, Русский, Español, Polski, Deutsch,
   Français, Italiano, Português (Brasil), Українська, 日本語, 한국어, 简体中文.
-- **Context menus** — `Assets → NekoSune → Lip Sync from this audio` on AudioClip assets and
-  `GameObject → NekoSune → Lip Sync Studio` in the hierarchy.
+- **Context menus** — `Assets → NekoSune → Lip Sync from this audio` on AudioClip assets, and
+  `GameObject → NekoSune → Lip Sync Studio` and `GameObject → NekoSune → Rank Advisor` in the
+  hierarchy.
 
 [0.1.0]: #

@@ -134,6 +134,89 @@
     { "k": "err.analysisFailed", "v": "분석이 취소되었거나 클립이 너무 짧습니다." },
     { "k": "err.noCurves", "v": "애니메이션할 대상이 없습니다: 비짐, 턱 본, 입 모양 중 아무것도 연결되지 않았습니다." },
     { "k": "err.notAnAvatar", "v": "이 오브젝트에는 SkinnedMesh나 Animator가 없어 아바타로 쓸 수 없습니다." },
-    { "k": "err.folderOutsideProject", "v": "이 Unity 프로젝트 안의 폴더를 선택하세요." }
+    { "k": "err.folderOutsideProject", "v": "이 Unity 프로젝트 안의 폴더를 선택하세요." },
+
+    { "k": "rank.title", "v": "랭크 어드바이저" },
+    { "k": "rank.desc", "v": "퍼포먼스 랭크와 무엇을 바꿔야 하는지 보여줍니다" },
+    { "k": "rank.header", "v": "랭크 어드바이저" },
+    { "k": "rank.tagline", "v": "퍼포먼스 랭크, 그리고 그것을 움직이는 것" },
+
+    { "k": "rank.platform.pc", "v": "PC" },
+    { "k": "rank.platform.mobile", "v": "Quest / 모바일" },
+
+    { "k": "rank.excellent", "v": "Excellent" },
+    { "k": "rank.good", "v": "Good" },
+    { "k": "rank.medium", "v": "Medium" },
+    { "k": "rank.poor", "v": "Poor" },
+    { "k": "rank.veryPoor", "v": "Very Poor" },
+    { "k": "rank.on", "v": "켜짐" },
+    { "k": "rank.off", "v": "꺼짐" },
+
+    { "k": "rank.otherPlatform", "v": "{0}: {1}" },
+    { "k": "rank.worstWins", "v": "VRChat은 가장 나쁜 항목 하나로 랭크를 정합니다. 한 항목만 나빠도 아바타 전체 랭크가 그것으로 결정됩니다." },
+    { "k": "rank.noAvatar", "v": "아바타를 놓으면 퍼포먼스 랭크를 보여줍니다." },
+
+    { "k": "rank.rescan", "v": "다시 스캔" },
+    { "k": "rank.copy", "v": "리포트 복사" },
+    { "k": "rank.copied", "v": "리포트를 복사했습니다." },
+    { "k": "rank.select", "v": "선택" },
+    { "k": "rank.table", "v": "모든 항목" },
+    { "k": "rank.notRanked", "v": "여기서는 계산 안 함" },
+    { "k": "rank.notMeasured", "v": "측정 안 함" },
+
+    { "k": "rank.wins", "v": "효과가 큰 순서" },
+    { "k": "rank.winsNone", "v": "더 고칠 것이 없습니다. 최고 랭크입니다." },
+    { "k": "rank.toReach", "v": "{0}에 도달하려면 다음을 모두 낮춰야 합니다:" },
+    { "k": "rank.blockerRow", "v": "{0}: {1} → {2} 이하" },
+    { "k": "rank.blockerBounds", "v": "{0}: {1} — {2} 안에 들어가야 합니다" },
+
+    { "k": "rank.group.mesh", "v": "메시와 머티리얼" },
+    { "k": "rank.group.rig", "v": "리그" },
+    { "k": "rank.group.physbones", "v": "PhysBone과 컨택트" },
+    { "k": "rank.group.dynamics", "v": "파티클과 다이내믹스" },
+    { "k": "rank.group.misc", "v": "그 외" },
+
+    { "k": "rank.warn.readWrite", "v": "메시 {0}개에서 Read/Write가 꺼져 있습니다. VRChat은 Very Poor를 강제하며 고칠 때까지 업로드를 막습니다." },
+    { "k": "rank.fix.readWrite", "v": "Read/Write 켜기" },
+    { "k": "rank.fix.readWriteDone", "v": "모델 {0}개에서 Read/Write를 켰습니다." },
+    { "k": "rank.fix.readWriteSkipped", "v": "메시 {0}개는 모델 파일에서 온 것이 아니라 직접 고쳐야 합니다." },
+    { "k": "rank.warn.noDescriptor", "v": "VRChat 아바타 디스크립터를 찾지 못했습니다. 수치는 맞지만 이 오브젝트는 아바타로 업로드할 수 없습니다." },
+    { "k": "rank.warn.unmeasured", "v": "Raycast 컴포넌트는 측정하지 않으므로 실제 랭크는 한 단계 더 낮을 수 있습니다." },
+    { "k": "rank.warn.estimates", "v": "~ 표시가 있는 값은 추정치이며 SDK의 수치가 아닙니다. 참고용으로 보세요." },
+    { "k": "rank.warn.disabled", "v": "비활성화된 오브젝트와 컴포넌트도 그대로 계산됩니다. 여기서는 아무것도 걸러내지 않습니다." },
+
+    { "k": "rank.stat.triangles", "v": "삼각형" },
+    { "k": "rank.stat.textureMemory", "v": "텍스처 메모리" },
+    { "k": "rank.stat.skinnedMeshes", "v": "Skinned Mesh" },
+    { "k": "rank.stat.basicMeshes", "v": "일반 메시" },
+    { "k": "rank.stat.materialSlots", "v": "머티리얼 슬롯" },
+    { "k": "rank.stat.bounds", "v": "바운즈 크기" },
+
+    { "k": "rank.stat.bones", "v": "본" },
+    { "k": "rank.stat.animators", "v": "Animator" },
+    { "k": "rank.stat.constraints", "v": "컨스트레인트" },
+    { "k": "rank.stat.constraintDepth", "v": "컨스트레인트 깊이" },
+
+    { "k": "rank.stat.pbComponents", "v": "PhysBone 컴포넌트" },
+    { "k": "rank.stat.pbTransforms", "v": "PhysBone 트랜스폼" },
+    { "k": "rank.stat.pbColliders", "v": "PhysBone 콜라이더" },
+    { "k": "rank.stat.pbChecks", "v": "PhysBone 충돌 검사 수" },
+    { "k": "rank.stat.contacts", "v": "컨택트" },
+
+    { "k": "rank.stat.particleSystems", "v": "파티클 시스템" },
+    { "k": "rank.stat.particlesActive", "v": "활성 파티클" },
+    { "k": "rank.stat.meshParticlePolys", "v": "메시 파티클 폴리곤" },
+    { "k": "rank.stat.particleTrails", "v": "파티클 트레일" },
+    { "k": "rank.stat.particleCollision", "v": "파티클 충돌" },
+    { "k": "rank.stat.trailRenderers", "v": "Trail Renderer" },
+    { "k": "rank.stat.lineRenderers", "v": "Line Renderer" },
+
+    { "k": "rank.stat.lights", "v": "라이트" },
+    { "k": "rank.stat.audioSources", "v": "오디오 소스" },
+    { "k": "rank.stat.cloths", "v": "Cloth" },
+    { "k": "rank.stat.clothVertices", "v": "Cloth 정점" },
+    { "k": "rank.stat.physColliders", "v": "물리 콜라이더" },
+    { "k": "rank.stat.physRigidbodies", "v": "Rigidbody" },
+    { "k": "rank.stat.raycasts", "v": "Raycast" }
   ]
 }

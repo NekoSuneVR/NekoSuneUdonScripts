@@ -134,6 +134,89 @@
     { "k": "err.analysisFailed", "v": "分析被取消，或者片段太短。" },
     { "k": "err.noCurves", "v": "没有可动画的对象：口型、下巴骨骼和嘴部形状都没有绑定。" },
     { "k": "err.notAnAvatar", "v": "这个对象没有 SkinnedMesh 也没有 Animator，不能当作模型使用。" },
-    { "k": "err.folderOutsideProject", "v": "请选择这个 Unity 工程内的文件夹。" }
+    { "k": "err.folderOutsideProject", "v": "请选择这个 Unity 工程内的文件夹。" },
+
+    { "k": "rank.title", "v": "性能等级顾问" },
+    { "k": "rank.desc", "v": "查看性能等级，以及该改什么" },
+    { "k": "rank.header", "v": "性能等级顾问" },
+    { "k": "rank.tagline", "v": "性能等级，以及影响它的因素" },
+
+    { "k": "rank.platform.pc", "v": "PC" },
+    { "k": "rank.platform.mobile", "v": "Quest / 移动端" },
+
+    { "k": "rank.excellent", "v": "Excellent" },
+    { "k": "rank.good", "v": "Good" },
+    { "k": "rank.medium", "v": "Medium" },
+    { "k": "rank.poor", "v": "Poor" },
+    { "k": "rank.veryPoor", "v": "Very Poor" },
+    { "k": "rank.on", "v": "开" },
+    { "k": "rank.off", "v": "关" },
+
+    { "k": "rank.otherPlatform", "v": "{0}：{1}" },
+    { "k": "rank.worstWins", "v": "VRChat 取最差的单项来定级，所以只要有一项不合格，整个模型的等级就由它决定。" },
+    { "k": "rank.noAvatar", "v": "拖入一个模型即可查看它的性能等级。" },
+
+    { "k": "rank.rescan", "v": "重新扫描" },
+    { "k": "rank.copy", "v": "复制报告" },
+    { "k": "rank.copied", "v": "报告已复制。" },
+    { "k": "rank.select", "v": "选中" },
+    { "k": "rank.table", "v": "全部统计" },
+    { "k": "rank.notRanked", "v": "此平台不计入" },
+    { "k": "rank.notMeasured", "v": "未统计" },
+
+    { "k": "rank.wins", "v": "收益最大的改动" },
+    { "k": "rank.winsNone", "v": "没有需要修的了，已经是最好的等级。" },
+    { "k": "rank.toReach", "v": "要达到 {0}，下面这些都得降下来：" },
+    { "k": "rank.blockerRow", "v": "{0}：{1} → 不超过 {2}" },
+    { "k": "rank.blockerBounds", "v": "{0}：{1} — 必须放得进 {2}" },
+
+    { "k": "rank.group.mesh", "v": "网格与材质" },
+    { "k": "rank.group.rig", "v": "骨架" },
+    { "k": "rank.group.physbones", "v": "PhysBone 与 Contact" },
+    { "k": "rank.group.dynamics", "v": "粒子与动态效果" },
+    { "k": "rank.group.misc", "v": "其他" },
+
+    { "k": "rank.warn.readWrite", "v": "有 {0} 个网格关闭了 Read/Write。VRChat 会直接判为 Very Poor，并在修好之前拒绝上传。" },
+    { "k": "rank.fix.readWrite", "v": "打开 Read/Write" },
+    { "k": "rank.fix.readWriteDone", "v": "已为 {0} 个模型打开 Read/Write。" },
+    { "k": "rank.fix.readWriteSkipped", "v": "有 {0} 个网格不是来自模型文件，需要手动处理。" },
+    { "k": "rank.warn.noDescriptor", "v": "没有找到 VRChat 模型描述组件。数值仍然准确，但这个对象不能作为模型上传。" },
+    { "k": "rank.warn.unmeasured", "v": "Raycast 组件没有统计，所以实际等级可能比这里显示的低一级。" },
+    { "k": "rank.warn.estimates", "v": "带 ~ 的数值是估算，不是 SDK 自己算出来的数字，仅供参考。" },
+    { "k": "rank.warn.disabled", "v": "被禁用的对象和组件同样计入统计，这里没有过滤任何东西。" },
+
+    { "k": "rank.stat.triangles", "v": "三角面" },
+    { "k": "rank.stat.textureMemory", "v": "贴图显存" },
+    { "k": "rank.stat.skinnedMeshes", "v": "蒙皮网格" },
+    { "k": "rank.stat.basicMeshes", "v": "普通网格" },
+    { "k": "rank.stat.materialSlots", "v": "材质槽" },
+    { "k": "rank.stat.bounds", "v": "包围盒尺寸" },
+
+    { "k": "rank.stat.bones", "v": "骨骼" },
+    { "k": "rank.stat.animators", "v": "Animator" },
+    { "k": "rank.stat.constraints", "v": "约束" },
+    { "k": "rank.stat.constraintDepth", "v": "约束深度" },
+
+    { "k": "rank.stat.pbComponents", "v": "PhysBone 组件" },
+    { "k": "rank.stat.pbTransforms", "v": "PhysBone 受影响骨骼" },
+    { "k": "rank.stat.pbColliders", "v": "PhysBone 碰撞体" },
+    { "k": "rank.stat.pbChecks", "v": "PhysBone 碰撞检测数" },
+    { "k": "rank.stat.contacts", "v": "Contact" },
+
+    { "k": "rank.stat.particleSystems", "v": "粒子系统" },
+    { "k": "rank.stat.particlesActive", "v": "活跃粒子数" },
+    { "k": "rank.stat.meshParticlePolys", "v": "网格粒子面数" },
+    { "k": "rank.stat.particleTrails", "v": "粒子拖尾" },
+    { "k": "rank.stat.particleCollision", "v": "粒子碰撞" },
+    { "k": "rank.stat.trailRenderers", "v": "Trail Renderer" },
+    { "k": "rank.stat.lineRenderers", "v": "Line Renderer" },
+
+    { "k": "rank.stat.lights", "v": "灯光" },
+    { "k": "rank.stat.audioSources", "v": "音频源" },
+    { "k": "rank.stat.cloths", "v": "Cloth" },
+    { "k": "rank.stat.clothVertices", "v": "Cloth 顶点" },
+    { "k": "rank.stat.physColliders", "v": "物理碰撞体" },
+    { "k": "rank.stat.physRigidbodies", "v": "刚体" },
+    { "k": "rank.stat.raycasts", "v": "Raycast" }
   ]
 }

@@ -134,6 +134,89 @@
     { "k": "err.analysisFailed", "v": "Аналіз скасовано, або кліп надто короткий." },
     { "k": "err.noCurves", "v": "Нема чого анімувати: не прив'язані ні віземи, ні щелепа, ні форма рота." },
     { "k": "err.notAnAvatar", "v": "У цього об'єкта немає skinned mesh чи аніматора, тож він не годиться як аватар." },
-    { "k": "err.folderOutsideProject", "v": "Обери теку всередині цього проєкту Unity." }
+    { "k": "err.folderOutsideProject", "v": "Обери теку всередині цього проєкту Unity." },
+
+    { "k": "rank.title", "v": "Порадник рангу" },
+    { "k": "rank.desc", "v": "Ранг продуктивності та що потрібно змінити" },
+    { "k": "rank.header", "v": "Порадник рангу" },
+    { "k": "rank.tagline", "v": "Ранг продуктивності і що на нього впливає" },
+
+    { "k": "rank.platform.pc", "v": "PC" },
+    { "k": "rank.platform.mobile", "v": "Quest / мобільні" },
+
+    { "k": "rank.excellent", "v": "Відмінний" },
+    { "k": "rank.good", "v": "Добрий" },
+    { "k": "rank.medium", "v": "Середній" },
+    { "k": "rank.poor", "v": "Поганий" },
+    { "k": "rank.veryPoor", "v": "Дуже поганий" },
+    { "k": "rank.on", "v": "Увімк." },
+    { "k": "rank.off", "v": "Вимк." },
+
+    { "k": "rank.otherPlatform", "v": "{0}: {1}" },
+    { "k": "rank.worstWins", "v": "VRChat бере найгірший окремий показник, тож одна погана категорія задає ранг усього аватара." },
+    { "k": "rank.noAvatar", "v": "Перетягніть аватар, щоб побачити його ранг продуктивності." },
+
+    { "k": "rank.rescan", "v": "Просканувати знову" },
+    { "k": "rank.copy", "v": "Скопіювати звіт" },
+    { "k": "rank.copied", "v": "Звіт скопійовано." },
+    { "k": "rank.select", "v": "Вибрати" },
+    { "k": "rank.table", "v": "Усі показники" },
+    { "k": "rank.notRanked", "v": "тут не враховується" },
+    { "k": "rank.notMeasured", "v": "не вимірюється" },
+
+    { "k": "rank.wins", "v": "Що дасть найбільше" },
+    { "k": "rank.winsNone", "v": "Виправляти нічого — це найкращий ранг." },
+    { "k": "rank.toReach", "v": "Щоб дійти до «{0}», усе це має зменшитися:" },
+    { "k": "rank.blockerRow", "v": "{0}: {1} → не більше {2}" },
+    { "k": "rank.blockerBounds", "v": "{0}: {1} — має вміщатися в {2}" },
+
+    { "k": "rank.group.mesh", "v": "Меші та матеріали" },
+    { "k": "rank.group.rig", "v": "Ріг" },
+    { "k": "rank.group.physbones", "v": "PhysBones і контакти" },
+    { "k": "rank.group.dynamics", "v": "Частинки та динаміка" },
+    { "k": "rank.group.misc", "v": "Решта" },
+
+    { "k": "rank.warn.readWrite", "v": "У {0} меша(ів) вимкнено Read/Write. VRChat ставить «Дуже поганий» і не дасть завантажити аватар, доки це не виправлено." },
+    { "k": "rank.fix.readWrite", "v": "Увімкнути Read/Write" },
+    { "k": "rank.fix.readWriteDone", "v": "Read/Write увімкнено для {0} моделі(ей)." },
+    { "k": "rank.fix.readWriteSkipped", "v": "{0} меш(ів) не з файлу моделі — їх доведеться виправити вручну." },
+    { "k": "rank.warn.noDescriptor", "v": "Дескриптор аватара VRChat не знайдено. Числа правильні, але цей об'єкт не можна завантажити як аватар." },
+    { "k": "rank.warn.unmeasured", "v": "Компоненти raycast не вимірюються, тож справжній ранг може бути на щабель гірший." },
+    { "k": "rank.warn.estimates", "v": "Значення з «~» — це оцінка, а не число самого SDK. Сприймайте як орієнтир." },
+    { "k": "rank.warn.disabled", "v": "Вимкнені об'єкти та компоненти все одно враховуються. Тут нічого не відфільтровано." },
+
+    { "k": "rank.stat.triangles", "v": "Трикутники" },
+    { "k": "rank.stat.textureMemory", "v": "Пам'ять текстур" },
+    { "k": "rank.stat.skinnedMeshes", "v": "Skinned-меші" },
+    { "k": "rank.stat.basicMeshes", "v": "Звичайні меші" },
+    { "k": "rank.stat.materialSlots", "v": "Слоти матеріалів" },
+    { "k": "rank.stat.bounds", "v": "Розмір меж" },
+
+    { "k": "rank.stat.bones", "v": "Кістки" },
+    { "k": "rank.stat.animators", "v": "Аніматори" },
+    { "k": "rank.stat.constraints", "v": "Constraints" },
+    { "k": "rank.stat.constraintDepth", "v": "Глибина constraints" },
+
+    { "k": "rank.stat.pbComponents", "v": "Компоненти PhysBone" },
+    { "k": "rank.stat.pbTransforms", "v": "Трансформи PhysBone" },
+    { "k": "rank.stat.pbColliders", "v": "Колайдери PhysBone" },
+    { "k": "rank.stat.pbChecks", "v": "Перевірки зіткнень PhysBone" },
+    { "k": "rank.stat.contacts", "v": "Контакти" },
+
+    { "k": "rank.stat.particleSystems", "v": "Системи частинок" },
+    { "k": "rank.stat.particlesActive", "v": "Активних частинок" },
+    { "k": "rank.stat.meshParticlePolys", "v": "Полігони меш-частинок" },
+    { "k": "rank.stat.particleTrails", "v": "Сліди частинок" },
+    { "k": "rank.stat.particleCollision", "v": "Зіткнення частинок" },
+    { "k": "rank.stat.trailRenderers", "v": "Trail Renderer" },
+    { "k": "rank.stat.lineRenderers", "v": "Line Renderer" },
+
+    { "k": "rank.stat.lights", "v": "Джерела світла" },
+    { "k": "rank.stat.audioSources", "v": "Джерела звуку" },
+    { "k": "rank.stat.cloths", "v": "Cloth" },
+    { "k": "rank.stat.clothVertices", "v": "Вершини Cloth" },
+    { "k": "rank.stat.physColliders", "v": "Фізичні колайдери" },
+    { "k": "rank.stat.physRigidbodies", "v": "Rigidbody" },
+    { "k": "rank.stat.raycasts", "v": "Raycast" }
   ]
 }

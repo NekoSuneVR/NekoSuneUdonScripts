@@ -6,10 +6,14 @@ A toolbox of VRChat **avatar** addons for the Unity Editor, all reachable from a
 World and Udon tooling is not part of this package — it lives in its own branch/package and
 installs alongside this one under the same **NekoSune** menu.
 
-The first addon is **Lip Sync Studio** — drop in an avatar and an audio clip, press one button,
-and get a `.anim` that drives the avatar's mouth in time with the audio. It works with songs
-(backing music and all), with plain speech, and with avatars from Booth, Gumroad, VRoid, CATS
-exports, ARKit-blendshape avatars, or anything you rigged yourself.
+**Lip Sync Studio** — drop in an avatar and an audio clip, press one button, and get a `.anim`
+that drives the avatar's mouth in time with the audio. It works with songs (backing music and
+all), with plain speech, and with avatars from Booth, Gumroad, VRoid, CATS exports,
+ARKit-blendshape avatars, or anything you rigged yourself.
+
+**Rank Advisor** — drop in an avatar and see its VRChat performance rank for PC *and* Quest,
+every statistic behind it, and the exact list of things that have to come down before the rank
+moves. Read-only; the one change it will make for you is opt-in.
 
 ---
 
@@ -112,6 +116,57 @@ on the same vowel decisions without you touching a slider.
 
 ---
 
+## Using Rank Advisor
+
+Open it from **NekoSune → Avatar → Rank Advisor**, from the **NekoSune → Hub** window, or by
+right-clicking an avatar in the Hierarchy and choosing **NekoSune → Rank Advisor**.
+
+Drop an avatar in and you get, for the platform tab you are on:
+
+- **The overall rank.** VRChat takes the *worst single statistic* and makes that the rank of the
+  whole avatar, so the badge shows what that worst statistic dragged you down to. The other
+  platform's rank is shown underneath, because an avatar that is Good on PC is frequently Very
+  Poor on Quest.
+- **Biggest wins.** Every statistic currently sitting at or below the overall rank, sorted by how
+  far over the line it is, each with its exact target: *Triangles: 94,312 → 70,000 or less*.
+  Because the rank is worst-wins, **all** of them have to come down before the rank moves — the
+  list is the complete job, not a menu.
+- **The full table**, grouped into mesh/material, rig, PhysBones and contacts, particles and
+  dynamics, and everything else. Each row has the value, a bar showing where it sits between
+  Excellent and Poor, its own rank chip, and a **Select** button that pings the offending object
+  in the Hierarchy.
+- **Copy report** puts both platforms' numbers on the clipboard as plain text — useful for a
+  commission thread or a bug report.
+
+### The silent killers it catches
+
+- **Mesh Read/Write off** is an automatic Very Poor *and* a hard upload block, and the SDK's own
+  message about it is easy to miss. This is the one thing the window will fix for you: **Turn
+  Read/Write on** flips `isReadable` on the affected *model importers* and reimports them. It
+  edits import settings only — never the mesh, never the scene. Meshes that are not from a model
+  file are counted and reported rather than touched.
+- **Disabled objects and components still count.** Everything in the table includes them, exactly
+  as VRChat does. Hiding a particle system in the Hierarchy does not hide it from the ranking.
+- **No avatar descriptor** — the numbers are still correct, but the object cannot be uploaded.
+- **The Quest tab strips six statistics** (lights, cloth, cloth vertices, physics colliders,
+  physics rigidbodies, audio sources) because mobile removes those components outright. They are
+  shown greyed as *not counted here* rather than hidden, so you can see why the two ranks differ.
+
+### What it estimates, and what it does not measure
+
+Honesty is built into the display rather than left to the README:
+
+- Values marked **~** are estimated, not the SDK's own number: texture memory, PhysBone
+  transforms, PhysBone collision checks, constraint depth, and bounds size. They are close enough
+  to plan against and are called out in the window whenever any are in play.
+- **Raycasts are not measured at all.** The stat is shown as *not measured* and is deliberately
+  not allowed to contribute a rank, so the window can never invent a rank the avatar has not
+  earned — instead it warns that the real rank could be one step worse than shown.
+
+Treat the result as a very good guide, not as a substitute for the SDK build panel.
+
+---
+
 ## Adding a language
 
 Languages live one file per language in `Editor/Localization/Languages/`. To add one, copy
@@ -134,7 +189,7 @@ anything missing from English falls back to the raw key, so a partial translatio
 break the UI.
 
 Shipping now: English, Русский, Español, Polski, Deutsch, Français, Italiano,
-Português (Brasil), Українська, 日本語, 한국어, 简体中文 — 120 keys each.
+Português (Brasil), Українська, 日本語, 한국어, 简体中文 — 190 keys each.
 
 The language is picked from Unity's system language on first run and remembered in
 `EditorPrefs` after that.
@@ -188,6 +243,11 @@ Editor/
     NekoAudioPreview.cs          Editor audio preview
     NekoLipSyncSettings.cs       Settings, presets, preset assets
     NekoLipSyncWindow.cs         The Lip Sync Studio UI
+  RankAdvisor/
+    NekoPerfTable.cs             The official PC / Quest limits and the ranking rules
+    NekoAvatarStats.cs           Walks the avatar and counts every statistic
+    NekoRankAdvisor.cs           Worst-wins verdict, blocker list, the Read/Write fix
+    NekoRankWindow.cs            The Rank Advisor UI
 ```
 
 ---
@@ -202,6 +262,10 @@ Editor/
   extremely well, dense mixes reasonably well, and screamed or heavily distorted vocals poorly.
   For a dense mix, leave **Clean vocal** off and raise **Clarity**.
 - Key reduction is lossy within the tolerance you set. Set the tolerance to 0 to keep every key.
+- Rank Advisor reads the scene; it never edits the avatar. The single exception is the opt-in
+  Read/Write fix, which changes model *import settings* and triggers a reimport.
+- The limits in `NekoPerfTable.cs` are transcribed from VRChat's published avatar performance
+  ranking tables. If VRChat changes them, that one file is the only thing that needs updating.
 
 ## License
 

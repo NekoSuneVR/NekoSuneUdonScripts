@@ -134,6 +134,89 @@
     { "k": "err.analysisFailed", "v": "El análisis se canceló o el clip es demasiado corto." },
     { "k": "err.noCurves", "v": "Nada que animar: no hay visema, mandíbula ni forma de boca vinculada." },
     { "k": "err.notAnAvatar", "v": "Ese objeto no tiene skinned mesh ni animator, así que no sirve como avatar." },
-    { "k": "err.folderOutsideProject", "v": "Elige una carpeta dentro de este proyecto de Unity." }
+    { "k": "err.folderOutsideProject", "v": "Elige una carpeta dentro de este proyecto de Unity." },
+
+    { "k": "rank.title", "v": "Asesor de rango" },
+    { "k": "rank.desc", "v": "Tu rango de rendimiento y qué cambiar" },
+    { "k": "rank.header", "v": "Asesor de rango" },
+    { "k": "rank.tagline", "v": "Rango de rendimiento, y qué lo mueve" },
+
+    { "k": "rank.platform.pc", "v": "PC" },
+    { "k": "rank.platform.mobile", "v": "Quest / móvil" },
+
+    { "k": "rank.excellent", "v": "Excelente" },
+    { "k": "rank.good", "v": "Bueno" },
+    { "k": "rank.medium", "v": "Medio" },
+    { "k": "rank.poor", "v": "Malo" },
+    { "k": "rank.veryPoor", "v": "Muy malo" },
+    { "k": "rank.on", "v": "Activado" },
+    { "k": "rank.off", "v": "Desactivado" },
+
+    { "k": "rank.otherPlatform", "v": "{0}: {1}" },
+    { "k": "rank.worstWins", "v": "VRChat toma la peor estadística por sí sola, así que una sola categoría mala define el rango de todo el avatar." },
+    { "k": "rank.noAvatar", "v": "Suelta un avatar para ver su rango de rendimiento." },
+
+    { "k": "rank.rescan", "v": "Volver a analizar" },
+    { "k": "rank.copy", "v": "Copiar informe" },
+    { "k": "rank.copied", "v": "Informe copiado." },
+    { "k": "rank.select", "v": "Seleccionar" },
+    { "k": "rank.table", "v": "Todas las estadísticas" },
+    { "k": "rank.notRanked", "v": "aquí no cuenta" },
+    { "k": "rank.notMeasured", "v": "sin medir" },
+
+    { "k": "rank.wins", "v": "Lo que más ayuda" },
+    { "k": "rank.winsNone", "v": "No queda nada que arreglar: es el mejor rango." },
+    { "k": "rank.toReach", "v": "Para llegar a {0}, todo esto tiene que bajar:" },
+    { "k": "rank.blockerRow", "v": "{0}: {1} → {2} o menos" },
+    { "k": "rank.blockerBounds", "v": "{0}: {1} — tiene que caber en {2}" },
+
+    { "k": "rank.group.mesh", "v": "Malla y material" },
+    { "k": "rank.group.rig", "v": "Esqueleto" },
+    { "k": "rank.group.physbones", "v": "PhysBones y contactos" },
+    { "k": "rank.group.dynamics", "v": "Partículas y dinámicas" },
+    { "k": "rank.group.misc", "v": "Lo demás" },
+
+    { "k": "rank.warn.readWrite", "v": "Read/Write está desactivado en {0} malla(s). VRChat fuerza Muy malo y rechaza la subida hasta que se arregle." },
+    { "k": "rank.fix.readWrite", "v": "Activar Read/Write" },
+    { "k": "rank.fix.readWriteDone", "v": "Read/Write activado en {0} modelo(s)." },
+    { "k": "rank.fix.readWriteSkipped", "v": "{0} malla(s) no vienen de un archivo de modelo y hay que arreglarlas a mano." },
+    { "k": "rank.warn.noDescriptor", "v": "No se encontró el descriptor de avatar de VRChat. Los números son correctos, pero este objeto no se puede subir como avatar." },
+    { "k": "rank.warn.unmeasured", "v": "Los componentes raycast no se miden, así que el rango real podría ser un paso peor." },
+    { "k": "rank.warn.estimates", "v": "Los valores marcados con ~ son estimaciones, no el número del propio SDK. Tómalos como orientación." },
+    { "k": "rank.warn.disabled", "v": "Los objetos y componentes desactivados también cuentan. Aquí no se filtra nada." },
+
+    { "k": "rank.stat.triangles", "v": "Triángulos" },
+    { "k": "rank.stat.textureMemory", "v": "Memoria de texturas" },
+    { "k": "rank.stat.skinnedMeshes", "v": "Mallas skinned" },
+    { "k": "rank.stat.basicMeshes", "v": "Mallas básicas" },
+    { "k": "rank.stat.materialSlots", "v": "Huecos de material" },
+    { "k": "rank.stat.bounds", "v": "Tamaño de los límites" },
+
+    { "k": "rank.stat.bones", "v": "Huesos" },
+    { "k": "rank.stat.animators", "v": "Animators" },
+    { "k": "rank.stat.constraints", "v": "Constraints" },
+    { "k": "rank.stat.constraintDepth", "v": "Profundidad de constraints" },
+
+    { "k": "rank.stat.pbComponents", "v": "Componentes PhysBone" },
+    { "k": "rank.stat.pbTransforms", "v": "Transforms de PhysBone" },
+    { "k": "rank.stat.pbColliders", "v": "Colisionadores PhysBone" },
+    { "k": "rank.stat.pbChecks", "v": "Comprobaciones de colisión PhysBone" },
+    { "k": "rank.stat.contacts", "v": "Contactos" },
+
+    { "k": "rank.stat.particleSystems", "v": "Sistemas de partículas" },
+    { "k": "rank.stat.particlesActive", "v": "Partículas activas" },
+    { "k": "rank.stat.meshParticlePolys", "v": "Polígonos de partículas de malla" },
+    { "k": "rank.stat.particleTrails", "v": "Estelas de partículas" },
+    { "k": "rank.stat.particleCollision", "v": "Colisión de partículas" },
+    { "k": "rank.stat.trailRenderers", "v": "Trail Renderers" },
+    { "k": "rank.stat.lineRenderers", "v": "Line Renderers" },
+
+    { "k": "rank.stat.lights", "v": "Luces" },
+    { "k": "rank.stat.audioSources", "v": "Fuentes de audio" },
+    { "k": "rank.stat.cloths", "v": "Cloths" },
+    { "k": "rank.stat.clothVertices", "v": "Vértices de Cloth" },
+    { "k": "rank.stat.physColliders", "v": "Colisionadores de física" },
+    { "k": "rank.stat.physRigidbodies", "v": "Rigidbodies" },
+    { "k": "rank.stat.raycasts", "v": "Raycasts" }
   ]
 }
