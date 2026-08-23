@@ -1,10 +1,10 @@
 {
   "name": "com.nekosune.worlds",
   "displayName": "NekoSune World Hub",
-  "version": "0.5.1",
-  "unity": "2022.3",
-  "description": "Base/template World Hub for NekoSune VRChat creator addons. Provides the shared menu, About page, localization and automatic addon discovery API.",
+  "version": "0.5.2",
+  "unity": "2021.3",
+  "description": "Base/template World Hub for NekoSune VRChat and ChilloutVR creator addons. Provides the shared menu, About page, localization and automatic addon discovery API.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
-  "keywords": ["vrchat","world","udon","hub","template","addon","nekosune"],
+  "keywords": ["vrchat","chilloutvr","world","udon","hub","template","addon","nekosune"],
   "hideInEditor": false
 }
