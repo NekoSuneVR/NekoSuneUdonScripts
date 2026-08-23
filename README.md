@@ -1,207 +1,226 @@
-# NekoSune Avatars
+# NekoSune Worlds
 
-A toolbox of VRChat **avatar** addons for the Unity Editor, all reachable from a single
-**NekoSune** menu in the menu bar (right next to *Tools*).
+World and Udon tooling for VRChat, packaged separately from the NekoSune avatar tools.
 
-World and Udon tooling is not part of this package — it lives in its own branch/package and
-installs alongside this one under the same **NekoSune** menu.
+**Package ID:** `com.nekosune.worlds`
 
-The first addon is **Lip Sync Studio** — drop in an avatar and an audio clip, press one button,
-and get a `.anim` that drives the avatar's mouth in time with the audio. It works with songs
-(backing music and all), with plain speech, and with avatars from Booth, Gumroad, VRoid, CATS
-exports, ARKit-blendshape avatars, or anything you rigged yourself.
+This branch is now a clean world-development starter. It does **not** contain Lip Sync Studio, avatar binders, visemes, avatar performance tools, or avatar-localization data.
 
----
+## Status
 
-## Install
+The package framework is ready for world features:
 
-### Via the VRChat Creator Companion (VPM)
+- VCC / VPM package manifest
+- VRChat Worlds SDK dependency
+- world-only editor assembly
+- `NekoSune → World → Hub`
+- reflection-based addon registry
+- localization framework with an English starter file
+- `Editor/World/` for world editor tooling
+- `Runtime/Udon/` for UdonSharp and runtime world content
+- GitHub Actions release workflow that creates a VPM-compatible ZIP
+- automatic rebuild of the shared VCC listing after a new world release
 
-1. Copy this folder into your project's `Packages/` directory as
-   `Packages/com.nekosune.avatars`, **or** add it as a local package from VCC.
-2. VCC / the package manager resolves `com.vrchat.avatars` for you.
-
-### Via the Unity Package Manager (UPM)
-
-*Window → Package Manager → + → Add package from disk…* and pick this folder's `package.json`.
-
-### Drop-in (no package manager)
-
-Copy the whole folder into `Assets/NekoSune/Avatars`. Everything lives under an
-Editor-only assembly definition, so it never ships in a build and never touches runtime code.
-
-**The VRChat SDK is optional.** Every SDK type is reached by reflection, so the package
-compiles and runs in a project with no VRChat SDK at all. When the SDK *is* present, the
-avatar descriptor is read first and its viseme mapping is used verbatim.
-
-Unity 2019.4 or newer.
+The included **World Template Guide** is scaffolding, not a finished world feature. It exists so the branch can be installed and used as a clean base for future tools.
 
 ---
 
-## Using Lip Sync Studio
+## Install with VRChat Creator Companion
 
-Open it from **NekoSune → Avatar → Lip Sync Studio**, from the **NekoSune → Hub** window,
-or by right-clicking an AudioClip in the Project window and choosing
-**NekoSune → Lip Sync from this audio**.
+The recommended install method is the shared NekoSune VCC repository:
 
-1. **Drop an avatar** into the top slot — a scene object or a prefab.
-2. **Drop an audio clip** into the second slot. The waveform strip appears with play/stop.
-3. Optionally pick a **preset** (Song / music, Speech, Anime, Subtle, Noisy recording) and
-   tweak the sliders.
-4. Press **Make lip sync**. The clip is written to the output folder and the green banner
-   links straight to it in the Project window.
-
-Then drop that `.anim` into an animator layer, a timeline, or wherever you drive it from.
-
-### What the settings do
-
-Every slider has a tooltip; the short version:
-
-| Setting | Effect |
-| --- | --- |
-| Volume → mouth | How much loudness drives how wide the mouth opens. At 0, every viseme plays at full size. |
-| Clarity | High values commit to one crisp viseme per frame instead of blending several. |
-| Consonants close mouth | How hard consonant frames pull the mouth shut. |
-| Strength | Overall amplitude of the whole animation. |
-| Offset, ms | Shifts the animation in time. Negative = mouth moves early. |
-| Attack / Release, ms | How fast the mouth reaches a new shape and relaxes back. |
-| Silence threshold | Anything quieter becomes the `sil` viseme. |
-| Liveliness | A small, deterministic wobble so held vowels don't look frozen. |
-| Frames per second | Keyframe rate of the baked clip. 30 is plenty. |
-| Quality | Analysis resolution. Higher separates consonants better and bakes slower. |
-| Clean vocal, no music | Turn on for an isolated voice track. **Leave it off for songs** — backing music is then suppressed before analysis. |
-| Reduce keyframes / tolerance | Drops keys a straight line already covers. Typical saving is 60–90% with no visible difference. |
-| Write the sil viseme | Turn off if the silence shape fights another animation layer. |
-| Normalize weights | Keeps the sum of all viseme weights at 100 or below. |
-| Start / End, s | Bake only a section of the clip. |
-
-### Targets
-
-The **Targets and output** section decides what actually gets animated:
-
-- **Automatic** — visemes if the avatar has them, otherwise the jaw bone, otherwise a single
-  mouth-open blendshape.
-- **VRC viseme blendshapes** — the 15 standard visemes (`sil, PP, FF, TH, DD, kk, CH, SS, nn,
-  RR, aa, E, ih, oh, ou`).
-- **Jaw bone** — rotates a bone on a chosen axis up to a chosen maximum angle.
-- **Single mouth-open shape** — for avatars with just one "mouth open" blendshape.
-
-The jaw bone and the single shape can also be driven *alongside* visemes with the
-**Also drive…** toggles.
-
-### How it finds the mouth on any avatar
-
-The **Avatar binding** section shows exactly what was found, in this order:
-
-1. **VRChat avatar descriptor** — read by reflection, including its viseme blendshape list,
-   its lip sync mode, and its jaw bone.
-2. **Blendshape name matching** — a fuzzy matcher that understands Booth, Gumroad, VRoid,
-   CATS and ARKit naming, common prefixes (`vrc.v_aa`, `Fcl_MTH_A`, `viseme_aa`, …), and
-   Japanese kana shapes (`あ い う え お`).
-3. **Humanoid jaw bone**, then a name search for a jaw-ish bone.
-4. **A single mouth-open blendshape** from a list of common names.
-
-Anything it gets wrong you can override by hand in that same section — each viseme has its own
-picker, and the green/red chips tell you at a glance what is mapped.
-
-### Why one preset works on every voice
-
-The analyzer measures the clip's own median first formant and rescales its vowel prototypes to
-that voice's vocal tract. A deep male voice, a high anime voice and a pitched-up song all land
-on the same vowel decisions without you touching a slider.
-
----
-
-## Adding a language
-
-Languages live one file per language in `Editor/Localization/Languages/`. To add one, copy
-`en.json`, rename it to the language code, translate the `v` values, and press
-**Reload languages** in the Hub — no recompile, no code change.
-
-```json
-{
-  "code": "nl",
-  "name": "Dutch",
-  "nativeName": "Nederlands",
-  "entries": [
-    { "k": "common.language", "v": "Taal" }
-  ]
-}
+```text
+https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
 ```
 
-You only need the keys you actually translated. Anything missing falls back to English, and
-anything missing from English falls back to the raw key, so a partial translation can never
-break the UI.
+1. Open **VRChat Creator Companion**.
+2. Go to **Settings → Packages**.
+3. Choose **Add Repository**.
+4. Paste the listing URL above.
+5. Open a VRChat Worlds project.
+6. Add **NekoSune Worlds** to the project.
 
-Shipping now: English, Русский, Español, Polski, Deutsch, Français, Italiano,
-Português (Brasil), Українська, 日本語, 한국어, 简体中文 — 120 keys each.
+VCC installs the release ZIP referenced by the generated VPM listing. The Git branch URL is not a VCC repository URL.
 
-The language is picked from Unity's system language on first run and remembered in
-`EditorPrefs` after that.
+### Unity Package Manager Git URL
+
+For development, Unity Package Manager can still install the branch directly:
+
+```text
+https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#world
+```
+
+That URL is for **Unity Package Manager**, not VCC.
+
+### Manual development clone
+
+```bash
+cd YourUnityProject/Packages
+git clone -b world https://github.com/NekoSuneVR/NekoSuneUdonScripts.git com.nekosune.worlds
+```
 
 ---
 
-## Adding an addon
+## Requirements
 
-Every window in the Hub is discovered by reflection. Implement `INekoAddon`, tag it, done —
-it shows up in the Hub grid under its category with no registry to edit:
+- Unity **2022.3** or newer
+- VRChat Worlds SDK through VCC / VPM
+- package dependency: `com.vrchat.worlds`
+
+The initial editor template does not directly reference VRChat SDK C# types, so the shared editor framework stays easy to extend. Add direct SDK/UdonSharp API usage inside the world feature that needs it.
+
+---
+
+## Menu
+
+After installation:
+
+- **NekoSune → World → Hub**
+- **NekoSune → World → Template Guide**
+
+The world menu intentionally has its own submenu so installing both `com.nekosune.avatars` and `com.nekosune.worlds` does not create duplicate `NekoSune → Hub` menu entries.
+
+---
+
+## Package layout
+
+```text
+package.json
+CHANGELOG.md
+README.md
+
+Editor/
+  NekoSune.Worlds.Editor.asmdef
+  Core/
+    NekoAddon.cs
+    NekoHubWindow.cs
+    NekoPaths.cs
+    NekoStyles.cs
+  Localization/
+    NekoLoc.cs
+    Languages/
+      en.json
+  World/
+    NekoWorldTemplateWindow.cs
+
+Runtime/
+  Udon/
+    README.md
+
+.github/
+  workflows/
+    release-world.yml
+```
+
+### Where future code goes
+
+Use `Editor/World/` for things that only run inside the Unity Editor, for example:
+
+- world setup builders
+- scene validators
+- Udon configuration helpers
+- prefab installers
+- lighting checks
+- performance checks
+- world upload helpers
+- inspectors and editor windows
+
+Use `Runtime/Udon/` for content that must exist in the built world, for example:
+
+- UdonSharp behaviours
+- runtime helper components
+- reusable prefabs
+- runtime data assets
+
+Do not put avatar-specific tools on this branch. Avatar tooling belongs on the `avatar` branch/package.
+
+---
+
+## Adding a world editor addon
+
+The Hub discovers addons automatically. Implement `INekoAddon` and add `[NekoAddon]`:
 
 ```csharp
-[NekoAddon(Order = 20)]
-internal class MyToolAddon : INekoAddon
+using UnityEditor;
+
+namespace NekoSune.Worlds.Editor
 {
-    public string Id           { get { return "mytool"; } }
-    public string TitleKey     { get { return "mytool.title"; } }
-    public string DescriptionKey { get { return "mytool.desc"; } }
-    public string CategoryKey  { get { return "cat.avatar"; } }
-    public string Glyph        { get { return "✦"; } }
-    public bool   IsAvailable  { get { return true; } }
-    public void   Open()       { MyToolWindow.Open(); }
+    [NekoAddon(Order = 20)]
+    internal sealed class MyWorldToolAddon : INekoAddon
+    {
+        public string Id { get { return "my-world-tool"; } }
+        public string TitleKey { get { return "mytool.title"; } }
+        public string DescriptionKey { get { return "mytool.desc"; } }
+        public string CategoryKey { get { return "cat.world"; } }
+        public string Glyph { get { return "W"; } }
+        public bool IsAvailable { get { return true; } }
+
+        public void Open()
+        {
+            MyWorldToolWindow.Open();
+        }
+    }
 }
 ```
 
-Add `mytool.title` and `mytool.desc` to `en.json` and the card is fully localized.
+Add the corresponding strings to `Editor/Localization/Languages/en.json`. More language files can be added later without changing the localization loader.
 
 ---
 
-## Layout
+## Adding UdonSharp features
 
+Keep Udon/runtime code separate from editor code. A suggested layout is:
+
+```text
+Runtime/Udon/
+  Behaviours/
+  Prefabs/
+  Data/
+
+Editor/World/
+  Builders/
+  Inspectors/
+  Validators/
 ```
-package.json                     VPM / UPM manifest
-Editor/
-  NekoSune.Avatars.Editor.asmdef    Editor-only assembly, no external references
-  Core/
-    NekoPaths.cs                 Finds the package root under Packages/ or Assets/
-    NekoAddon.cs                 [NekoAddon] attribute + reflection registry
-    NekoHubWindow.cs             The NekoSune menu-bar hub
-    NekoStyles.cs                Shared look and feel, runtime-generated textures
-  Localization/
-    NekoLoc.cs                   Loader, fallback chain, language switching
-    Languages/*.json             One file per language
-  LipSync/
-    NekoFFT.cs                   Allocation-free radix-2 FFT
-    NekoAudioReader.cs           Reads samples from compressed clips safely
-    NekoLipSyncAnalyzer.cs       Formants, consonants, music suppression, envelopes
-    NekoVisemes.cs               The 15 VRC visemes and their openness values
-    NekoAvatarBinder.cs          Descriptor → name matching → jaw → single shape
-    NekoAnimClipBuilder.cs       Curve building, key reduction, saving the .anim
-    NekoAudioPreview.cs          Editor audio preview
-    NekoLipSyncSettings.cs       Settings, presets, preset assets
-    NekoLipSyncWindow.cs         The Lip Sync Studio UI
-```
+
+If a future feature needs another VPM package, add it to `vpmDependencies` in `package.json` only when it becomes necessary.
 
 ---
 
-## Notes and limits
+## Releases and VCC listing
 
-- Reading a compressed clip temporarily flips its importer to `DecompressOnLoad` and reimports
-  it. The original import settings are always restored, including if the bake throws.
-- Baking is synchronous with a cancellable progress bar. A three-minute song at quality 6 takes
-  a few seconds.
-- The analyzer is a signal-processing estimator, not a phoneme recognizer. It reads clean vocals
-  extremely well, dense mixes reasonably well, and screamed or heavily distorted vocals poorly.
-  For a dense mix, leave **Clean vocal** off and raise **Clarity**.
-- Key reduction is lossy within the tolerance you set. Set the tolerance to 0 to keep every key.
+World releases use tags in this form:
+
+```text
+worlds-v0.1.0
+worlds-v0.2.0
+worlds-v1.0.0
+```
+
+The release workflow:
+
+1. reads the version from `package.json`;
+2. creates a ZIP with `package.json` at the ZIP root;
+3. publishes that ZIP as a GitHub Release asset;
+4. triggers the `main` branch VCC listing workflow.
+
+The main listing scans release ZIPs from this repository, so both Avatar and World packages can appear in the same VCC repository:
+
+```text
+https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
+```
+
+To publish an update, change the world package version in `package.json`. Existing released versions are never overwritten.
+
+---
+
+## Branches
+
+| Branch | Package | Purpose |
+| --- | --- | --- |
+| `avatar` | `com.nekosune.avatars` | VRChat avatar editor tools |
+| `world` | `com.nekosune.worlds` | VRChat world and Udon tools |
+| `main` | VPM listing | VCC repository and project landing page |
 
 ## License
 
