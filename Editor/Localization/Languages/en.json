@@ -12,6 +12,8 @@
     { "k": "hub.open", "v": "Open" },
     { "k": "hub.reloadLanguages", "v": "Reload languages" },
     { "k": "cat.avatar", "v": "Avatar" },
+    { "k": "mesh.title", "v": "Mesh Compressor" },
+    { "k": "mesh.desc", "v": "Safe mesh cleanup, compression, material-slot merging, and Quest readiness" },
 
     { "k": "lipsync.title", "v": "Lip Sync Studio" },
     { "k": "lipsync.desc", "v": "Bake a viseme .anim from any audio clip" },
