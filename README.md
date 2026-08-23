@@ -1,12 +1,12 @@
 # NekoSune Doctors
 
-**Package ID:** `com.nekosune.doctors`
+Auto-registering diagnostic addon for both the Avatar Hub and World Hub.
 
-Diagnostics are now one dedicated package instead of being mixed into Avatar/World/Optimizer.
+**Package ID:** `com.nekosune.doctors`
 
 ## Avatar Doctors
 
-- Avatar / Preflight Doctor
+- Avatar Doctor / Preflight
 - PhysBone Doctor
 - Face Tracking Doctor
 - Expression + Animator Doctor
@@ -16,10 +16,6 @@ Diagnostics are now one dedicated package instead of being mixed into Avatar/Wor
 - World Doctor
 - Udon Network Doctor
 
-Optimization actions live in **NekoSune Optimizer**. ChilloutVR/Resonite conversion lives in **NekoSune Converters**.
+The package owns diagnostics only. It depends on the base Avatar/World Hubs for menus/UI and on Avatar Tools for shared avatar performance/reflection analysis.
 
-Install from:
-
-```text
-https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
-```
+VCC repository: `https://nekosunevr.github.io/NekoSuneUdonScripts/index.json`

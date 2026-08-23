@@ -1,8 +1,12 @@
 # Changelog
 
+## 1.1.0
+
+- Rebased all Doctor cards on the dedicated Avatar and World Hub APIs.
+- Removed the World Tools assembly dependency.
+- Kept Avatar diagnostics connected to the shared Avatar Tools analysis API.
+- Doctors remain independently installable from Optimizer and Converters.
+
 ## 1.0.0
 
-- Split all avatar/world diagnostic and preflight tools into `com.nekosune.doctors`.
-- Avatar: Preflight, PhysBone, Face Tracking, Expression/Animator Doctors.
-- World: World Doctor and Udon Network Doctor.
-- Removed optimization and conversion responsibilities from the Doctors package.
+Initial modular Doctors release.

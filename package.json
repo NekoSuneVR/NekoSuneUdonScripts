@@ -1,11 +1,15 @@
 {
   "name": "com.nekosune.doctors",
   "displayName": "NekoSune Doctors",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "unity": "2022.3",
-  "description": "Diagnostic/preflight suite for VRChat avatars and worlds: Avatar, PhysBone, Face Tracking, Expression/Animator, World and Udon Network Doctors.",
+  "description": "Auto-registering Avatar + World diagnostic addon: Avatar, PhysBone, Face Tracking, Expression/Animator, World and Udon Network Doctors.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
-  "keywords": ["vrchat","doctor","diagnostics","avatar","world","udon","physbone","animator","face-tracking","preflight"],
-  "vpmDependencies": {"com.nekosune.avatar-tools": ">=1.0.0", "com.nekosune.world-tools": ">=1.0.0"},
+  "keywords": ["vrchat","addon","doctor","diagnostics","avatar","world","udon","physbone","animator","face-tracking","preflight"],
+  "vpmDependencies": {
+    "com.nekosune.avatars": ">=0.7.0",
+    "com.nekosune.worlds": ">=0.5.0",
+    "com.nekosune.avatar-tools": ">=1.1.0"
+  },
   "hideInEditor": false
 }
