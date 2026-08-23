@@ -68,7 +68,9 @@ namespace NekoSune.WorldUI.Editor
             if (feed == null) return null;
             string folder = EnsureFolder("Assets/NekoSune/WorldUI/Data");
             string path = AssetDatabase.GenerateUniqueAssetPath(folder + "/" + SafeFile(suggestedName) + ".json");
-            File.WriteAllText(Path.GetFullPath(path), JsonUtility.ToJson(feed, true), Encoding.UTF8);
+            string projectRoot = Directory.GetParent(Application.dataPath).FullName;
+            string absolute = Path.Combine(projectRoot, path.Replace('/', Path.DirectorySeparatorChar));
+            File.WriteAllText(absolute, JsonUtility.ToJson(feed, true), Encoding.UTF8);
             AssetDatabase.ImportAsset(path);
             return path;
         }
@@ -76,10 +78,13 @@ namespace NekoSune.WorldUI.Editor
         public static void GenerateVrchatStarterPack()
         {
             string folder = EnsureFolder("Assets/NekoSune/WorldUI/Generated");
+            string projectRoot = Directory.GetParent(Application.dataPath).FullName;
             string jsonPath = folder + "/NekoWorldUiVrchatJsonFeed.cs";
             string imagePath = folder + "/NekoWorldUiVrchatImageFeed.cs";
-            if (!File.Exists(Path.GetFullPath(jsonPath))) File.WriteAllText(Path.GetFullPath(jsonPath), VrchatJsonSource, Encoding.UTF8);
-            if (!File.Exists(Path.GetFullPath(imagePath))) File.WriteAllText(Path.GetFullPath(imagePath), VrchatImageSource, Encoding.UTF8);
+            string jsonAbsolute = Path.Combine(projectRoot, jsonPath.Replace('/', Path.DirectorySeparatorChar));
+            string imageAbsolute = Path.Combine(projectRoot, imagePath.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(jsonAbsolute)) File.WriteAllText(jsonAbsolute, VrchatJsonSource, Encoding.UTF8);
+            if (!File.Exists(imageAbsolute)) File.WriteAllText(imageAbsolute, VrchatImageSource, Encoding.UTF8);
             AssetDatabase.Refresh();
             EditorUtility.DisplayDialog("NekoSune World UI Builder", "Generated VRChat UdonSharp starter scripts under:\n\n" + folder + "\n\nUnity/UdonSharp will compile them if the VRChat Worlds SDK is installed. Add the generated behaviour to a helper GameObject and assign the row/image slots made by the UI Builder.", "OK");
         }
@@ -165,6 +170,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDK3.Image;
 using VRC.SDKBase;
+using VRC.Udon.Common.Interfaces;
 
 public class NekoWorldUiVrchatImageFeed : UdonSharpBehaviour
 {
@@ -184,7 +190,7 @@ public class NekoWorldUiVrchatImageFeed : UdonSharpBehaviour
         for (int i = 0; i < count; i++)
         {
             if (VRCUrl.IsNullOrEmpty(imageUrls[i])) continue;
-            _downloader.DownloadImage(imageUrls[i], null, this, new TextureInfo());
+            _downloader.DownloadImage(imageUrls[i], null, (IUdonEventReceiver)this, new TextureInfo());
         }
     }
 
@@ -203,7 +209,7 @@ public class NekoWorldUiVrchatImageFeed : UdonSharpBehaviour
 
     public override void OnImageLoadError(IVRCImageDownload result)
     {
-        Debug.LogError(\"[NekoSune World UI] Image download failed: \" + result.ErrorCode + \" - \" + result.Error);
+        Debug.LogError(\"[NekoSune World UI] Image download failed: \" + result.Error + \" - \" + result.ErrorMessage);
     }
 
     void OnDestroy()
