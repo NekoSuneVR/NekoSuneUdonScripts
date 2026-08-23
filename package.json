@@ -1,7 +1,7 @@
 {
   "name": "com.nekosune.world-tools",
   "displayName": "NekoSune World Tools",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "unity": "2022.3",
   "description": "Lightweight NekoSune world creator framework and template utilities shared by the modular Optimizer, Doctors and Converters packages.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
