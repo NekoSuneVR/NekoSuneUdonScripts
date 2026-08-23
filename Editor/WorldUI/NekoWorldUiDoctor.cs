@@ -88,15 +88,15 @@ namespace NekoSune.WorldUI.Editor
             if (_root.GetComponent<GraphicRaycaster>() == null)
                 Add(MessageType.Error, "Missing GraphicRaycaster", "Buttons/Toggles/Sliders need a GraphicRaycaster for Unity UI pointer interaction.", _root);
 
-            if ((_platform == NekoWorldUiPlatform.VRChat || _platform == NekoWorldUiPlatform.Both) && NekoWorldUiPlatform.FindType("VRCUiShape", "VRC_UIShape") != null)
+            if ((_platform == NekoWorldUiPlatform.VRChat || _platform == NekoWorldUiPlatform.Both) && NekoWorldUiPlatformBridge.FindType("VRCUiShape", "VRC_UIShape") != null)
             {
-                Type t = NekoWorldUiPlatform.FindType("VRCUiShape", "VRC_UIShape");
+                Type t = NekoWorldUiPlatformBridge.FindType("VRCUiShape", "VRC_UIShape");
                 if (t != null && _root.GetComponent(t) == null) Add(MessageType.Warning, "Missing VRChat UI Shape", "VRChat interactive world-space Canvas setup is incomplete.", _root);
             }
 
-            if ((_platform == NekoWorldUiPlatform.ChilloutVR || _platform == NekoWorldUiPlatform.Both) && NekoWorldUiPlatform.FindType("CVRCanvasWrapper") != null)
+            if ((_platform == NekoWorldUiPlatform.ChilloutVR || _platform == NekoWorldUiPlatform.Both) && NekoWorldUiPlatformBridge.FindType("CVRCanvasWrapper") != null)
             {
-                Type t = NekoWorldUiPlatform.FindType("CVRCanvasWrapper");
+                Type t = NekoWorldUiPlatformBridge.FindType("CVRCanvasWrapper");
                 if (t != null && _root.GetComponent(t) == null) Add(MessageType.Warning, "Missing CVR Canvas Wrapper", "ChilloutVR world-space Canvas setup is incomplete.", _root);
             }
 
@@ -120,7 +120,7 @@ namespace NekoSune.WorldUI.Editor
             {
                 NekoWorldUiAction action;
                 string value;
-                if (!NekoWorldUiPlatform.TryParseMeta(buttons[i].gameObject.name, out action, out value))
+                if (!NekoWorldUiPlatformBridge.TryParseMeta(buttons[i].gameObject.name, out action, out value))
                 {
                     if (buttons[i].onClick.GetPersistentEventCount() == 0) noAction++;
                     continue;
@@ -153,7 +153,7 @@ namespace NekoSune.WorldUI.Editor
             }
             if (_root.GetComponent<GraphicRaycaster>() == null) Undo.AddComponent<GraphicRaycaster>(_root);
             List<string> notes = new List<string>();
-            NekoWorldUiPlatform.ApplyPlatform(_root, _platform, notes);
+            NekoWorldUiPlatformBridge.ApplyPlatform(_root, _platform, notes);
             if (notes.Count > 0) Debug.Log("[NekoSune World UI Doctor]\n- " + string.Join("\n- ", notes.ToArray()), _root);
             Scan();
         }
