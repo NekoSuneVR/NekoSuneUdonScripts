@@ -1,5 +1,6 @@
 using NekoSune.Worlds.Editor;
 using UnityEditor;
+using UnityEngine;
 
 [NekoAddon(Order = 100)]
 public sealed class MyWorldAddon : INekoAddon
@@ -10,5 +11,22 @@ public sealed class MyWorldAddon : INekoAddon
     public string CategoryKey => "cat.world";
     public string Glyph => "+";
     public bool IsAvailable => true;
-    public void Open() => EditorApplication.ExecuteMenuItem("NekoSune/World/My Addon");
+    public void Open() => MyWorldAddonWindow.Open();
+}
+
+public sealed class MyWorldAddonWindow : EditorWindow
+{
+    [MenuItem("NekoSune/World/My Addon", false, 100)]
+    public static void Open()
+    {
+        var window = GetWindow<MyWorldAddonWindow>(false, "My World Addon", true);
+        window.minSize = new Vector2(420f, 260f);
+        window.Show();
+    }
+
+    void OnGUI()
+    {
+        GUILayout.Label("My World Addon", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox("Replace this window with your feature. The Hub card and NekoSune menu entry are already wired.", MessageType.Info);
+    }
 }
