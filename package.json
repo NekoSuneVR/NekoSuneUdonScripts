@@ -1,39 +1,17 @@
 {
   "name": "com.nekosune.worlds",
-  "displayName": "NekoSune Worlds",
-  "version": "0.3.1",
+  "displayName": "NekoSune Worlds Bundle",
+  "version": "0.4.0",
   "unity": "2022.3",
-  "description": "VRChat Worlds creator toolbox with World Doctor, Udon networking diagnostics, and the world-owned non-destructive ChilloutVR CCK 3/4 world converter.",
-  "author": {
-    "name": "NekoSuneVR",
-    "email": "contact@nekosunevr.co.uk",
-    "url": "https://github.com/NekoSuneVR"
-  },
-  "keywords": [
-    "vrchat",
-    "world",
-    "worlds",
-    "udon",
-    "udonsharp",
-    "optimization",
-    "quest",
-    "networking",
-    "chilloutvr",
-    "cck3",
-    "cck4",
-    "converter",
-    "interactable",
-    "mirror",
-    "station",
-    "video-player",
-    "editor",
-    "tools"
-  ],
+  "description": "Compatibility bundle for the modular NekoSune world suite. Installs World Tools, Optimizer, Doctors and Converters while preserving the original package ID.",
+  "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
+  "keywords": ["vrchat","world","bundle","udon","nekosune"],
   "vpmDependencies": {
-    "com.vrchat.worlds": ">=3.5.0"
-  },
-  "legacyFolders": {
-    "Assets\\NekoSune\\Worlds": ""
+    "com.vrchat.worlds": ">=3.5.0",
+    "com.nekosune.world-tools": ">=1.0.0",
+    "com.nekosune.optimizer": ">=1.0.0",
+    "com.nekosune.doctors": ">=1.0.0",
+    "com.nekosune.converters": ">=1.0.0"
   },
   "hideInEditor": false
 }
