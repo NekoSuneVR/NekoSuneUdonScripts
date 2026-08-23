@@ -1,31 +1,22 @@
 # NekoSune Optimizer
 
+Installable addon for both the NekoSune Avatar Hub and World Hub.
+
 **Package ID:** `com.nekosune.optimizer`
 
-One optimization package for the NekoSune suite.
+## Avatar modules
 
-## Avatar optimization
-
-- `NekoSune → Avatar → Compressor`
-- Mesh Compression / safe mesh cleanup
-- Quest Assistant
+- Compressor
+- Mesh Compression
+- PC → Quest Assistant
 - VRAM / Texture Inspector
-- Android-only texture overrides
-- particle/PhysBone cleanup assistance
 
-Rank calculations come from **NekoSune Avatar Tools**, keeping Rank Advisor and Optimizer on the same performance model.
+## World modules
 
-## World optimization
+- World Optimizer
 
-- `NekoSune → World → Optimizer`
-- scene triangle/material/texture estimates
-- large-texture review
-- realtime light/shadow review
-- particle/audio counts
-- performance advisories separated from World Doctor/build checks
+The package registers cards automatically with both base Hubs. It does not own either Hub and does not contain duplicate Core/menu code.
 
-## Install
+Optimizer depends on Avatar Tools for the shared Rank/performance API. Doctor buttons are optional navigation shims: Doctors does not need to be installed for Optimizer to compile.
 
-```text
-https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
-```
+VCC repository: `https://nekosunevr.github.io/NekoSuneUdonScripts/index.json`

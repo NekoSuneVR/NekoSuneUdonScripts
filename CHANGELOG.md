@@ -1,7 +1,12 @@
 # Changelog
 
+## 1.1.0
+
+- Rebased Optimizer on the dedicated Avatar and World Hub assemblies.
+- Removed the unnecessary World Tools assembly dependency.
+- Kept Avatar performance analysis through the Avatar Tools shared API.
+- Optimizer remains independent from Doctors through menu-navigation shims.
+
 ## 1.0.0
 
-- Split avatar Compressor, Mesh Optimization, Quest Assistant and VRAM/Texture Inspector into `com.nekosune.optimizer`.
-- Added a dedicated World Optimizer so performance work is separate from World Doctor.
-- Uses Avatar Tools and World Tools as shared framework dependencies.
+Initial modular Optimizer release.
