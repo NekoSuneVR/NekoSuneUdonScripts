@@ -1,0 +1,14 @@
+{
+  "name": "NekoSune.Doctors.Editor",
+  "rootNamespace": "NekoSune",
+  "references": ["NekoSune.AvatarTools.Editor", "NekoSune.WorldTools.Editor"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

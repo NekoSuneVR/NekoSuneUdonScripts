@@ -1,49 +1,11 @@
 {
-  "name": "com.nekosune.avatars",
-  "displayName": "NekoSune Avatars",
-  "version": "0.5.2",
-  "unity": "2019.4",
-  "description": "VRChat avatar creation, diagnostics and conversion toolbox with Rank-driven Compressor, Quest tools, Resonite export, and ChilloutVR CCK 3/4 avatar + prop conversion. World CCK conversion is shipped only in com.nekosune.worlds.",
-  "author": {
-    "name": "NekoSuneVR",
-    "email": "contact@nekosunevr.co.uk",
-    "url": "https://github.com/NekoSuneVR"
-  },
-  "keywords": [
-    "vrchat",
-    "avatar",
-    "avatars",
-    "diagnostics",
-    "preflight",
-    "compressor",
-    "compression",
-    "quest",
-    "mobile",
-    "physbone",
-    "vram",
-    "texture",
-    "particles",
-    "face-tracking",
-    "vrcft",
-    "animator",
-    "expressions",
-    "resonite",
-    "chilloutvr",
-    "cck3",
-    "cck4",
-    "prop",
-    "spawnable",
-    "mesh",
-    "optimizer",
-    "lipsync",
-    "performance"
-  ],
-  "vpmDependencies": {
-    "com.vrchat.avatars": ">=3.5.0"
-  },
-  "legacyFolders": {
-    "Assets\\NekoSune\\Avatars": "",
-    "Assets\\NekoSune\\UdonScripts": ""
-  },
+  "name": "com.nekosune.doctors",
+  "displayName": "NekoSune Doctors",
+  "version": "1.0.0",
+  "unity": "2022.3",
+  "description": "Diagnostic/preflight suite for VRChat avatars and worlds: Avatar, PhysBone, Face Tracking, Expression/Animator, World and Udon Network Doctors.",
+  "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
+  "keywords": ["vrchat","doctor","diagnostics","avatar","world","udon","physbone","animator","face-tracking","preflight"],
+  "vpmDependencies": {"com.nekosune.avatar-tools": ">=1.0.0", "com.nekosune.world-tools": ">=1.0.0"},
   "hideInEditor": false
 }
