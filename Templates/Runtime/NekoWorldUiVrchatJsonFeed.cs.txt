@@ -1,0 +1,59 @@
+using UdonSharp;
+using UnityEngine;
+using UnityEngine.UI;
+using VRC.SDK3.Data;
+using VRC.SDK3.StringLoading;
+using VRC.SDKBase;
+
+public class NekoWorldUiVrchatJsonFeed : UdonSharpBehaviour
+{
+    public VRCUrl jsonUrl;
+    public Text[] rows;
+    public string titleKey = "title";
+    public string subtitleKey = "subtitle";
+    public string descriptionKey = "description";
+
+    public void RefreshJson()
+    {
+        if (VRCUrl.IsNullOrEmpty(jsonUrl)) return;
+        VRCStringDownloader.LoadUrl(jsonUrl, this);
+    }
+
+    public override void OnStringLoadSuccess(IVRCStringDownload result)
+    {
+        DataToken rootToken;
+        if (!VRCJson.TryDeserializeFromJson(result.Result, out rootToken)) return;
+
+        DataDictionary root = rootToken.DataDictionary;
+        DataToken itemsToken;
+        if (!root.TryGetValue("items", out itemsToken)) return;
+
+        DataList items = itemsToken.DataList;
+        int count = rows.Length < items.Count ? rows.Length : items.Count;
+        for (int i = 0; i < count; i++)
+        {
+            DataDictionary item = items[i].DataDictionary;
+            string title = GetString(item, titleKey);
+            string subtitle = GetString(item, subtitleKey);
+            string description = GetString(item, descriptionKey);
+            rows[i].text = title
+                + (subtitle == "" ? "" : "\n" + subtitle)
+                + (description == "" ? "" : "\n" + description);
+            rows[i].gameObject.SetActive(true);
+        }
+
+        for (int i = count; i < rows.Length; i++) rows[i].gameObject.SetActive(false);
+    }
+
+    public override void OnStringLoadError(IVRCStringDownload result)
+    {
+        Debug.LogError("[NekoSune World UI] JSON download failed: " + result.ErrorCode + " - " + result.Error);
+    }
+
+    private string GetString(DataDictionary item, string key)
+    {
+        DataToken token;
+        if (!item.TryGetValue(key, out token)) return "";
+        return token.String;
+    }
+}
