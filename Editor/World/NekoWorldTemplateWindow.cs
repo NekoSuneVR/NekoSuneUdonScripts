@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace NekoSune.Worlds.Editor
 {
-    [NekoAddon(Order = 0)]
+    [NekoAddon(Order = 100)]
     internal sealed class NekoWorldTemplateAddon : INekoAddon
     {
         public string Id { get { return "world-template"; } }
@@ -22,7 +22,7 @@ namespace NekoSune.Worlds.Editor
 
     internal sealed class NekoWorldTemplateWindow : EditorWindow
     {
-        [MenuItem(NekoPaths.MenuRoot + "World/Template Guide", false, 10)]
+        [MenuItem(NekoPaths.MenuRoot + "World/Template Guide", false, 100)]
         public static void Open()
         {
             var window = GetWindow<NekoWorldTemplateWindow>(false, "World Template", true);
@@ -39,11 +39,11 @@ namespace NekoSune.Worlds.Editor
             EditorGUILayout.HelpBox(NekoLoc.T("template.ready.desc"), MessageType.Info);
 
             GUILayout.Space(8f);
-            GUILayout.Label("Starter layout", EditorStyles.boldLabel);
+            GUILayout.Label("Current layout", EditorStyles.boldLabel);
             EditorGUILayout.SelectableLabel(
                 "Editor/Core/                 Shared editor framework\n" +
                 "Editor/Localization/         Localized editor text\n" +
-                "Editor/World/                World-specific editor tools\n" +
+                "Editor/World/                World Doctor + networking/editor tools\n" +
                 "Runtime/Udon/                UdonSharp/world runtime content\n" +
                 "package.json                 VPM manifest",
                 EditorStyles.textArea,
