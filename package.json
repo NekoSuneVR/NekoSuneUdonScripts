@@ -1,49 +1,17 @@
 {
   "name": "com.nekosune.avatars",
-  "displayName": "NekoSune Avatars",
-  "version": "0.5.2",
+  "displayName": "NekoSune Avatars Bundle",
+  "version": "0.6.0",
   "unity": "2019.4",
-  "description": "VRChat avatar creation, diagnostics and conversion toolbox with Rank-driven Compressor, Quest tools, Resonite export, and ChilloutVR CCK 3/4 avatar + prop conversion. World CCK conversion is shipped only in com.nekosune.worlds.",
-  "author": {
-    "name": "NekoSuneVR",
-    "email": "contact@nekosunevr.co.uk",
-    "url": "https://github.com/NekoSuneVR"
-  },
-  "keywords": [
-    "vrchat",
-    "avatar",
-    "avatars",
-    "diagnostics",
-    "preflight",
-    "compressor",
-    "compression",
-    "quest",
-    "mobile",
-    "physbone",
-    "vram",
-    "texture",
-    "particles",
-    "face-tracking",
-    "vrcft",
-    "animator",
-    "expressions",
-    "resonite",
-    "chilloutvr",
-    "cck3",
-    "cck4",
-    "prop",
-    "spawnable",
-    "mesh",
-    "optimizer",
-    "lipsync",
-    "performance"
-  ],
+  "description": "Compatibility bundle for the modular NekoSune avatar suite. Installs Avatar Tools, Optimizer, Doctors and Converters while keeping the original package ID for existing users.",
+  "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
+  "keywords": ["vrchat","avatar","bundle","nekosune"],
   "vpmDependencies": {
-    "com.vrchat.avatars": ">=3.5.0"
-  },
-  "legacyFolders": {
-    "Assets\\NekoSune\\Avatars": "",
-    "Assets\\NekoSune\\UdonScripts": ""
+    "com.vrchat.avatars": ">=3.5.0",
+    "com.nekosune.avatar-tools": ">=1.0.0",
+    "com.nekosune.optimizer": ">=1.0.0",
+    "com.nekosune.doctors": ">=1.0.0",
+    "com.nekosune.converters": ">=1.0.0"
   },
   "hideInEditor": false
 }
