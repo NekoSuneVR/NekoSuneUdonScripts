@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace NekoSune.WorldUI.Editor
 {
-    internal static class NekoWorldUiPlatform
+    internal static class NekoWorldUiPlatformBridge
     {
         public static bool HasVRChatWorldSdk { get { return FindType("VRCUiShape", "VRC_UIShape", "VRCSceneDescriptor") != null; } }
         public static bool HasChilloutVR { get { return FindType("CVRCanvasWrapper", "CVRWorld") != null; } }
