@@ -1,333 +1,307 @@
 # NekoSune Avatars
 
-A toolbox of VRChat **avatar** addons for the Unity Editor, all reachable from a single
-**NekoSune** menu in the menu bar (right next to *Tools*).
+A Unity Editor toolbox for VRChat avatar creation, diagnostics, optimization, Quest preparation, face tracking, and cross-platform conversion.
 
-World and Udon tooling is not part of this package — it lives in its own branch/package and
-installs alongside this one under the same **NekoSune** menu.
+**Package ID:** `com.nekosune.avatars`
 
-**Lip Sync Studio** — drop in an avatar and an audio clip, press one button, and get a `.anim`
-that drives the avatar's mouth in time with the audio. It works with songs (backing music and
-all), with plain speech, and with avatars from Booth, Gumroad, VRoid, CATS exports,
-ARKit-blendshape avatars, or anything you rigged yourself.
+World/Udon tooling is shipped separately as `com.nekosune.worlds`.
 
-**Rank Advisor** — drop in an avatar and see its VRChat performance rank for PC *and* Quest,
-every statistic behind it, and the exact list of things that have to come down before the rank
-moves. Read-only; the one change it will make for you is opt-in.
+## Install with VRChat Creator Companion
 
----
-
-## Install
-
-### Via VRChat Creator Companion (VCC / VPM)
-
-VCC does **not** install this package by using this Git URL as a repository:
-
-```text
-https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#avatar
-```
-
-It also does not use this branch's `package.json` as a repository URL. VCC expects a VPM
-**package listing** (`index.json`) which points at compatible release ZIP files.
-
-Add this repository URL to VCC:
+Add the shared NekoSune VPM repository to VCC:
 
 ```text
 https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
 ```
 
-Then:
+Then open an avatar project and add **NekoSune Avatars**.
 
-1. Open **VCC → Settings → Packages**.
-2. Add the repository URL above under the user/community repositories section.
-3. Open your VRChat avatar project.
-4. Add **NekoSune Avatars** (`com.nekosune.avatars`).
-
-The release ZIP used by VCC is generated from this branch with `package.json` at the ZIP root,
-which is required by the VPM listing builder.
-
-### Via Unity Package Manager (Git URL)
-
-The Git URL **is valid for Unity Package Manager**; it just is not a VCC repository URL.
-
-In Unity open **Window → Package Manager → + → Add package from git URL…** and enter:
+For development through Unity Package Manager you can use:
 
 ```text
 https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#avatar
 ```
 
-You can also use **Add package from disk…** and select this branch's `package.json` after
-downloading/cloning it locally.
+The Git URL is a UPM URL, not a VCC repository URL.
 
-### Drop-in (no package manager)
+## Avatar tools
 
-Copy the whole folder into `Assets/NekoSune/Avatars`. Everything lives under an
-Editor-only assembly definition, so it never ships in a build and never touches runtime code.
+Everything is available from **NekoSune → Hub** and the **NekoSune → Avatar** submenu.
 
-**The VRChat SDK is optional.** Every SDK type is reached by reflection, so the package
-compiles and runs in a project with no VRChat SDK at all. When the SDK *is* present, the
-avatar descriptor is read first and its viseme mapping is used verbatim.
+### Avatar Doctor
 
-Unity 2019.4 or newer.
+`NekoSune → Avatar → Avatar Doctor`
 
----
+A preflight pass for answering “what is actually wrong with this avatar?” before upload.
 
-## Publishing a VCC release
+Checks include:
 
-The `avatar` branch contains `.github/workflows/release-avatar.yml`.
+- missing `VRCAvatarDescriptor`, root Animator, rig and viewpoint setup;
+- Expression Parameters presence, duplicate names, synced-bit budget and parameter count;
+- recursive Expressions Menu validation, missing parameters, empty submenus and overfilled menus;
+- Animator/Expression parameter type mismatches;
+- mixed Write Defaults;
+- Mesh Read/Write failures;
+- current PC and Quest/mobile performance rank;
+- large texture/VRAM offenders;
+- materials which do not use VRChat Mobile avatar shaders;
+- PC-only/mobile-stripped components;
+- optional PC ↔ Quest parameter-order/type consistency checks.
 
-To publish a new version:
+It reuses the same measurements as Rank Advisor so the two tools do not maintain conflicting performance calculations.
 
-1. Make your changes on `avatar`.
-2. Change the semantic `version` in `package.json`.
-3. Push the `package.json` change, or manually run **Build Avatar Release** from GitHub Actions.
-4. The workflow creates a release ZIP shaped like this:
+### PC → Quest Assistant
+
+`NekoSune → Avatar → PC to Quest Assistant`
+
+Builds a conversion plan from the current mobile performance blockers and can create a **separate Quest copy** without touching the PC hierarchy.
+
+Safe automatic operations include:
+
+- duplicate the source avatar as `<name> [Quest]`;
+- remove components which are not useful/supported on the mobile avatar copy;
+- duplicate unsupported materials instead of modifying the PC materials;
+- convert duplicated materials to an available `VRChat/Mobile/*` avatar shader;
+- preserve common main texture, colour and emission data where the target shader supports it;
+- create Android-only texture import overrides at 512, 1024 or 2048;
+- compare the PC and Quest Expression Parameters order/type.
+
+It deliberately does **not** blindly delete triangles. Meshes which exceed mobile budgets are reported as topology/retopology work instead of being destructively damaged.
+
+Generated Quest materials are stored under:
 
 ```text
-com.nekosune.avatars-0.1.0.zip
-├── package.json
-├── CHANGELOG.md
-├── README.md
-└── Editor/
-    └── ...
+Assets/NekoSune/Avatars/QuestGenerated/
 ```
 
-5. The VCC listing on `main` is rebuilt so Creator Companion can see the new version.
+### PhysBone Doctor
 
-Do not delete old VPM releases after publishing them because existing projects can depend on
-those exact versions.
+`NekoSune → Avatar → PhysBone Doctor`
 
----
+Shows which PhysBones are responsible for the most mobile cost:
 
-## Using Lip Sync Studio
+- component count;
+- estimated affected transforms per chain;
+- assigned colliders;
+- estimated transform × collider collision checks;
+- unused PhysBone colliders;
+- multiple PhysBones sharing the same root, which are review/merge candidates;
+- mobile Good/Poor targets beside the measurements.
 
-Open it from **NekoSune → Avatar → Lip Sync Studio**, from the **NekoSune → Hub** window,
-or by right-clicking an AudioClip in the Project window and choosing
-**NekoSune → Lip Sync from this audio**.
+The transform/collision-check numbers are estimates because the exact SDK calculation has implementation details which are not completely represented by a simple hierarchy walk.
 
-1. **Drop an avatar** into the top slot — a scene object or a prefab.
-2. **Drop an audio clip** into the second slot. The waveform strip appears with play/stop.
-3. Optionally pick a **preset** (Song / music, Speech, Anime, Subtle, Noisy recording) and
-   tweak the sliders.
-4. Press **Make lip sync**. The clip is written to the output folder and the green banner
-   links straight to it in the Project window.
+### VRAM / Texture Inspector
 
-Then drop that `.anim` into an animator layer, a timeline, or wherever you drive it from.
+`NekoSune → Avatar → VRAM and Texture Inspector`
 
-### What the settings do
+Lists every unique texture used by the avatar, sorted by estimated loaded memory.
 
-Every slider has a tooltip; the short version:
+For each texture it shows:
 
-| Setting | Effect |
+- resolution;
+- estimated loaded memory;
+- TextureImporter compression;
+- importer maximum size;
+- mipmap state;
+- unique material usage count;
+- estimated memory if the largest dimension were reduced to 2048 or 1024.
+
+It can create **Android platform overrides only**, so reducing a Quest texture does not have to reduce the PC texture import.
+
+Runtime-memory figures are estimates. VRChat's final platform-compressed accounting can differ, so use Rank Advisor and the VRChat SDK Builder for the final performance verdict.
+
+### Face Tracking Doctor
+
+`NekoSune → Avatar → Face Tracking Doctor`
+
+Scans the avatar's actual blendshapes for common ARKit/Unified Expressions coverage across:
+
+- eyes and eyelids;
+- brows;
+- cheeks and nose;
+- jaw/mouth;
+- tongue.
+
+It also checks for a core set of **VRCFaceTracking v2** parameters and can add missing entries to the assigned VRChat Expression Parameters asset as **local, unsynced Float parameters**.
+
+The setup button does not fabricate missing blendshapes or silently create expression animation mappings. It prepares the parameter side and shows what facial data the model actually contains.
+
+### Expression + Animator Doctor
+
+`NekoSune → Avatar → Expression and Animator Doctor`
+
+A deeper expressions/FX debugging pass than Avatar Doctor.
+
+It checks:
+
+- synced Expression Parameter budget;
+- duplicate Expression/Animator parameter names;
+- recursive menu references;
+- puppet sub-parameters and Float compatibility;
+- the eight-controls-per-menu rule;
+- empty submenus;
+- Expression ↔ Animator parameter type mismatches;
+- transition conditions which reference missing Animator parameters;
+- mixed Write Defaults;
+- unconditional/suspicious Any State transitions;
+- potentially unreachable states;
+- Parameter Driver states which write the same parameter multiple times;
+- apparently unused parameters, while noting that OSC, contacts and build-time tools can make those false positives.
+
+A plain-text report can be copied for debugging/commission support.
+
+### Mesh Compressor
+
+`NekoSune → Avatar → Mesh Compressor`
+
+Non-destructive mesh optimization and Quest readiness checks.
+
+- scans triangles, vertices, submeshes/material slots, blendshapes and Read/Write state;
+- removes degenerate triangles without rewriting the vertex topology;
+- merges submeshes which already use the exact same material;
+- creates optimized mesh copies instead of overwriting FBX/model sources;
+- offers Unity ModelImporter mesh-compression presets;
+- protects blendshape-heavy facial meshes from unsafe vertex-order optimization;
+- reports meshes which genuinely need decimation/retopology instead of pretending file compression reduces triangles.
+
+Optimized copies are written under:
+
+```text
+Assets/NekoSune/Avatars/OptimizedMeshes/
+```
+
+### Rank Advisor
+
+`NekoSune → Avatar → Rank Advisor`
+
+Computes the VRChat performance rank for PC and Quest/mobile, showing the statistics which currently determine the worst-stat-wins result and what each blocker must reach for the next rank.
+
+It covers mesh/material, texture, rig, constraints, PhysBones, contacts, particles, renderers, lights/audio/cloth/physics and bounds. Values which cannot be measured exactly are visibly treated as estimates.
+
+The one opt-in automatic fix is Mesh Read/Write on model importers.
+
+### Lip Sync Studio
+
+`NekoSune → Avatar → Lip Sync Studio`
+
+Bakes a viseme `.anim` from an AudioClip using audio analysis, formant/energy matching, music suppression, attack/release smoothing and optional key reduction.
+
+It can bind through the VRChat descriptor, fuzzy blendshape-name matching, a humanoid jaw, or a single mouth-open blendshape.
+
+## Cross-platform conversion
+
+### VRChat → Resonite
+
+`NekoSune → Avatar → Export to Resonite`
+
+NekoSune does **not** invent its own incompatible `.resonitepackage` format. When the experimental **Modular Avatar - Resonite** integration is installed, NekoSune drives that package's actual Resonite build backend and saves the generated `.resonitepackage`.
+
+That means the export uses the same upstream conversion path for the hierarchy/common avatar data, meshes, textures/materials, viewpoint/visemes and supported PhysBone-to-Resonite dynamics.
+
+Important limitation: Modular Avatar's Resonite platform is experimental. Animator/controller, toggle and animation conversion is still limited by what the upstream exporter currently supports. NekoSune exposes this honestly rather than claiming VRChat FX menus are fully translated when the backend cannot yet represent them.
+
+If the upstream private build API changes, NekoSune opens the NDMF Console so its native Resonite build UI can still be used.
+
+### VRChat → ChilloutVR
+
+`NekoSune → Avatar → Convert to ChilloutVR`
+
+This integration is enabled only when the **ChilloutVR CCK** is installed. NekoSune itself keeps no hard CCK assembly reference, so normal VRChat projects can still install the package.
+
+The converter creates a separate `<name> [ChilloutVR]` copy and can:
+
+- add a real CCK `CVRAvatar` component;
+- carry the VRChat viewpoint and voice position;
+- carry the face/body mesh, viseme names and detected blink shape;
+- duplicate the source FX Animator Controller as the CVR Advanced Avatar Settings base controller;
+- convert VRChat Expression Parameters to CVR Advanced Avatar Settings;
+- use VRChat Expressions Menu labels as the friendly CVR setting labels;
+- convert Bool parameters to CVR GameObject Toggles;
+- convert Float parameters to CVR Sliders;
+- convert Int parameters to CVR Dropdowns when multiple integer transition values can be discovered, with a toggle fallback for simple 0/1 cases;
+- ask the installed CCK to generate/update the AAS Animator when its editor API is available;
+- optionally strip VRChat-only components from the generated CVR copy.
+
+#### PhysBones on ChilloutVR
+
+Dynamic Bone is optional and is **not bundled** with NekoSune or ChilloutVR CCK.
+
+When Dynamic Bone v1.x is installed, NekoSune can create Dynamic Bone components from detected PhysBone roots and copy a conservative subset of spring/stiffness/immobile/radius/gravity/ignored-transform data.
+
+PhysBone collider geometry is not automatically translated, and complex dynamics should always be reviewed in the CVR copy before upload.
+
+If Dynamic Bone is not installed, NekoSune warns before stripping a copy which still contains PhysBones.
+
+#### CVR conversion limits
+
+Normal parameter-driven FX toggles/sliders/dropdowns are the target of the automatic conversion. VRChat-only `StateMachineBehaviour`s, specialised Parameter Driver logic, unusual gesture systems, contacts and platform-specific shader behaviour may need manual CVR equivalents after conversion.
+
+The CCK is actively developed, so CCK-facing code uses reflection and reports a clear error if an installed future CCK changes one of the expected editor data types.
+
+## Safety / non-destructive policy
+
+The optimizer/converter tools are designed around this flow:
+
+```text
+Analyze → Explain → Duplicate / platform override → Apply safe changes → Review
+```
+
+They avoid silently rewriting the source avatar wherever a separate copy or platform-specific import override is practical.
+
+Always keep source control/backups and run the target platform's own SDK validation before publishing.
+
+## Optional integrations
+
+| Feature | Optional dependency |
 | --- | --- |
-| Volume → mouth | How much loudness drives how wide the mouth opens. At 0, every viseme plays at full size. |
-| Clarity | High values commit to one crisp viseme per frame instead of blending several. |
-| Consonants close mouth | How hard consonant frames pull the mouth shut. |
-| Strength | Overall amplitude of the whole animation. |
-| Offset, ms | Shifts the animation in time. Negative = mouth moves early. |
-| Attack / Release, ms | How fast the mouth reaches a new shape and relaxes back. |
-| Silence threshold | Anything quieter becomes the `sil` viseme. |
-| Liveliness | A small, deterministic wobble so held vowels don't look frozen. |
-| Frames per second | Keyframe rate of the baked clip. 30 is plenty. |
-| Quality | Analysis resolution. Higher separates consonants better and bakes slower. |
-| Clean vocal, no music | Turn on for an isolated voice track. **Leave it off for songs** — backing music is then suppressed before analysis. |
-| Reduce keyframes / tolerance | Drops keys a straight line already covers. Typical saving is 60–90% with no visible difference. |
-| Write the sil viseme | Turn off if the silence shape fights another animation layer. |
-| Normalize weights | Keeps the sum of all viseme weights at 100 or below. |
-| Start / End, s | Bake only a section of the clip. |
+| VRChat → Resonite package | Modular Avatar - Resonite / NDMF Resonite platform |
+| VRChat → ChilloutVR | ChilloutVR CCK |
+| PhysBone → Dynamic Bone bridge | Dynamic Bone v1.x |
 
-### Targets
+These are not hard VPM dependencies of `com.nekosune.avatars`.
 
-The **Targets and output** section decides what actually gets animated:
-
-- **Automatic** — visemes if the avatar has them, otherwise the jaw bone, otherwise a single
-  mouth-open blendshape.
-- **VRC viseme blendshapes** — the 15 standard visemes (`sil, PP, FF, TH, DD, kk, CH, SS, nn,
-  RR, aa, E, ih, oh, ou`).
-- **Jaw bone** — rotates a bone on a chosen axis up to a chosen maximum angle.
-- **Single mouth-open shape** — for avatars with just one "mouth open" blendshape.
-
-The jaw bone and the single shape can also be driven *alongside* visemes with the
-**Also drive…** toggles.
-
-### How it finds the mouth on any avatar
-
-The **Avatar binding** section shows exactly what was found, in this order:
-
-1. **VRChat avatar descriptor** — read by reflection, including its viseme blendshape list,
-   its lip sync mode, and its jaw bone.
-2. **Blendshape name matching** — a fuzzy matcher that understands Booth, Gumroad, VRoid,
-   CATS and ARKit naming, common prefixes (`vrc.v_aa`, `Fcl_MTH_A`, `viseme_aa`, …), and
-   Japanese kana shapes (`あ い う え お`).
-3. **Humanoid jaw bone**, then a name search for a jaw-ish bone.
-4. **A single mouth-open blendshape** from a list of common names.
-
-Anything it gets wrong you can override by hand in that same section — each viseme has its own
-picker, and the green/red chips tell you at a glance what is mapped.
-
-### Why one preset works on every voice
-
-The analyzer measures the clip's own median first formant and rescales its vowel prototypes to
-that voice's vocal tract. A deep male voice, a high anime voice and a pitched-up song all land
-on the same vowel decisions without you touching a slider.
-
----
-
-## Using Rank Advisor
-
-Open it from **NekoSune → Avatar → Rank Advisor**, from the **NekoSune → Hub** window, or by
-right-clicking an avatar in the Hierarchy and choosing **NekoSune → Rank Advisor**.
-
-Drop an avatar in and you get, for the platform tab you are on:
-
-- **The overall rank.** VRChat takes the *worst single statistic* and makes that the rank of the
-  whole avatar, so the badge shows what that worst statistic dragged you down to. The other
-  platform's rank is shown underneath, because an avatar that is Good on PC is frequently Very
-  Poor on Quest.
-- **Biggest wins.** Every statistic currently sitting at or below the overall rank, sorted by how
-  far over the line it is, each with its exact target: *Triangles: 94,312 → 70,000 or less*.
-  Because the rank is worst-wins, **all** of them have to come down before the rank moves — the
-  list is the complete job, not a menu.
-- **The full table**, grouped into mesh/material, rig, PhysBones and contacts, particles and
-  dynamics, and everything else. Each row has the value, a bar showing where it sits between
-  Excellent and Poor, its own rank chip, and a **Select** button that pings the offending object
-  in the Hierarchy.
-- **Copy report** puts both platforms' numbers on the clipboard as plain text — useful for a
-  commission thread or a bug report.
-
-### The silent killers it catches
-
-- **Mesh Read/Write off** is an automatic Very Poor *and* a hard upload block, and the SDK's own
-  message about it is easy to miss. This is the one thing the window will fix for you: **Turn
-  Read/Write on** flips `isReadable` on the affected *model importers* and reimports them. It
-  edits import settings only — never the mesh, never the scene. Meshes that are not from a model
-  file are counted and reported rather than touched.
-- **Disabled objects and components still count.** Everything in the table includes them, exactly
-  as VRChat does. Hiding a particle system in the Hierarchy does not hide it from the ranking.
-- **No avatar descriptor** — the numbers are still correct, but the object cannot be uploaded.
-- **The Quest tab strips six statistics** (lights, cloth, cloth vertices, physics colliders,
-  physics rigidbodies, audio sources) because mobile removes those components outright. They are
-  shown greyed as *not counted here* rather than hidden, so you can see why the two ranks differ.
-
-### What it estimates, and what it does not measure
-
-Honesty is built into the display rather than left to the README:
-
-- Values marked **~** are estimated, not the SDK's own number: texture memory, PhysBone
-  transforms, PhysBone collision checks, constraint depth, and bounds size. They are close enough
-  to plan against and are called out in the window whenever any are in play.
-- **Raycasts are not measured at all.** The stat is shown as *not measured* and is deliberately
-  not allowed to contribute a rank, so the window can never invent a rank the avatar has not
-  earned — instead it warns that the real rank could be one step worse than shown.
-
-Treat the result as a very good guide, not as a substitute for the SDK build panel.
-
----
-
-## Adding a language
-
-Languages live one file per language in `Editor/Localization/Languages/`. To add one, copy
-`en.json`, rename it to the language code, translate the `v` values, and press
-**Reload languages** in the Hub — no recompile, no code change.
-
-```json
-{
-  "code": "nl",
-  "name": "Dutch",
-  "nativeName": "Nederlands",
-  "entries": [
-    { "k": "common.language", "v": "Taal" }
-  ]
-}
-```
-
-You only need the keys you actually translated. Anything missing falls back to English, and
-anything missing from English falls back to the raw key, so a partial translation can never
-break the UI.
-
-Shipping now: English, Русский, Español, Polski, Deutsch, Français, Italiano,
-Português (Brasil), Українська, 日本語, 한국어, 简体中文 — 190 keys each.
-
-The language is picked from Unity's system language on first run and remembered in
-`EditorPrefs` after that.
-
----
-
-## Adding an addon
-
-Every window in the Hub is discovered by reflection. Implement `INekoAddon`, tag it, done —
-it shows up in the Hub grid under its category with no registry to edit:
-
-```csharp
-[NekoAddon(Order = 20)]
-internal class MyToolAddon : INekoAddon
-{
-    public string Id           { get { return "mytool"; } }
-    public string TitleKey     { get { return "mytool.title"; } }
-    public string DescriptionKey { get { return "mytool.desc"; } }
-    public string CategoryKey  { get { return "cat.avatar"; } }
-    public string Glyph        { get { return "✦"; } }
-    public bool   IsAvailable  { get { return true; } }
-    public void   Open()       { MyToolWindow.Open(); }
-}
-```
-
-Add `mytool.title` and `mytool.desc` to `en.json` and the card is fully localized.
-
----
-
-## Layout
+## Package layout
 
 ```text
-package.json                         VPM / UPM package manifest
-CHANGELOG.md
-README.md
-.github/
-  workflows/
-    release-avatar.yml               Builds the VPM release ZIP
 Editor/
-  NekoSune.Avatars.Editor.asmdef     Editor-only assembly, no external references
-  Core/
-    NekoPaths.cs                     Finds the package root under Packages/ or Assets/
-    NekoAddon.cs                     [NekoAddon] attribute + reflection registry
-    NekoHubWindow.cs                 The NekoSune menu-bar hub
-    NekoStyles.cs                    Shared look and feel, runtime-generated textures
-  Localization/
-    NekoLoc.cs                       Loader, fallback chain, language switching
-    Languages/*.json                 One file per language
-  LipSync/
-    NekoFFT.cs                       Allocation-free radix-2 FFT
-    NekoAudioReader.cs               Reads samples from compressed clips safely
-    NekoLipSyncAnalyzer.cs           Formants, consonants, music suppression, envelopes
-    NekoVisemes.cs                   The 15 VRC visemes and their openness values
-    NekoAvatarBinder.cs              Descriptor → name matching → jaw → single shape
-    NekoAnimClipBuilder.cs           Curve building, key reduction, saving the .anim
-    NekoAudioPreview.cs              Editor audio preview
-    NekoLipSyncSettings.cs           Settings, presets, preset assets
-    NekoLipSyncWindow.cs             The Lip Sync Studio UI
-  RankAdvisor/
-    NekoPerfTable.cs                 The official PC / Quest limits and ranking rules
-    NekoAvatarStats.cs               Walks the avatar and counts every statistic
-    NekoRankAdvisor.cs               Worst-wins verdict, blocker list, Read/Write fix
-    NekoRankWindow.cs                The Rank Advisor UI
+├── Core/
+│   ├── NekoAddon.cs
+│   ├── NekoAddonText.cs
+│   ├── NekoHubWindow.cs
+│   ├── NekoPaths.cs
+│   └── NekoStyles.cs
+├── Diagnostics/
+│   ├── NekoAvatarDiagnosticsUtil.cs
+│   ├── NekoAvatarDoctor.cs
+│   ├── NekoQuestAssistant.cs
+│   ├── NekoPhysBoneDoctor.cs
+│   ├── NekoTextureInspector.cs
+│   ├── NekoFaceTrackingDoctor.cs
+│   └── NekoExpressionAnimatorDoctor.cs
+├── Converters/
+│   ├── NekoResoniteExporter.cs
+│   └── NekoChilloutVRConverter.cs
+├── MeshOptimizer/
+├── RankAdvisor/
+├── LipSync/
+└── Localization/
 ```
 
----
+New addon card names have built-in English fallbacks. Existing JSON localization still overrides those labels when translations are added.
 
-## Notes and limits
+## Publishing
 
-- Reading a compressed clip temporarily flips its importer to `DecompressOnLoad` and reimports
-  it. The original import settings are always restored, including if the bake throws.
-- Baking is synchronous with a cancellable progress bar. A three-minute song at quality 6 takes
-  a few seconds.
-- The analyzer is a signal-processing estimator, not a phoneme recognizer. It reads clean vocals
-  extremely well, dense mixes reasonably well, and screamed or heavily distorted vocals poorly.
-  For a dense mix, leave **Clean vocal** off and raise **Clarity**.
-- Key reduction is lossy within the tolerance you set. Set the tolerance to 0 to keep every key.
-- Rank Advisor reads the scene; it never edits the avatar. The single exception is the opt-in
-  Read/Write fix, which changes model *import settings* and triggers a reimport.
-- The limits in `NekoPerfTable.cs` are transcribed from VRChat's published avatar performance
-  ranking tables. If VRChat changes them, that one file is the only thing that needs updating.
+Package releases use tags such as:
+
+```text
+avatars-v0.1.0
+avatars-v0.2.0
+avatars-v0.3.0
+```
+
+Changing `version` in `package.json` triggers `.github/workflows/release-avatar.yml`, which creates a VPM-compatible ZIP with `package.json` at the ZIP root and asks the shared VCC listing to rebuild.
+
+Published versions should remain immutable because existing VCC projects can depend on them.
 
 ## License
 
