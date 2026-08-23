@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-namespace NekoSune.Avatars.Editor
+namespace NekoSune.Worlds.Editor
 {
     /// <summary>
-    /// Marks a class as a NekoSune addon so the Hub can list it without a hard reference.
-    /// Drop a new addon file into the package, tag it, and it shows up in the menu and Hub.
+    /// Marks a world editor tool so the NekoSune Worlds Hub can discover it automatically.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     internal sealed class NekoAddonAttribute : Attribute
@@ -17,17 +16,11 @@ namespace NekoSune.Avatars.Editor
 
     internal interface INekoAddon
     {
-        /// <summary>Stable id, used for prefs keys.</summary>
         string Id { get; }
-        /// <summary>Localization key for the display name.</summary>
         string TitleKey { get; }
-        /// <summary>Localization key for the one-line description.</summary>
         string DescriptionKey { get; }
-        /// <summary>Localization key for the Hub category header.</summary>
         string CategoryKey { get; }
-        /// <summary>Short glyph shown on the Hub card.</summary>
         string Glyph { get; }
-        /// <summary>True when the addon is usable in this project (SDK present, etc.).</summary>
         bool IsAvailable { get; }
         void Open();
     }
@@ -45,18 +38,32 @@ namespace NekoSune.Avatars.Editor
             }
         }
 
-        public static void Refresh() { _addons = null; }
+        public static void Refresh()
+        {
+            _addons = null;
+        }
 
         static void Scan()
         {
             var found = new List<KeyValuePair<int, INekoAddon>>();
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
             for (int a = 0; a < assemblies.Length; a++)
             {
                 Type[] types;
-                try { types = assemblies[a].GetTypes(); }
-                catch (ReflectionTypeLoadException e) { types = e.Types; }
-                catch (Exception) { continue; }
+                try
+                {
+                    types = assemblies[a].GetTypes();
+                }
+                catch (ReflectionTypeLoadException e)
+                {
+                    types = e.Types;
+                }
+                catch
+                {
+                    continue;
+                }
+
                 if (types == null) continue;
 
                 for (int t = 0; t < types.Length; t++)
@@ -70,24 +77,27 @@ namespace NekoSune.Avatars.Editor
 
                     try
                     {
-                        var inst = (INekoAddon)Activator.CreateInstance(type);
-                        found.Add(new KeyValuePair<int, INekoAddon>(attr.Order, inst));
+                        var addon = (INekoAddon)Activator.CreateInstance(type);
+                        found.Add(new KeyValuePair<int, INekoAddon>(attr.Order, addon));
                     }
                     catch (Exception e)
                     {
-                        Debug.LogWarning("[NekoSune] Could not instantiate addon " + type.FullName + ": " + e.Message);
+                        Debug.LogWarning("[NekoSune Worlds] Could not instantiate addon " + type.FullName + ": " + e.Message);
                     }
                 }
             }
 
             found.Sort((x, y) =>
             {
-                int c = x.Key.CompareTo(y.Key);
-                return c != 0 ? c : string.Compare(x.Value.Id, y.Value.Id, StringComparison.OrdinalIgnoreCase);
+                int byOrder = x.Key.CompareTo(y.Key);
+                return byOrder != 0
+                    ? byOrder
+                    : string.Compare(x.Value.Id, y.Value.Id, StringComparison.OrdinalIgnoreCase);
             });
 
             _addons = new List<INekoAddon>(found.Count);
-            for (int i = 0; i < found.Count; i++) _addons.Add(found[i].Value);
+            for (int i = 0; i < found.Count; i++)
+                _addons.Add(found[i].Value);
         }
     }
 }
