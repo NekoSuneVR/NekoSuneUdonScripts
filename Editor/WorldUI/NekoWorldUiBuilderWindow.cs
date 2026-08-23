@@ -26,6 +26,7 @@ namespace NekoSune.WorldUI.Editor
         TextAsset _localJson;
         Vector2 _scroll;
         bool _showElements = true;
+        bool _showTheme = true;
         bool _showLearn = true;
         string _status = "Choose a template, edit it, then Build UI.";
 
@@ -33,7 +34,7 @@ namespace NekoSune.WorldUI.Editor
         public static void Open()
         {
             NekoWorldUiBuilderWindow window = GetWindow<NekoWorldUiBuilderWindow>(false, "World UI Builder", true);
-            window.minSize = new Vector2(720f, 620f);
+            window.minSize = new Vector2(760f, 640f);
             window.Show();
         }
 
@@ -47,7 +48,7 @@ namespace NekoSune.WorldUI.Editor
             if (_blueprint == null) _blueprint = NekoWorldUiTemplates.Create(0);
             EditorGUILayout.Space(8f);
             GUILayout.Label("NekoSune World UI Builder", new GUIStyle(EditorStyles.boldLabel) { fontSize = 20 });
-            EditorGUILayout.LabelField("Beginner-first UI generation for VRChat, ChilloutVR and normal Unity world-space canvases.", EditorStyles.wordWrappedLabel);
+            EditorGUILayout.LabelField("Build and learn world UI without manually wiring every Canvas, RectTransform, platform wrapper and starter action.", EditorStyles.wordWrappedLabel);
             EditorGUILayout.Space(8f);
 
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
@@ -69,7 +70,7 @@ namespace NekoSune.WorldUI.Editor
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             GUILayout.Label("1. Start from a template", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField("Templates are editable examples, not hard-coded final layouts. You can change every element or import your own blueprint JSON.", EditorStyles.wordWrappedLabel);
+            EditorGUILayout.LabelField("Templates are editable starting points, not fixed hard-coded panels. Change elements, styling, actions and JSON data, then export the whole design as a blueprint.", EditorStyles.wordWrappedLabel);
             EditorGUILayout.BeginHorizontal();
             _templateIndex = EditorGUILayout.Popup("Template", _templateIndex, NekoWorldUiTemplates.Names);
             if (GUILayout.Button("Load Template", GUILayout.Width(120f)))
@@ -100,14 +101,54 @@ namespace NekoSune.WorldUI.Editor
         void DrawBlueprintSection()
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            GUILayout.Label("2. Panel setup", EditorStyles.boldLabel);
+            GUILayout.Label("2. Panel setup + theme", EditorStyles.boldLabel);
             _blueprint.name = EditorGUILayout.TextField("UI name", _blueprint.name);
             _blueprint.description = EditorGUILayout.TextField("Purpose", _blueprint.description);
             _blueprint.platform = (NekoWorldUiPlatform)EditorGUILayout.EnumPopup("Target platform", _blueprint.platform);
-            _blueprint.width = EditorGUILayout.FloatField("Canvas width (px)", _blueprint.width);
-            _blueprint.height = EditorGUILayout.FloatField("Canvas height (px)", _blueprint.height);
+            _blueprint.width = Mathf.Max(320f, EditorGUILayout.FloatField("Canvas width (px)", _blueprint.width));
+            _blueprint.height = Mathf.Max(240f, EditorGUILayout.FloatField("Canvas height (px)", _blueprint.height));
             _blueprint.worldScale = EditorGUILayout.Slider("World scale", _blueprint.worldScale, 0.00025f, 0.01f);
-            EditorGUILayout.HelpBox("A 1200 x 800 Canvas at scale 0.001 is roughly 1.2m x 0.8m in the world. You can resize/position the generated RectTransform normally afterward.", MessageType.Info);
+            EditorGUILayout.HelpBox("A 1200 x 800 Canvas at scale 0.001 is roughly 1.2m x 0.8m in the world. Move/rotate/resize the generated RectTransform normally afterward.", MessageType.Info);
+
+            _showTheme = EditorGUILayout.Foldout(_showTheme, "Theme and VR readability", true);
+            if (_showTheme)
+            {
+                EditorGUILayout.BeginVertical("box");
+                NekoWorldUiTheme picked = (NekoWorldUiTheme)EditorGUILayout.EnumPopup("Theme preset", _blueprint.theme);
+                if (picked != _blueprint.theme)
+                {
+                    if (picked == NekoWorldUiTheme.Custom) _blueprint.theme = picked;
+                    else NekoWorldUiThemePresets.Apply(_blueprint, picked);
+                }
+
+                EditorGUI.BeginChangeCheck();
+                _blueprint.backgroundColor = EditorGUILayout.ColorField("Background", _blueprint.backgroundColor);
+                _blueprint.panelColor = EditorGUILayout.ColorField("Cards / panels", _blueprint.panelColor);
+                _blueprint.controlColor = EditorGUILayout.ColorField("Control background", _blueprint.controlColor);
+                _blueprint.primaryColor = EditorGUILayout.ColorField("Primary / buttons", _blueprint.primaryColor);
+                _blueprint.accentColor = EditorGUILayout.ColorField("Accent / checkmarks", _blueprint.accentColor);
+                _blueprint.textColor = EditorGUILayout.ColorField("Text", _blueprint.textColor);
+                _blueprint.mutedTextColor = EditorGUILayout.ColorField("Muted text", _blueprint.mutedTextColor);
+                _blueprint.linkColor = EditorGUILayout.ColorField("Links", _blueprint.linkColor);
+                _blueprint.spacing = EditorGUILayout.Slider("Spacing", _blueprint.spacing, 0f, 40f);
+                _blueprint.panelPadding = EditorGUILayout.Slider("Panel padding", _blueprint.panelPadding, 0f, 48f);
+                _blueprint.baseFontSize = EditorGUILayout.IntSlider("Base font size", _blueprint.baseFontSize, 16, 48);
+                _blueprint.buttonHeight = EditorGUILayout.Slider("Button / toggle height", _blueprint.buttonHeight, 40f, 110f);
+                if (EditorGUI.EndChangeCheck()) _blueprint.theme = NekoWorldUiTheme.Custom;
+
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("Neko Dark")) NekoWorldUiThemePresets.Apply(_blueprint, NekoWorldUiTheme.NekoDark);
+                if (GUILayout.Button("Light")) NekoWorldUiThemePresets.Apply(_blueprint, NekoWorldUiTheme.Light);
+                if (GUILayout.Button("Neon")) NekoWorldUiThemePresets.Apply(_blueprint, NekoWorldUiTheme.Neon);
+                if (GUILayout.Button("Glass")) NekoWorldUiThemePresets.Apply(_blueprint, NekoWorldUiTheme.Glass);
+                if (GUILayout.Button("Pastel")) NekoWorldUiThemePresets.Apply(_blueprint, NekoWorldUiTheme.Pastel);
+                if (GUILayout.Button("Terminal")) NekoWorldUiThemePresets.Apply(_blueprint, NekoWorldUiTheme.Terminal);
+                EditorGUILayout.EndHorizontal();
+
+                if (_blueprint.baseFontSize < 20 || _blueprint.buttonHeight < 48f)
+                    EditorGUILayout.HelpBox("This theme uses small text or controls. It may look fine on a monitor but be uncomfortable to read/select in VR. UI Doctor will flag very small generated controls.", MessageType.Warning);
+                EditorGUILayout.EndVertical();
+            }
             EditorGUILayout.EndVertical();
         }
 
@@ -147,7 +188,9 @@ namespace NekoSune.WorldUI.Editor
                 EditorGUILayout.HelpBox("Loaded " + (_feed.items == null ? 0 : _feed.items.Count) + " JSON item(s). They will be appended as data cards when you build the UI.", MessageType.Info);
 
             if (_blueprint.dataSource == NekoWorldUiDataSource.VRChatRuntimeJson)
-                EditorGUILayout.HelpBox("Runtime JSON is VRChat-specific. The Builder can generate an UdonSharp starter using VRCStringDownloader + VRCJson. For cross-platform UI, an Editor snapshot is the most portable option.", MessageType.Warning);
+                EditorGUILayout.HelpBox("Runtime JSON is VRChat-specific. The Builder can generate an UdonSharp starter using VRCStringDownloader + VRCJson. For a UI that looks the same in VRChat and ChilloutVR, an Editor snapshot is the most portable option.", MessageType.Warning);
+
+            EditorGUILayout.LabelField("Feed shape: { items: [ { title, subtitle, description, imageUrl, url, value } ] }", EditorStyles.miniLabel);
             EditorGUILayout.EndVertical();
         }
 
@@ -158,12 +201,19 @@ namespace NekoSune.WorldUI.Editor
             if (_showElements)
             {
                 for (int i = 0; i < _blueprint.elements.Count; i++) DrawElement(i);
+                GUILayout.Label("Add an element", EditorStyles.miniBoldLabel);
                 EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("+ Heading")) AddElement(NekoWorldUiElementType.Heading, "Heading");
                 if (GUILayout.Button("+ Text")) AddElement(NekoWorldUiElementType.Text, "New text");
                 if (GUILayout.Button("+ Button")) AddElement(NekoWorldUiElementType.Button, "New button");
                 if (GUILayout.Button("+ Toggle")) AddElement(NekoWorldUiElementType.Toggle, "New toggle");
                 if (GUILayout.Button("+ Slider")) AddElement(NekoWorldUiElementType.Slider, "New slider");
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button("+ Image")) AddElement(NekoWorldUiElementType.Image, "Image");
+                if (GUILayout.Button("+ Card")) AddElement(NekoWorldUiElementType.GridItem, "Card title");
+                if (GUILayout.Button("+ Divider")) AddElement(NekoWorldUiElementType.Divider, "Divider");
+                if (GUILayout.Button("+ Spacer")) AddElement(NekoWorldUiElementType.Spacer, "Spacer");
                 EditorGUILayout.EndHorizontal();
             }
             EditorGUILayout.EndVertical();
@@ -188,21 +238,27 @@ namespace NekoSune.WorldUI.Editor
             e.type = (NekoWorldUiElementType)EditorGUILayout.EnumPopup("Type", e.type);
             e.label = EditorGUILayout.TextField("Label / text", e.label);
             e.secondary = EditorGUILayout.TextField("Secondary text", e.secondary);
-            e.height = EditorGUILayout.FloatField("Height", e.height);
+            e.height = Mathf.Max(2f, EditorGUILayout.FloatField("Height", e.height));
 
             if (e.type == NekoWorldUiElementType.Image)
             {
-                Sprite current = string.IsNullOrEmpty(e.actionValue) ? null : AssetDatabase.LoadAssetAtPath<Sprite>(e.actionValue);
-                Sprite chosen = (Sprite)EditorGUILayout.ObjectField("Local Sprite", current, typeof(Sprite), false);
+                Texture current = string.IsNullOrEmpty(e.actionValue) ? null : AssetDatabase.LoadAssetAtPath<Texture>(e.actionValue);
+                Texture chosen = (Texture)EditorGUILayout.ObjectField("Local Texture", current, typeof(Texture), false);
                 if (chosen != current) e.actionValue = chosen == null ? "" : AssetDatabase.GetAssetPath(chosen);
-                e.imageUrl = EditorGUILayout.TextField("Remote image URL note", e.imageUrl);
+                e.imageUrl = EditorGUILayout.TextField("Runtime image URL", e.imageUrl);
+                e.dataKey = EditorGUILayout.TextField("JSON image key", e.dataKey);
+                EditorGUILayout.HelpBox("Local Texture = baked into the world. Runtime URL = a placeholder the platform runtime loader can fill. VRChat runtime image URLs should be declared as VRCUrl fields before upload.", MessageType.None);
             }
-            else
+            else if (e.type != NekoWorldUiElementType.Divider && e.type != NekoWorldUiElementType.Spacer && e.type != NekoWorldUiElementType.Heading && e.type != NekoWorldUiElementType.Text && e.type != NekoWorldUiElementType.GridItem)
             {
                 e.action = (NekoWorldUiAction)EditorGUILayout.EnumPopup("Action", e.action);
                 e.actionValue = EditorGUILayout.TextField(ActionValueLabel(e.action), e.actionValue);
                 e.dataKey = EditorGUILayout.TextField("JSON key (optional)", e.dataKey);
                 DrawActionHint(e);
+            }
+            else
+            {
+                e.dataKey = EditorGUILayout.TextField("JSON key (optional)", e.dataKey);
             }
             EditorGUILayout.EndVertical();
         }
@@ -213,8 +269,8 @@ namespace NekoSune.WorldUI.Editor
             GUILayout.Label("5. Build / validate", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(_status, MessageType.None);
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("BUILD WORLD UI", GUILayout.Height(36f))) BuildUi();
-            if (GUILayout.Button("Open UI Doctor", GUILayout.Height(36f))) NekoWorldUiDoctorWindow.Open();
+            if (GUILayout.Button("BUILD WORLD UI", GUILayout.Height(38f))) BuildUi();
+            if (GUILayout.Button("Open UI Doctor", GUILayout.Height(38f))) NekoWorldUiDoctorWindow.Open();
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Generate VRChat Runtime Starter Pack")) NekoWorldUiData.GenerateVrchatStarterPack();
@@ -234,18 +290,22 @@ namespace NekoSune.WorldUI.Editor
             _showLearn = EditorGUILayout.Foldout(_showLearn, "Learn what the Builder is doing", true);
             if (_showLearn)
             {
-                GUILayout.Label("Canvas", EditorStyles.boldLabel);
-                EditorGUILayout.LabelField("The generated Canvas uses World Space. Its RectTransform controls the physical panel size and its Transform scale converts pixels into world metres.", EditorStyles.wordWrappedLabel);
+                GUILayout.Label("Canvas + RectTransform", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("The generated Canvas uses World Space. Canvas width/height define its pixel workspace; world scale converts that into physical metres. RectTransforms position every child UI element.", EditorStyles.wordWrappedLabel);
+                GUILayout.Label("Layout Groups", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("The generated content uses a VerticalLayoutGroup and ContentSizeFitter, so adding/removing cards does not require manually calculating Y positions.", EditorStyles.wordWrappedLabel);
                 GUILayout.Label("GraphicRaycaster", EditorStyles.boldLabel);
                 EditorGUILayout.LabelField("Unity UI needs a GraphicRaycaster so pointer rays can hit Buttons, Toggles and Sliders.", EditorStyles.wordWrappedLabel);
                 GUILayout.Label("VRChat", EditorStyles.boldLabel);
                 EditorGUILayout.LabelField("The Builder adds VRC UI Shape when the Worlds SDK is installed and disables Unity Navigation on controls. Teleport, respawn and live JSON need Udon/UdonSharp; use the generated starter pack rather than a normal MonoBehaviour.", EditorStyles.wordWrappedLabel);
                 GUILayout.Label("ChilloutVR", EditorStyles.boldLabel);
-                EditorGUILayout.LabelField("The Builder adds CVR Canvas Wrapper when CCK 3/4 is installed. CCK 3.16.4+ and CCK 4 use CVR's Unity-UI pointer interaction path for CVRInteractable actions.", EditorStyles.wordWrappedLabel);
+                EditorGUILayout.LabelField("The Builder adds CVR Canvas Wrapper when CCK 3/4 is installed. CVR-specific player/interactable actions still use CCK components/runtime logic rather than a fake cross-platform Unity callback.", EditorStyles.wordWrappedLabel);
                 GUILayout.Label("JSON", EditorStyles.boldLabel);
-                EditorGUILayout.LabelField("Use Editor snapshots when you want the same baked UI on both platforms. Use VRChat Runtime JSON only when the world really needs live text updates after upload.", EditorStyles.wordWrappedLabel);
+                EditorGUILayout.LabelField("Use Editor snapshots when you want the same baked supporter/shop/event data on both platforms. Use VRChat Runtime JSON only when the world needs live text changes after upload.", EditorStyles.wordWrappedLabel);
+                GUILayout.Label("Images", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("Local textures are baked directly. Remote image slots are generated as RawImage components so a platform-specific loader can fill them. On VRChat, image URLs are security-limited and should be predeclared as VRCUrl fields.", EditorStyles.wordWrappedLabel);
                 GUILayout.Label("Links / Patreon / shops", EditorStyles.boldLabel);
-                EditorGUILayout.LabelField("The Builder treats these as information/catalog cards. If the runtime platform does not provide a safe generic browser-open action, it keeps the URL visible and expects a QR/image/link instruction instead of faking a browser API or processing payments in-world.", EditorStyles.wordWrappedLabel);
+                EditorGUILayout.LabelField("These templates are information/catalog/support panels. URLs are always shown visibly, and you can add a QR image. The Builder does not fake a browser API or process Patreon/store payments inside the world.", EditorStyles.wordWrappedLabel);
             }
             EditorGUILayout.EndVertical();
         }
@@ -273,6 +333,8 @@ namespace NekoSune.WorldUI.Editor
             e.type = type;
             e.label = label;
             if (type == NekoWorldUiElementType.Image) e.height = 220f;
+            else if (type == NekoWorldUiElementType.Divider) e.height = 2f;
+            else if (type == NekoWorldUiElementType.Spacer) e.height = 20f;
             _blueprint.elements.Add(e);
         }
 
@@ -307,7 +369,7 @@ namespace NekoSune.WorldUI.Editor
             else if (e.action == NekoWorldUiAction.TeleportPlayer || e.action == NekoWorldUiAction.RespawnPlayer)
                 EditorGUILayout.HelpBox("Player movement needs VRChat Udon or a CVR Interactable action; it cannot be implemented by an ordinary Unity Button callback in both runtimes.", MessageType.None);
             else if (e.action == NekoWorldUiAction.OpenLinkCard)
-                EditorGUILayout.HelpBox("The URL is always rendered visibly. Add a QR Sprite for the smoothest cross-platform external-link experience.", MessageType.None);
+                EditorGUILayout.HelpBox("The URL is always rendered visibly. Add an Image element containing a QR texture for the smoothest cross-platform external-link experience.", MessageType.None);
         }
     }
 }
