@@ -19,15 +19,45 @@ moves. Read-only; the one change it will make for you is opt-in.
 
 ## Install
 
-### Via the VRChat Creator Companion (VPM)
+### Via VRChat Creator Companion (VCC / VPM)
 
-1. Copy this folder into your project's `Packages/` directory as
-   `Packages/com.nekosune.avatars`, **or** add it as a local package from VCC.
-2. VCC / the package manager resolves `com.vrchat.avatars` for you.
+VCC does **not** install this package by using this Git URL as a repository:
 
-### Via the Unity Package Manager (UPM)
+```text
+https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#avatar
+```
 
-*Window → Package Manager → + → Add package from disk…* and pick this folder's `package.json`.
+It also does not use this branch's `package.json` as a repository URL. VCC expects a VPM
+**package listing** (`index.json`) which points at compatible release ZIP files.
+
+Add this repository URL to VCC:
+
+```text
+https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
+```
+
+Then:
+
+1. Open **VCC → Settings → Packages**.
+2. Add the repository URL above under the user/community repositories section.
+3. Open your VRChat avatar project.
+4. Add **NekoSune Avatars** (`com.nekosune.avatars`).
+
+The release ZIP used by VCC is generated from this branch with `package.json` at the ZIP root,
+which is required by the VPM listing builder.
+
+### Via Unity Package Manager (Git URL)
+
+The Git URL **is valid for Unity Package Manager**; it just is not a VCC repository URL.
+
+In Unity open **Window → Package Manager → + → Add package from git URL…** and enter:
+
+```text
+https://github.com/NekoSuneVR/NekoSuneUdonScripts.git#avatar
+```
+
+You can also use **Add package from disk…** and select this branch's `package.json` after
+downloading/cloning it locally.
 
 ### Drop-in (no package manager)
 
@@ -39,6 +69,33 @@ compiles and runs in a project with no VRChat SDK at all. When the SDK *is* pres
 avatar descriptor is read first and its viseme mapping is used verbatim.
 
 Unity 2019.4 or newer.
+
+---
+
+## Publishing a VCC release
+
+The `avatar` branch contains `.github/workflows/release-avatar.yml`.
+
+To publish a new version:
+
+1. Make your changes on `avatar`.
+2. Change the semantic `version` in `package.json`.
+3. Push the `package.json` change, or manually run **Build Avatar Release** from GitHub Actions.
+4. The workflow creates a release ZIP shaped like this:
+
+```text
+com.nekosune.avatars-0.1.0.zip
+├── package.json
+├── CHANGELOG.md
+├── README.md
+└── Editor/
+    └── ...
+```
+
+5. The VCC listing on `main` is rebuilt so Creator Companion can see the new version.
+
+Do not delete old VPM releases after publishing them because existing projects can depend on
+those exact versions.
 
 ---
 
@@ -221,33 +278,38 @@ Add `mytool.title` and `mytool.desc` to `en.json` and the card is fully localize
 
 ## Layout
 
-```
-package.json                     VPM / UPM manifest
+```text
+package.json                         VPM / UPM package manifest
+CHANGELOG.md
+README.md
+.github/
+  workflows/
+    release-avatar.yml               Builds the VPM release ZIP
 Editor/
-  NekoSune.Avatars.Editor.asmdef    Editor-only assembly, no external references
+  NekoSune.Avatars.Editor.asmdef     Editor-only assembly, no external references
   Core/
-    NekoPaths.cs                 Finds the package root under Packages/ or Assets/
-    NekoAddon.cs                 [NekoAddon] attribute + reflection registry
-    NekoHubWindow.cs             The NekoSune menu-bar hub
-    NekoStyles.cs                Shared look and feel, runtime-generated textures
+    NekoPaths.cs                     Finds the package root under Packages/ or Assets/
+    NekoAddon.cs                     [NekoAddon] attribute + reflection registry
+    NekoHubWindow.cs                 The NekoSune menu-bar hub
+    NekoStyles.cs                    Shared look and feel, runtime-generated textures
   Localization/
-    NekoLoc.cs                   Loader, fallback chain, language switching
-    Languages/*.json             One file per language
+    NekoLoc.cs                       Loader, fallback chain, language switching
+    Languages/*.json                 One file per language
   LipSync/
-    NekoFFT.cs                   Allocation-free radix-2 FFT
-    NekoAudioReader.cs           Reads samples from compressed clips safely
-    NekoLipSyncAnalyzer.cs       Formants, consonants, music suppression, envelopes
-    NekoVisemes.cs               The 15 VRC visemes and their openness values
-    NekoAvatarBinder.cs          Descriptor → name matching → jaw → single shape
-    NekoAnimClipBuilder.cs       Curve building, key reduction, saving the .anim
-    NekoAudioPreview.cs          Editor audio preview
-    NekoLipSyncSettings.cs       Settings, presets, preset assets
-    NekoLipSyncWindow.cs         The Lip Sync Studio UI
+    NekoFFT.cs                       Allocation-free radix-2 FFT
+    NekoAudioReader.cs               Reads samples from compressed clips safely
+    NekoLipSyncAnalyzer.cs           Formants, consonants, music suppression, envelopes
+    NekoVisemes.cs                   The 15 VRC visemes and their openness values
+    NekoAvatarBinder.cs              Descriptor → name matching → jaw → single shape
+    NekoAnimClipBuilder.cs           Curve building, key reduction, saving the .anim
+    NekoAudioPreview.cs              Editor audio preview
+    NekoLipSyncSettings.cs           Settings, presets, preset assets
+    NekoLipSyncWindow.cs             The Lip Sync Studio UI
   RankAdvisor/
-    NekoPerfTable.cs             The official PC / Quest limits and the ranking rules
-    NekoAvatarStats.cs           Walks the avatar and counts every statistic
-    NekoRankAdvisor.cs           Worst-wins verdict, blocker list, the Read/Write fix
-    NekoRankWindow.cs            The Rank Advisor UI
+    NekoPerfTable.cs                 The official PC / Quest limits and ranking rules
+    NekoAvatarStats.cs               Walks the avatar and counts every statistic
+    NekoRankAdvisor.cs               Worst-wins verdict, blocker list, Read/Write fix
+    NekoRankWindow.cs                The Rank Advisor UI
 ```
 
 ---
