@@ -24,6 +24,7 @@ namespace NekoSune.Avatars.Editor
         GameObject _source;
         bool _convertPickup = true;
         bool _convertObjectSync = true;
+        bool _generateAnimatorToggles = true;
         bool _stripVrcComponents = true;
         bool _addRigidbodyWhenMissing = true;
         Vector2 _scroll;
@@ -34,7 +35,7 @@ namespace NekoSune.Avatars.Editor
         public static void Open()
         {
             var w = GetWindow<NekoChilloutVRPropConverterWindow>(false, "CVR Prop Converter", true);
-            w.minSize = new Vector2(700f, 520f);
+            w.minSize = new Vector2(700f, 540f);
             w.Show();
         }
 
@@ -56,7 +57,7 @@ namespace NekoSune.Avatars.Editor
 
             if (!NekoCckCompatibility.Installed || NekoCckCompatibility.SpawnableType == null)
             {
-                EditorGUILayout.HelpBox("Install ChilloutVR CCK 4 stable or CCK 3 legacy first. NekoSune creates a real CVRSpawnable component and does not emit placeholder metadata.", MessageType.Warning);
+                EditorGUILayout.HelpBox("Install ChilloutVR CCK 4 stable or CCK 3 legacy first. NekoSune creates real CCK components and does not emit placeholder metadata.", MessageType.Warning);
                 if (GUILayout.Button("Open CCK setup documentation")) Application.OpenURL("https://docs.chilloutvr.net/cck/setup/");
                 return;
             }
@@ -81,15 +82,16 @@ namespace NekoSune.Avatars.Editor
             GUILayout.Label("Conversion", EditorStyles.boldLabel);
             _convertPickup = EditorGUILayout.ToggleLeft("Convert VRChat Pickup markers to CVR Pickup Object", _convertPickup);
             _convertObjectSync = EditorGUILayout.ToggleLeft("Convert VRChat Object Sync markers to CVR Object Sync", _convertObjectSync);
+            _generateAnimatorToggles = EditorGUILayout.ToggleLeft("Generate CVR Interactable controls for Animator Bool toggles", _generateAnimatorToggles);
             _addRigidbodyWhenMissing = EditorGUILayout.ToggleLeft("Add Rigidbody when converting a pickup and one is missing", _addRigidbodyWhenMissing);
             _stripVrcComponents = EditorGUILayout.ToggleLeft("Strip VRChat/Udon components from the generated prop copy", _stripVrcComponents);
 
-            EditorGUILayout.HelpBox("The converter preserves meshes, materials, colliders, AudioSources, ParticleSystems and Animators. Animator parameters are listed as candidates for CVR Spawnable synced values/interactions; custom Udon logic cannot be losslessly translated and is reported before stripping.", MessageType.Info);
+            EditorGUILayout.HelpBox("Meshes, materials, colliders, AudioSources, ParticleSystems and Animators are preserved. Bool Animator parameters can become Global Networked Buffered CVR Interactable toggles. The generated toggle panel is deliberately marked MOVE/STYLE ME so you can position it on the prop. Custom Udon logic still requires a CVR equivalent.", MessageType.Info);
 
             if (_toggleCandidates.Count > 0)
             {
                 _scroll = EditorGUILayout.BeginScrollView(_scroll, GUILayout.MaxHeight(170f));
-                GUILayout.Label("Animator values/toggles to wire in CVR", EditorStyles.boldLabel);
+                GUILayout.Label("Animator values/toggles", EditorStyles.boldLabel);
                 for (int i = 0; i < _toggleCandidates.Count; i++) GUILayout.Label("• " + _toggleCandidates[i], EditorStyles.wordWrappedMiniLabel);
                 EditorGUILayout.EndScrollView();
             }
@@ -163,6 +165,8 @@ namespace NekoSune.Avatars.Editor
                         if (NekoCckCompatibility.EnsureComponent(src[i].gameObject, NekoCckCompatibility.ObjectSyncType) != null) syncs++;
                 }
 
+                int toggles = _generateAnimatorToggles ? NekoChilloutVRToggleBuilder.Generate(copy) : 0;
+
                 int stripped = 0;
                 if (_stripVrcComponents)
                 {
@@ -179,7 +183,7 @@ namespace NekoSune.Avatars.Editor
                 EditorUtility.SetDirty(spawnable);
                 Selection.activeGameObject = copy;
                 EditorGUIUtility.PingObject(copy);
-                _status = "Done — " + pickups + " pickup(s), " + syncs + " object-sync marker(s), " + stripped + " VRC/Udon component(s) stripped";
+                _status = "Done — " + pickups + " pickup(s), " + syncs + " sync marker(s), " + toggles + " toggle(s), " + stripped + " VRC/Udon component(s) stripped";
                 Debug.Log("[NekoSune CVR Prop Converter] " + _status);
             }
             catch (Exception e)
@@ -199,10 +203,10 @@ namespace NekoSune.Avatars.Editor
             if (_source == null) return sb.ToString();
             sb.AppendLine("VRChat pickups: " + FindVrc("VRCPickup", "VRC_Pickup").Count);
             sb.AppendLine("VRChat object sync: " + FindVrc("VRCObjectSync", "VRC_ObjectSync").Count);
-            sb.AppendLine("Animator value candidates:");
+            sb.AppendLine("Animator values:");
             for (int i = 0; i < _toggleCandidates.Count; i++) sb.AppendLine("- " + _toggleCandidates[i]);
             sb.AppendLine();
-            sb.AppendLine("Custom Udon/network logic has no guaranteed one-to-one CCK conversion and must be reviewed manually.");
+            sb.AppendLine("Bool Animator values can be generated as CVR Interactable toggles. Float/Int values and custom Udon/network logic should be reviewed and wired to CVR Spawnable values/interactions as appropriate.");
             return sb.ToString();
         }
     }
