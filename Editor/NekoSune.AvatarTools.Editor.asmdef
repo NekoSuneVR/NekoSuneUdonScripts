@@ -1,7 +1,7 @@
 {
-  "name": "NekoSune.AvatarTools.Editor",
-  "rootNamespace": "NekoSune.Avatars.Editor",
-  "references": ["NekoSune.Avatars.Editor"],
+  "name": "NekoSune.AnimationTools.Editor",
+  "rootNamespace": "NekoSune.AnimationTools.Editor",
+  "references": ["NekoSune.Avatars.Editor", "NekoSune.Worlds.Editor", "NekoSune.AvatarTools.Editor"],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
