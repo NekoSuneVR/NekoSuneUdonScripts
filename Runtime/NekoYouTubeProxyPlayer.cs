@@ -26,20 +26,20 @@ namespace NekoSune.WorldYouTubeProxy
         [Header("Input / status")]
         public VRCUrlInputField proxyInput;
         public Text statusText;
-        [Tooltip("Watch the assigned VRCUrlInputField and submit a changed URL automatically. YouTube URLs use the NekoSune handling path; every other URL is passed to the player unchanged.")]
+        [Tooltip("Watch the assigned VRCUrlInputField for YouTube/NekoSune relay URLs only. Non-YouTube URLs are left completely alone for the existing video player to handle normally.")]
         public bool autoWatchInput = true;
 
         [Header("Start URL")]
         public VRCUrl startUrl = VRCUrl.Empty;
         public bool playStartUrl;
-        [Tooltip("Stops stock AVPro/Unity players once when the bridge starts, preventing their native default autoplay from racing the bridge start URL.")]
-        public bool stopNativePlayerOnBridgeStart = true;
+        [Tooltip("Optional compatibility switch for a proxy-owned start URL. Disabled by default so adding this component never interrupts an existing player's normal non-YouTube autoplay.")]
+        public bool stopNativePlayerOnBridgeStart = false;
 
         [Header("Networking")]
         public bool synchronizeUrl = true;
 
         [Header("YouTube compatibility")]
-        [Tooltip("Fallback only. If enabled, a normal youtube.com/youtu.be URL is played directly when it cannot be converted to a NekoSune proxy VRCUrl at runtime. Non-YouTube URLs always pass through unchanged regardless of this setting.")]
+        [Tooltip("Fallback only. If enabled, a normal youtube.com/youtu.be URL is played directly when it cannot be converted to a NekoSune proxy VRCUrl at runtime. Non-YouTube URLs are never changed by this option.")]
         public bool allowDirectYouTubeFallback;
 
         [UdonSynced] private VRCUrl syncedUrl = VRCUrl.Empty;
@@ -66,7 +66,7 @@ namespace NekoSune.WorldYouTubeProxy
             if (proxyInput != null && !VRCUrl.IsNullOrEmpty(proxyInput.GetUrl()))
                 _lastInputValue = proxyInput.GetUrl().Get();
 
-            SetStatus("NekoSune YouTube Proxy ready. Non-YouTube URLs pass through normally.");
+            SetStatus("NekoSune YouTube Proxy ready. Only YouTube is intercepted.");
             if (playStartUrl && !VRCUrl.IsNullOrEmpty(startUrl)) SubmitUrl(startUrl);
         }
 
@@ -80,9 +80,22 @@ namespace NekoSune.WorldYouTubeProxy
             if (value == _lastInputValue) return;
 
             _lastInputValue = value;
-            if (!string.IsNullOrEmpty(value)) SubmitUrl(current);
+            if (string.IsNullOrEmpty(value)) return;
+
+            // Passive component mode: only intercept YouTube/proxy URLs. Everything else is
+            // deliberately ignored so the existing video player's own URL logic remains intact.
+            if (IsYouTube(value) || IsNekoProxy(value))
+            {
+                SubmitUrl(current);
+            }
+            else
+            {
+                SetStatus("Non-YouTube URL left to the original video player.");
+            }
         }
 
+        // Explicit button/API mode. If a creator wires their UI directly to this bridge,
+        // non-YouTube URLs are passed through unchanged because the bridge owns submission.
         public void PlayFromInput()
         {
             if (proxyInput == null)
@@ -122,7 +135,6 @@ namespace NekoSune.WorldYouTubeProxy
 
             string raw = url.Get();
 
-            // Already a stable NekoSune YouTube relay URL: use it as-is.
             if (IsNekoProxy(raw))
             {
                 SetStatus("NekoSune YouTube relay URL detected.");
@@ -130,10 +142,6 @@ namespace NekoSune.WorldYouTubeProxy
                 return;
             }
 
-            // Only YouTube gets special handling. VRChat Udon cannot freely create a new
-            // VRCUrl from a rewritten runtime string, so a normal YouTube URL cannot be
-            // transformed into /v/VIDEO_ID?vrc=1 here unless the URL originated from an
-            // editor/predeclared/proxy-input flow.
             if (IsYouTube(raw))
             {
                 if (allowDirectYouTubeFallback)
@@ -148,9 +156,7 @@ namespace NekoSune.WorldYouTubeProxy
                 return;
             }
 
-            // Vimeo, Twitch, direct MP4/HLS, radio/video CDNs and every other supported URL
-            // keep their original VRCUrl. The YouTube bridge must not hijack unrelated media.
-            SetStatus("Non-YouTube URL detected. Passing through unchanged.");
+            SetStatus("Non-YouTube URL passing through unchanged.");
             PublishAndQueue(url);
         }
 
@@ -290,8 +296,7 @@ namespace NekoSune.WorldYouTubeProxy
         private bool IsYouTube(string value)
         {
             if (string.IsNullOrEmpty(value)) return false;
-            string lower = value.ToLower();
-            return lower.IndexOf("youtube.com") >= 0 || lower.IndexOf("youtu.be") >= 0;
+            return value.IndexOf("youtube.com") >= 0 || value.IndexOf("youtu.be") >= 0;
         }
 
         private bool IsYouTubeOrProxy(string value)
