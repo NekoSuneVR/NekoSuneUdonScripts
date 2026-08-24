@@ -15,7 +15,13 @@ public class NekoImageGalleryRuntime : UdonSharpBehaviour
     public VRCUrl[] imageUrls;
     public int sourceMode; // 0 local textures, 1 predeclared VRCUrl array
 
-    [Header("Optional JSON metadata")]
+    [Header("Raw / embedded metadata")]
+    public string[] rawTitles;
+    public string[] rawSubtitles;
+    [TextArea(3, 12)] public string embeddedJson;
+    [TextArea(2, 6)] public string[] rawJsonRows;
+
+    [Header("Optional remote JSON metadata")]
     public VRCUrl metadataJsonUrl;
     public string rootKey = "items";
     public string titleKey = "title";
@@ -67,6 +73,10 @@ public class NekoImageGalleryRuntime : UdonSharpBehaviour
         _backBase = backImage == null ? Vector2.zero : backImage.rectTransform.anchoredPosition;
         if (shaderImage != null) shaderImage.gameObject.SetActive(false);
         if (backGroup != null) backGroup.alpha = 0f;
+
+        if (!string.IsNullOrEmpty(embeddedJson)) ParseMetadataJson(embeddedJson, "embedded JSON");
+        else if (rawJsonRows != null && rawJsonRows.Length > 0) ParseRawRows();
+
         if (!VRCUrl.IsNullOrEmpty(metadataJsonUrl)) VRCStringDownloader.LoadUrl(metadataJsonUrl, this);
         ShowInitial();
     }
@@ -101,28 +111,58 @@ public class NekoImageGalleryRuntime : UdonSharpBehaviour
 
     public void ReloadMetadata()
     {
-        if (VRCUrl.IsNullOrEmpty(metadataJsonUrl)) { SetStatus("No metadata JSON URL configured"); return; }
-        SetStatus("Loading metadata...");
-        VRCStringDownloader.LoadUrl(metadataJsonUrl, this);
+        if (!VRCUrl.IsNullOrEmpty(metadataJsonUrl))
+        {
+            SetStatus("Loading remote metadata...");
+            VRCStringDownloader.LoadUrl(metadataJsonUrl, this);
+            return;
+        }
+        ReloadEmbeddedMetadata();
+    }
+
+    public void ReloadEmbeddedMetadata()
+    {
+        if (!string.IsNullOrEmpty(embeddedJson)) { ParseMetadataJson(embeddedJson, "embedded JSON"); ShowInitial(); return; }
+        if (rawJsonRows != null && rawJsonRows.Length > 0) { ParseRawRows(); ShowInitial(); return; }
+        SetStatus("No embedded JSON, raw JSON rows, or remote metadata URL configured.");
     }
 
     public override void OnStringLoadSuccess(IVRCStringDownload result)
     {
-        DataToken root;
-        if (!VRCJson.TryDeserializeFromJson(result.Result, out root)) { SetStatus("JSON parse failed: " + root.ToString()); return; }
-        DataList list = null;
-        if (root.TokenType == TokenType.DataList) list = root.DataList;
-        else if (root.TokenType == TokenType.DataDictionary)
-        {
-            DataDictionary d = root.DataDictionary; DataToken token;
-            if (!string.IsNullOrEmpty(rootKey) && d.TryGetValue(rootKey, TokenType.DataList, out token)) list = token.DataList;
-            else if (d.TryGetValue("items", TokenType.DataList, out token)) list = token.DataList;
-            else if (d.TryGetValue("images", TokenType.DataList, out token)) list = token.DataList;
-            else if (d.TryGetValue("gallery", TokenType.DataList, out token)) list = token.DataList;
-            else if (d.TryGetValue("data", TokenType.DataList, out token)) list = token.DataList;
-        }
-        if (list == null) { SetStatus("JSON does not contain an array at the root/items/images/gallery/data"); return; }
+        ParseMetadataJson(result.Result, "remote JSON");
+        ShowInitial();
+    }
 
+    public override void OnStringLoadError(IVRCStringDownload result)
+    {
+        SetStatus("Metadata download failed: " + result.ErrorCode + " - " + result.Error);
+    }
+
+    void ParseMetadataJson(string json, string sourceLabel)
+    {
+        DataToken root;
+        if (!VRCJson.TryDeserializeFromJson(json, out root)) { SetStatus("JSON parse failed: " + root.ToString()); return; }
+        DataList list = ResolveList(root);
+        if (list == null) { SetStatus("JSON does not contain an array at root/items/images/gallery/data"); return; }
+        ParseList(list);
+        SetStatus("Loaded " + _metadataCount + " gallery entries from " + sourceLabel + ".");
+    }
+
+    DataList ResolveList(DataToken root)
+    {
+        if (root.TokenType == TokenType.DataList) return root.DataList;
+        if (root.TokenType != TokenType.DataDictionary) return null;
+        DataDictionary d = root.DataDictionary; DataToken token;
+        if (!string.IsNullOrEmpty(rootKey) && d.TryGetValue(rootKey, TokenType.DataList, out token)) return token.DataList;
+        if (d.TryGetValue("items", TokenType.DataList, out token)) return token.DataList;
+        if (d.TryGetValue("images", TokenType.DataList, out token)) return token.DataList;
+        if (d.TryGetValue("gallery", TokenType.DataList, out token)) return token.DataList;
+        if (d.TryGetValue("data", TokenType.DataList, out token)) return token.DataList;
+        return null;
+    }
+
+    void ParseList(DataList list)
+    {
         int count = Mathf.Min(list.Count, 256);
         _titles = new string[count]; _subtitles = new string[count]; _mappedIndices = new int[count];
         for (int i = 0; i < count; i++)
@@ -130,26 +170,41 @@ public class NekoImageGalleryRuntime : UdonSharpBehaviour
             _mappedIndices[i] = i;
             DataToken item;
             if (!list.TryGetValue(i, TokenType.DataDictionary, out item)) continue;
-            DataDictionary row = item.DataDictionary;
-            _titles[i] = GetString(row, titleKey, "title", "name", "label");
-            _subtitles[i] = GetString(row, subtitleKey, "subtitle", "description", "caption");
-            DataToken n;
-            if (!string.IsNullOrEmpty(imageIndexKey) && row.TryGetValue(imageIndexKey, out n) && n.IsNumber)
-                _mappedIndices[i] = Mathf.RoundToInt((float)n.Double);
-            else
-            {
-                string url = GetString(row, imageUrlKey, "imageUrl", "image", "url", "thumbnailImageUrl");
-                int mapped = FindPredeclaredUrl(url); if (mapped >= 0) _mappedIndices[i] = mapped;
-            }
+            ParseRow(item.DataDictionary, i);
         }
         _metadataCount = count; _index = 0;
-        SetStatus("Loaded " + count + " gallery entries");
-        ShowInitial();
     }
 
-    public override void OnStringLoadError(IVRCStringDownload result)
+    void ParseRawRows()
     {
-        SetStatus("Metadata download failed: " + result.ErrorCode + " - " + result.Error);
+        int count = Mathf.Min(rawJsonRows.Length, 256);
+        _titles = new string[count]; _subtitles = new string[count]; _mappedIndices = new int[count];
+        int valid = 0;
+        for (int i = 0; i < count; i++)
+        {
+            _mappedIndices[i] = i;
+            if (string.IsNullOrEmpty(rawJsonRows[i])) continue;
+            DataToken rowToken;
+            if (!VRCJson.TryDeserializeFromJson(rawJsonRows[i], out rowToken) || rowToken.TokenType != TokenType.DataDictionary) continue;
+            ParseRow(rowToken.DataDictionary, i);
+            valid++;
+        }
+        _metadataCount = count; _index = 0;
+        SetStatus("Loaded " + valid + " raw JSON rows.");
+    }
+
+    void ParseRow(DataDictionary row, int i)
+    {
+        _titles[i] = GetString(row, titleKey, "title", "name", "label");
+        _subtitles[i] = GetString(row, subtitleKey, "subtitle", "description", "caption");
+        DataToken n;
+        if (!string.IsNullOrEmpty(imageIndexKey) && row.TryGetValue(imageIndexKey, out n) && n.IsNumber)
+            _mappedIndices[i] = Mathf.RoundToInt((float)n.Number);
+        else
+        {
+            string url = GetString(row, imageUrlKey, "imageUrl", "image", "url", "thumbnailImageUrl");
+            int mapped = FindPredeclaredUrl(url); if (mapped >= 0) _mappedIndices[i] = mapped;
+        }
     }
 
     public override void OnImageLoadSuccess(IVRCImageDownload result)
@@ -278,8 +333,16 @@ public class NekoImageGalleryRuntime : UdonSharpBehaviour
     {
         int count = ItemCount();
         if (pageText != null) pageText.text = count <= 0 ? "0 / 0" : (displayIndex + 1) + " / " + count;
-        if (titleText != null) titleText.text = _titles != null && displayIndex < _titles.Length && !string.IsNullOrEmpty(_titles[displayIndex]) ? _titles[displayIndex] : "Gallery Image " + (displayIndex + 1);
-        if (subtitleText != null) subtitleText.text = _subtitles != null && displayIndex < _subtitles.Length ? _subtitles[displayIndex] : "";
+
+        string title = "";
+        if (_titles != null && displayIndex >= 0 && displayIndex < _titles.Length) title = _titles[displayIndex];
+        if (string.IsNullOrEmpty(title) && rawTitles != null && displayIndex >= 0 && displayIndex < rawTitles.Length) title = rawTitles[displayIndex];
+        if (titleText != null) titleText.text = string.IsNullOrEmpty(title) ? "Gallery Image " + (displayIndex + 1) : title;
+
+        string subtitle = "";
+        if (_subtitles != null && displayIndex >= 0 && displayIndex < _subtitles.Length) subtitle = _subtitles[displayIndex];
+        if (string.IsNullOrEmpty(subtitle) && rawSubtitles != null && displayIndex >= 0 && displayIndex < rawSubtitles.Length) subtitle = rawSubtitles[displayIndex];
+        if (subtitleText != null) subtitleText.text = subtitle;
     }
 
     string GetString(DataDictionary d, string preferred, string a, string b, string c)
