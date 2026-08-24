@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using NekoSune.Worlds.Editor;
@@ -15,7 +16,7 @@ namespace NekoSune.WorldGallery.Editor
     {
         public string Id { get { return "world-gallery"; } }
         public string TitleKey { get { return "Image Gallery"; } }
-        public string DescriptionKey { get { return "Build local/remote image galleries with JSON metadata, lazy loading and animated or shader transitions."; } }
+        public string DescriptionKey { get { return "Build local/remote image galleries with mapped JSON paths, lazy loading and animated or shader transitions."; } }
         public string CategoryKey { get { return "cat.world"; } }
         public string Glyph { get { return "▣"; } }
         public bool IsAvailable { get { return true; } }
@@ -24,61 +25,99 @@ namespace NekoSune.WorldGallery.Editor
 
     internal sealed class NekoWorldGalleryWindow : EditorWindow
     {
+        const string GeneratedFolder = "Assets/NekoSune/Gallery/Generated";
+        const string GeneratedScriptPath = GeneratedFolder + "/NekoImageGalleryRuntime.cs";
+        const string GeneratedProgramPath = GeneratedFolder + "/NekoImageGalleryRuntime.asset";
+
         readonly string[] _effects = { "Cross Fade", "Slide Left", "Slide Right", "Slide Up", "Zoom", "Spin + Zoom", "Shader Wipe", "Shader Dissolve", "Shader Radial" };
+        readonly string[] _sources = { "Local Texture[]", "Remote predeclared VRCUrl[]" };
         int _effect;
+        int _sourceMode;
         float _duration = 0.65f;
         bool _autoPlay = true;
         float _autoSeconds = 7f;
         Vector2 _scroll;
 
+        string _remoteJsonUrl = "";
+        string _rootPath = "items";
+        string _titleKey = "title";
+        string _subtitleKey = "subtitle";
+        string _indexKey = "imageIndex";
+        string _urlKey = "imageUrl";
+        string _predeclaredUrls = "";
+        string _urlAliases = "";
+
         [MenuItem("NekoSune/World/Image Gallery", false, 24)]
         public static void Open()
         {
             var w = GetWindow<NekoWorldGalleryWindow>(false, "World Image Gallery", true);
-            w.minSize = new Vector2(760f, 600f);
+            w.minSize = new Vector2(790f, 670f);
             w.Show();
         }
 
         void OnGUI()
         {
             NekoStyles.Ensure();
-            NekoStyles.HeaderBar("Image Gallery", "NekoSune", "Stylish galleries for local textures, predeclared VRCUrls and JSON-driven metadata");
+            NekoStyles.HeaderBar("Image Gallery", "NekoSune", "Stylish galleries for local textures, remote VRCUrls and JSON/path-driven feeds");
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
 
             EditorGUILayout.BeginVertical(NekoStyles.Card);
-            GUILayout.Label("Demo gallery", NekoStyles.SlotName);
+            GUILayout.Label("Repair / update generated runtime", NekoStyles.SlotName);
+            EditorGUILayout.LabelField("If an older generated NekoImageGalleryRuntime.cs has a compile error, copy the latest package runtime over it without rebuilding the UI.", NekoStyles.WrapLabel);
+            if (GUILayout.Button("REPAIR / COPY LATEST GALLERY RUNTIME", NekoStyles.PrimaryButton, GUILayout.Height(34f)))
+            {
+                CopyRuntime();
+                EditorUtility.DisplayDialog("Image Gallery", "Replaced " + GeneratedScriptPath + " with the latest runtime. Let Unity/UdonSharp compile it, then use AUTO-WIRE / REPAIR on your existing gallery root.", "OK");
+            }
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.BeginVertical(NekoStyles.Card);
+            GUILayout.Label("Gallery source", NekoStyles.SlotName);
+            _sourceMode = EditorGUILayout.Popup("Image source", _sourceMode, _sources);
             _effect = EditorGUILayout.Popup("Transition", _effect, _effects);
             _duration = EditorGUILayout.Slider("Transition time", _duration, 0.1f, 2.5f);
             _autoPlay = EditorGUILayout.Toggle("Auto-play", _autoPlay);
             _autoSeconds = EditorGUILayout.Slider("Auto-play seconds", _autoSeconds, 2f, 30f);
             if (GUILayout.Button("BUILD DEMO IMAGE GALLERY", NekoStyles.PrimaryButton, GUILayout.Height(36f))) BuildDemo();
-            EditorGUILayout.LabelField("The demo creates three editable local textures, a full world-space UI, next/previous/auto buttons and a transition material. It also copies the readable runtime UdonSharp script into Assets.", NekoStyles.WrapLabel);
+            EditorGUILayout.LabelField("The demo creates three local textures so it works immediately. Switch Image Source to Remote before Auto-Wire if you want the VRCUrl/JSON configuration below applied instead.", NekoStyles.WrapLabel);
             EditorGUILayout.EndVertical();
 
             EditorGUILayout.BeginVertical(NekoStyles.Card);
-            GUILayout.Label("After UdonSharp compiles", NekoStyles.SlotName);
-            EditorGUILayout.LabelField("Keep the generated gallery root selected and click Auto-Wire. The tool attaches NekoImageGalleryRuntime, fills every UI reference, applies the transition settings and wires the buttons.", NekoStyles.WrapLabel);
-            if (GUILayout.Button("AUTO-WIRE SELECTED GALLERY", NekoStyles.PrimaryButton, GUILayout.Height(34f))) AutoWire(Selection.activeGameObject);
-            EditorGUILayout.EndVertical();
+            GUILayout.Label("Remote JSON mapper", NekoStyles.SlotName);
+            _remoteJsonUrl = EditorGUILayout.TextField("Remote JSON URL", _remoteJsonUrl);
+            _rootPath = EditorGUILayout.TextField("Root array path", _rootPath);
+            _titleKey = EditorGUILayout.TextField("Title field", _titleKey);
+            _subtitleKey = EditorGUILayout.TextField("Subtitle field", _subtitleKey);
+            _indexKey = EditorGUILayout.TextField("Image index field", _indexKey);
+            _urlKey = EditorGUILayout.TextField("Image URL/path field", _urlKey);
+            EditorGUILayout.HelpBox("Root Array Path supports a root array, a normal key such as items, or a dotted path such as payload.gallery.images. Array entries may be objects, numeric image indexes, or raw strings such as /gallery/a.png.", MessageType.Info);
 
-            EditorGUILayout.BeginVertical(NekoStyles.Card);
-            GUILayout.Label("Data sources", NekoStyles.SlotName);
-            EditorGUILayout.LabelField("1. Local Texture[] — fastest and fully baked into the world.\n2. Predeclared VRCUrl[] — lazy runtime image loading.\n3. Optional JSON metadata — title/subtitle plus imageIndex, or imageUrl matched against the predeclared VRCUrl array.\n\nThe JSON mapper accepts a root array or common wrappers such as items, images, gallery and data. Field names remain editable on the generated behaviour.", NekoStyles.WrapLabel);
+            GUILayout.Label("Predeclared image URLs — one per line", EditorStyles.boldLabel);
+            _predeclaredUrls = EditorGUILayout.TextArea(_predeclaredUrls, GUILayout.MinHeight(72f));
+            GUILayout.Label("Optional aliases / relative paths — one per line, aligned with URLs", EditorStyles.boldLabel);
+            _urlAliases = EditorGUILayout.TextArea(_urlAliases, GUILayout.MinHeight(58f));
+            EditorGUILayout.LabelField("Example: URL https://cdn.example.com/gallery/a.png can use alias /gallery/a.png. JSON may then contain only that path and still map to the predeclared VRCUrl safely.", NekoStyles.WrapLabel);
             if (GUILayout.Button("Copy example gallery JSON into Assets")) CopyExampleJson();
             EditorGUILayout.EndVertical();
 
             EditorGUILayout.BeginVertical(NekoStyles.Card);
-            GUILayout.Label("Transition library", NekoStyles.SlotName);
-            EditorGUILayout.LabelField("Cross-fade, four-direction style sliding, zoom, spin+zoom, plus shader wipe, dissolve and radial reveal. The runtime uses two RawImage layers for transform effects and a third shader layer for the GPU effects.", NekoStyles.WrapLabel);
+            GUILayout.Label("After UdonSharp compiles", NekoStyles.SlotName);
+            EditorGUILayout.LabelField("Keep the generated or existing gallery root selected and click Auto-Wire / Repair. It verifies the UdonSharpProgramAsset before attaching the runtime, fills UI/data references and wires the buttons.", NekoStyles.WrapLabel);
+            if (GUILayout.Button("AUTO-WIRE / REPAIR SELECTED GALLERY", NekoStyles.PrimaryButton, GUILayout.Height(34f))) AutoWire(Selection.activeGameObject);
             EditorGUILayout.EndVertical();
 
-            EditorGUILayout.HelpBox("VRChat cannot construct arbitrary VRCUrl objects from JSON strings at runtime. For remote JSON galleries, predeclare the image URLs in the inspector and let JSON map to them by imageIndex or matching imageUrl. This keeps the gallery compatible with VRChat's URL security model.", MessageType.Info);
+            EditorGUILayout.BeginVertical(NekoStyles.Card);
+            GUILayout.Label("Transition library", NekoStyles.SlotName);
+            EditorGUILayout.LabelField("Cross-fade, slide left/right/up, zoom, spin+zoom, plus shader wipe, dissolve and radial reveal. The runtime uses two RawImage layers for transform effects and a third shader layer for the GPU effects.", NekoStyles.WrapLabel);
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.HelpBox("VRChat still does not let Udon construct arbitrary VRCUrl objects from downloaded JSON strings. NekoSune maps downloaded full URLs, relative paths or aliases onto creator-predeclared VRCUrl[] entries instead of bypassing that security model.", MessageType.Info);
             EditorGUILayout.EndScrollView();
         }
 
         void BuildDemo()
         {
-            string assetFolder = EnsureFolder("Assets/NekoSune/Gallery/Generated");
+            string assetFolder = EnsureFolder(GeneratedFolder);
             Texture2D[] demo = CreateDemoTextures(assetFolder);
             Material transitionMaterial = CreateTransitionMaterial(assetFolder);
 
@@ -87,6 +126,7 @@ namespace NekoSune.WorldGallery.Editor
             Canvas canvas = root.GetComponent<Canvas>(); canvas.renderMode = RenderMode.WorldSpace;
             RectTransform rootRt = root.GetComponent<RectTransform>(); rootRt.sizeDelta = new Vector2(1100f, 760f); root.transform.localScale = Vector3.one * 0.001f;
             root.GetComponent<Image>().color = new Color(0.035f, 0.045f, 0.07f, 0.98f);
+            TryAddVrcUiShape(root);
 
             GameObject frame = Ui("[Frame]", root.transform, typeof(Image)); Stretch(frame.GetComponent<RectTransform>(), 28f); frame.GetComponent<Image>().color = new Color(0.075f,0.09f,0.135f,1f);
             GameObject viewport = Ui("[Viewport]", frame.transform, typeof(RectMask2D)); RectTransform vr = viewport.GetComponent<RectTransform>(); vr.anchorMin = new Vector2(0f,0.18f); vr.anchorMax = new Vector2(1f,1f); vr.offsetMin = new Vector2(22f,0f); vr.offsetMax = new Vector2(-22f,-78f);
@@ -102,30 +142,71 @@ namespace NekoSune.WorldGallery.Editor
             Text page = TextNode(frame.transform, "[PageText]", "1 / 3", 20, FontStyle.Bold, TextAnchor.MiddleCenter); RectTransform pr = page.rectTransform; pr.anchorMin = new Vector2(.75f,0f); pr.anchorMax = new Vector2(.9f,.13f); pr.offsetMin = Vector2.zero; pr.offsetMax = Vector2.zero;
             Text status = TextNode(frame.transform, "[StatusText]", "", 15, FontStyle.Normal, TextAnchor.MiddleLeft); RectTransform str = status.rectTransform; str.anchorMin = new Vector2(0f,0f); str.anchorMax = new Vector2(.55f,.08f); str.offsetMin = new Vector2(30f,0f); str.offsetMax = Vector2.zero;
 
-            Button prev = ButtonNode(frame.transform, "[PrevButton]", "‹", new Vector2(.68f,.065f), new Vector2(70f,52f));
-            Button next = ButtonNode(frame.transform, "[NextButton]", "›", new Vector2(.94f,.065f), new Vector2(70f,52f));
-            Button auto = ButtonNode(frame.transform, "[AutoButton]", "AUTO", new Vector2(.81f,.065f), new Vector2(105f,52f));
+            ButtonNode(frame.transform, "[PrevButton]", "‹", new Vector2(.68f,.065f), new Vector2(70f,52f));
+            ButtonNode(frame.transform, "[NextButton]", "›", new Vector2(.94f,.065f), new Vector2(70f,52f));
+            ButtonNode(frame.transform, "[AutoButton]", "AUTO", new Vector2(.81f,.065f), new Vector2(105f,52f));
 
             CopyRuntime();
             Selection.activeGameObject = root;
-            EditorUtility.DisplayDialog("Image Gallery", "Created the demo gallery. Wait for UdonSharp to compile NekoImageGalleryRuntime.cs, keep the gallery root selected, then click AUTO-WIRE SELECTED GALLERY.", "OK");
+            EditorUtility.DisplayDialog("Image Gallery", "Created the demo gallery and refreshed the runtime script. Wait for Unity/UdonSharp to compile, then click AUTO-WIRE / REPAIR SELECTED GALLERY.", "OK");
         }
 
         void AutoWire(GameObject root)
         {
             if (root == null || !root.name.Contains("Gallery")) { EditorUtility.DisplayDialog("Image Gallery", "Select the generated Neko Image Gallery root.", "OK"); return; }
+            if (EditorApplication.isCompiling || EditorApplication.isUpdating) { EditorUtility.DisplayDialog("Image Gallery", "Unity is still compiling/importing. Wait for it to finish and try again.", "OK"); return; }
+
             Type type = FindType("NekoImageGalleryRuntime");
-            if (type == null) { EditorUtility.DisplayDialog("Image Gallery", "NekoImageGalleryRuntime has not compiled yet. Wait for Unity/UdonSharp and try again.", "OK"); return; }
-            Component c = root.GetComponent(type); if (c == null) c = Undo.AddComponent(root, type);
-            RawImage front = Find(root,"[FrontImage]").GetComponent<RawImage>(); RawImage back = Find(root,"[BackImage]").GetComponent<RawImage>(); RawImage fx = Find(root,"[ShaderImage]").GetComponent<RawImage>();
+            if (type == null) { EditorUtility.DisplayDialog("Image Gallery", "NekoImageGalleryRuntime has not compiled yet. Use REPAIR / COPY LATEST RUNTIME, fix any remaining Console errors, then try again.", "OK"); return; }
+
+            bool createdProgram;
+            if (!EnsureUdonSharpProgramAsset(type, out createdProgram)) { EditorUtility.DisplayDialog("Image Gallery", "Could not find/create the UdonSharpProgramAsset. Run VRChat SDK → Udon Sharp → Refresh All UdonSharp Assets, then try again.", "OK"); return; }
+            if (createdProgram || EditorApplication.isCompiling || EditorApplication.isUpdating) { EditorUtility.DisplayDialog("Image Gallery", "Created/repaired NekoImageGalleryRuntime.asset. Let UdonSharp finish compiling, then Auto-Wire again.", "OK"); return; }
+
+            Component c = root.GetComponent(type); if (c == null) c = AddUdonSharpComponent(root, type); else RunUdonSharpSetup(c);
+            if (c == null) { EditorUtility.DisplayDialog("Image Gallery", "UdonSharp could not attach the gallery runtime through its editor API. Check the Console and try again.", "OK"); return; }
+
+            GameObject frontGo=Find(root,"[FrontImage]"), backGo=Find(root,"[BackImage]"), fxGo=Find(root,"[ShaderImage]");
+            if(frontGo==null||backGo==null||fxGo==null){EditorUtility.DisplayDialog("Image Gallery","Required generated image layers are missing.","OK");return;}
+            RawImage front = frontGo.GetComponent<RawImage>(); RawImage back = backGo.GetComponent<RawImage>(); RawImage fx = fxGo.GetComponent<RawImage>();
             Set(c,"frontImage",front); Set(c,"backImage",back); Set(c,"shaderImage",fx); Set(c,"frontGroup",front.GetComponent<CanvasGroup>()); Set(c,"backGroup",back.GetComponent<CanvasGroup>());
             Set(c,"titleText",Find(root,"[TitleText]").GetComponent<Text>()); Set(c,"subtitleText",Find(root,"[SubtitleText]").GetComponent<Text>()); Set(c,"pageText",Find(root,"[PageText]").GetComponent<Text>()); Set(c,"statusText",Find(root,"[StatusText]").GetComponent<Text>());
-            Set(c,"transitionMode",_effect); Set(c,"transitionDuration",_duration); Set(c,"autoPlay",_autoPlay); Set(c,"autoPlaySeconds",_autoSeconds); Set(c,"sourceMode",0);
-            string folder = "Assets/NekoSune/Gallery/Generated";
-            Texture[] textures = new Texture[] { AssetDatabase.LoadAssetAtPath<Texture2D>(folder+"/Demo_A.asset"), AssetDatabase.LoadAssetAtPath<Texture2D>(folder+"/Demo_B.asset"), AssetDatabase.LoadAssetAtPath<Texture2D>(folder+"/Demo_C.asset") };
-            Set(c,"localTextures",textures); Set(c,"transitionMaterial",AssetDatabase.LoadAssetAtPath<Material>(folder+"/NekoGalleryTransition.mat"));
+            Set(c,"transitionMode",_effect); Set(c,"transitionDuration",_duration); Set(c,"autoPlay",_autoPlay); Set(c,"autoPlaySeconds",_autoSeconds); Set(c,"sourceMode",_sourceMode);
+            Set(c,"rootKey",_rootPath); Set(c,"titleKey",_titleKey); Set(c,"subtitleKey",_subtitleKey); Set(c,"imageIndexKey",_indexKey); Set(c,"imageUrlKey",_urlKey);
+
+            Texture[] textures = new Texture[] { AssetDatabase.LoadAssetAtPath<Texture2D>(GeneratedFolder+"/Demo_A.asset"), AssetDatabase.LoadAssetAtPath<Texture2D>(GeneratedFolder+"/Demo_B.asset"), AssetDatabase.LoadAssetAtPath<Texture2D>(GeneratedFolder+"/Demo_C.asset") };
+            Set(c,"localTextures",textures); Set(c,"transitionMaterial",AssetDatabase.LoadAssetAtPath<Material>(GeneratedFolder+"/NekoGalleryTransition.mat"));
+
+            ApplyRemoteConfiguration(c);
+
             Wire(Find(root,"[PrevButton]").GetComponent<Button>(), c, "Previous"); Wire(Find(root,"[NextButton]").GetComponent<Button>(), c, "Next"); Wire(Find(root,"[AutoButton]").GetComponent<Button>(), c, "ToggleAutoPlay");
-            EditorUtility.SetDirty(c); EditorUtility.DisplayDialog("Image Gallery", "Gallery auto-wired. Assign your own Texture[] or predeclared VRCUrl[] and optional JSON metadata on the generated behaviour.", "OK");
+            ApplyUdonSharpProxy(c); EditorUtility.SetDirty(c);
+            EditorUtility.DisplayDialog("Image Gallery", "Gallery auto-wired/repaired. Remote JSON supports root/dotted array paths plus full URL, relative-path and alias mapping onto predeclared VRCUrl entries.", "OK");
+        }
+
+        void ApplyRemoteConfiguration(Component c)
+        {
+            Type urlType=FindType("VRC.SDKBase.VRCUrl"); if(urlType==null)return;
+            if(!string.IsNullOrWhiteSpace(_remoteJsonUrl)) Set(c,"metadataJsonUrl",CreateVrcUrl(urlType,_remoteJsonUrl.Trim()));
+
+            string[] urls=Lines(_predeclaredUrls); string[] aliases=Lines(_urlAliases);
+            if(urls.Length>0)
+            {
+                Array array=Array.CreateInstance(urlType,urls.Length);
+                for(int i=0;i<urls.Length;i++)array.SetValue(CreateVrcUrl(urlType,urls[i]),i);
+                Set(c,"imageUrls",array);
+            }
+            if(aliases.Length>0)Set(c,"imageUrlMapKeys",aliases);
+        }
+
+        static object CreateVrcUrl(Type urlType,string value)
+        {
+            try{return Activator.CreateInstance(urlType,new object[]{value});}catch{return null;}
+        }
+
+        static string[] Lines(string value)
+        {
+            if(string.IsNullOrWhiteSpace(value))return new string[0]; string[] raw=value.Replace("\r","").Split('\n'); var list=new List<string>(); for(int i=0;i<raw.Length;i++){string s=raw[i].Trim();if(!string.IsNullOrEmpty(s))list.Add(s);}return list.ToArray();
         }
 
         Texture2D[] CreateDemoTextures(string folder)
@@ -148,17 +229,43 @@ namespace NekoSune.WorldGallery.Editor
             Material m = new Material(shader); AssetDatabase.CreateAsset(m,path); return m;
         }
 
+        static bool EnsureUdonSharpProgramAsset(Type runtimeType,out bool created)
+        {
+            created=false; Type programType=FindType("UdonSharp.UdonSharpProgramAsset"); if(programType==null)return false;
+            MethodInfo getProgram=programType.GetMethod("GetProgramAssetForClass",BindingFlags.Public|BindingFlags.Static,null,new[]{typeof(Type)},null);
+            if(getProgram!=null){try{if(getProgram.Invoke(null,new object[]{runtimeType})!=null)return true;}catch{}}
+            MonoScript source=AssetDatabase.LoadAssetAtPath<MonoScript>(GeneratedScriptPath); if(source==null)return false;
+            UnityEngine.Object existing=AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(GeneratedProgramPath); FieldInfo sourceField=programType.GetField("sourceCsScript",BindingFlags.Public|BindingFlags.Instance); if(sourceField==null)return false;
+            if(existing==null){ScriptableObject program=ScriptableObject.CreateInstance(programType);sourceField.SetValue(program,source);AssetDatabase.CreateAsset(program,GeneratedProgramPath);EditorUtility.SetDirty(program);AssetDatabase.SaveAssets();created=true;}
+            else if(sourceField.GetValue(existing)==null){sourceField.SetValue(existing,source);EditorUtility.SetDirty(existing);AssetDatabase.SaveAssets();created=true;}
+            TryCompileUdonSharp(programType);AssetDatabase.ImportAsset(GeneratedProgramPath,ImportAssetOptions.ForceUpdate);return true;
+        }
+
+        static void TryCompileUdonSharp(Type programType)
+        {
+            try{MethodInfo compile=programType.GetMethod("CompileAllCsPrograms",BindingFlags.Public|BindingFlags.Static);if(compile==null)return;ParameterInfo[]p=compile.GetParameters();if(p.Length==2)compile.Invoke(null,new object[]{true,true});else if(p.Length==1)compile.Invoke(null,new object[]{true});else compile.Invoke(null,null);}catch(Exception e){Debug.LogWarning("[NekoSune Gallery] UdonSharp compile request deferred: "+e.Message);}
+        }
+
+        static Component AddUdonSharpComponent(GameObject root,Type runtimeType)
+        {
+            Type ext=FindType("UdonSharpEditor.UdonSharpComponentExtensions");if(ext==null)return null;MethodInfo add=ext.GetMethod("AddUdonSharpComponent",BindingFlags.Public|BindingFlags.Static,null,new[]{typeof(GameObject),typeof(Type)},null);if(add==null)return null;try{return add.Invoke(null,new object[]{root,runtimeType}) as Component;}catch(Exception e){string msg=e.InnerException!=null?e.InnerException.Message:e.Message;Debug.LogError("[NekoSune Gallery] UdonSharp AddComponent failed: "+msg);return null;}
+        }
+        static void RunUdonSharpSetup(Component component){InvokeUdonSharpUtility("RunBehaviourSetup",component);}
+        static void ApplyUdonSharpProxy(Component component){InvokeUdonSharpUtility("CopyProxyToUdon",component);}
+        static void InvokeUdonSharpUtility(string methodName,Component component){Type utility=FindType("UdonSharpEditor.UdonSharpEditorUtility");if(utility==null||component==null)return;MethodInfo[]ms=utility.GetMethods(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Static);for(int i=0;i<ms.Length;i++){MethodInfo m=ms[i];if(m.Name!=methodName)continue;ParameterInfo[]p=m.GetParameters();if(p.Length==1&&p[0].ParameterType.IsAssignableFrom(component.GetType())){try{m.Invoke(null,new object[]{component});}catch{}return;}}}
+
         static GameObject Ui(string name, Transform parent, params Type[] components) { Type[] all = new Type[components.Length + 1]; all[0] = typeof(RectTransform); Array.Copy(components,0,all,1,components.Length); GameObject go = new GameObject(name, all); go.transform.SetParent(parent,false); return go; }
         static RawImage Raw(Transform parent,string name) { return Ui(name,parent,typeof(RawImage)).GetComponent<RawImage>(); }
         static Text TextNode(Transform parent,string name,string value,int size,FontStyle style,TextAnchor align) { Text t=Ui(name,parent,typeof(Text)).GetComponent<Text>(); t.font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); t.text=value; t.fontSize=size; t.fontStyle=style; t.alignment=align; t.color=Color.white; return t; }
         static Button ButtonNode(Transform parent,string name,string value,Vector2 anchor,Vector2 size) { GameObject go=Ui(name,parent,typeof(Image),typeof(Button)); RectTransform r=go.GetComponent<RectTransform>(); r.anchorMin=r.anchorMax=anchor; r.pivot=new Vector2(.5f,.5f); r.sizeDelta=size; go.GetComponent<Image>().color=new Color(.29f,.56f,.98f,1f); Text t=TextNode(go.transform,"Label",value,28,FontStyle.Bold,TextAnchor.MiddleCenter); Stretch(t.rectTransform,4f); return go.GetComponent<Button>(); }
         static void Stretch(RectTransform r,float p){r.anchorMin=Vector2.zero;r.anchorMax=Vector2.one;r.offsetMin=new Vector2(p,p);r.offsetMax=new Vector2(-p,-p);}
         static GameObject Find(GameObject root,string name){Transform[] all=root.GetComponentsInChildren<Transform>(true);for(int i=0;i<all.Length;i++)if(all[i].name==name)return all[i].gameObject;return null;}
-        static Type FindType(string simple){foreach(Assembly a in AppDomain.CurrentDomain.GetAssemblies()){Type[] ts;try{ts=a.GetTypes();}catch{continue;}for(int i=0;i<ts.Length;i++)if(ts[i]!=null&&ts[i].Name==simple)return ts[i];}return null;}
-        static void Set(Component c,string field,object value){FieldInfo f=c.GetType().GetField(field,BindingFlags.Public|BindingFlags.Instance);if(f!=null){Undo.RecordObject(c,"Wire gallery");f.SetValue(c,value);EditorUtility.SetDirty(c);}}
+        static Type FindType(string simple){foreach(Assembly a in AppDomain.CurrentDomain.GetAssemblies()){Type direct=a.GetType(simple,false);if(direct!=null)return direct;Type[] ts;try{ts=a.GetTypes();}catch{continue;}for(int i=0;i<ts.Length;i++)if(ts[i]!=null&&(ts[i].Name==simple||ts[i].FullName==simple))return ts[i];}return null;}
+        static void Set(Component c,string field,object value){FieldInfo f=c.GetType().GetField(field,BindingFlags.Public|BindingFlags.Instance);if(f!=null){Undo.RecordObject(c,"Wire gallery");try{f.SetValue(c,value);}catch(Exception e){Debug.LogWarning("[NekoSune Gallery] Could not assign "+field+": "+e.Message);}EditorUtility.SetDirty(c);}}
         static void Wire(Button b,Component c,string method){if(b==null||c==null)return;MethodInfo m=c.GetType().GetMethod(method,BindingFlags.Public|BindingFlags.Instance);if(m==null)return;try{UnityAction a=(UnityAction)Delegate.CreateDelegate(typeof(UnityAction),c,m);UnityEventTools.AddPersistentListener(b.onClick,a);EditorUtility.SetDirty(b);}catch(Exception e){Debug.LogWarning("[NekoSune Gallery] Could not wire "+method+": "+e.Message);}}
+        static void TryAddVrcUiShape(GameObject root){Type t=FindType("VRC.SDK3.Components.VRCUiShape");if(t==null)t=FindType("VRCUiShape");if(t==null)t=FindType("VRC_UiShape");if(t!=null&&root.GetComponent(t)==null)Undo.AddComponent(root,t);}
 
-        static void CopyRuntime(){CopyPackageFile("Templates/Runtime/NekoImageGalleryRuntime.cs.txt","Assets/NekoSune/Gallery/Generated/NekoImageGalleryRuntime.cs");}
+        static void CopyRuntime(){CopyPackageFile("Templates/Runtime/NekoImageGalleryRuntime.cs.txt",GeneratedScriptPath);}
         static void CopyExampleJson(){string dst="Assets/NekoSune/Gallery/Examples/gallery-items.json";EnsureFolder("Assets/NekoSune/Gallery/Examples");CopyPackageFile("Examples/gallery-items.json",dst);EditorUtility.DisplayDialog("Image Gallery","Copied "+dst,"OK");}
         static void CopyPackageFile(string sourceRelative,string target){string src=Path.GetFullPath(Path.Combine("Packages/com.nekosune.world-gallery",sourceRelative));if(!File.Exists(src)){Debug.LogError("Missing package file: "+src);return;}EnsureFolder(Path.GetDirectoryName(target).Replace('\\','/'));string abs=Path.Combine(Directory.GetParent(Application.dataPath).FullName,target.Replace('/',Path.DirectorySeparatorChar));File.Copy(src,abs,true);AssetDatabase.Refresh();}
         static string EnsureFolder(string path){string[] p=path.Split('/');string cur=p[0];for(int i=1;i<p.Length;i++){string n=cur+"/"+p[i];if(!AssetDatabase.IsValidFolder(n))AssetDatabase.CreateFolder(cur,p[i]);cur=n;}return cur;}
