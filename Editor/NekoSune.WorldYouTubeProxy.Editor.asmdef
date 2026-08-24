@@ -1,0 +1,14 @@
+{
+  "name": "NekoSune.WorldYouTubeProxy.Editor",
+  "rootNamespace": "NekoSune.WorldYouTubeProxy.Editor",
+  "references": ["NekoSune.Worlds.Editor"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

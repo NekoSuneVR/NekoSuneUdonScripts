@@ -1,126 +1,181 @@
-# NekoSune World Gallery
+# NekoSune World YouTube Proxy
 
-A beginner-friendly VRChat image gallery/slideshow addon for the NekoSune World Hub.
+A VRChat World addon that bridges the stable NekoSuneTools YouTube relay into VRChat video players.
 
-## Sources
+## Package
 
-The same runtime can be driven in several ways:
+- Branch: `world-youtube-proxy`
+- VPM package: `com.nekosune.world-youtube-proxy`
+- Menu: `NekoSune > World > YouTube Proxy`
 
-- local `Texture[]` baked with the world
-- raw `string[]` titles/subtitles
-- embedded JSON pasted directly into the inspector
-- an array of raw JSON-object strings (`string[] rawJsonRows`)
-- predeclared `VRCUrl[]` downloaded lazily with `VRCImageDownloader`
-- optional remote JSON downloaded with `VRCStringDownloader` and parsed with `VRCJson`
+## Stable relay contract
 
-## Remote JSON mapper
-
-The Builder now exposes the remote JSON configuration directly:
+Use the stable NekoSuneTools URL as the canonical video URL:
 
 ```text
-Remote JSON URL
-Root array path
-Title field
-Subtitle field
-Image index field
-Image URL/path field
-Predeclared image URLs
-Optional path aliases
+https://tools.nekosunevr.co.uk/v/{youtubeVideoId}?vrc=1
 ```
-
-`Root array path` supports:
-
-- a root JSON array
-- a normal wrapper such as `items`
-- dotted/nested paths such as `payload.gallery.images`
-
-The target array can contain object rows, numeric image indexes, or raw string paths/URLs.
 
 Examples:
 
-```json
-[
-  "/gallery/a.png",
-  "/gallery/b.png"
-]
+```text
+https://tools.nekosunevr.co.uk/v/O9qAGM_JVGI?vrc=1
+https://tools.nekosunevr.co.uk/v/O9qAGM_JVGI?vrc=1&q=1080
+https://tools.nekosunevr.co.uk/v/O9qAGM_JVGI?vrc=1&q=720
 ```
 
-```json
-{
-  "payload": {
-    "gallery": {
-      "images": [
-        "/gallery/a.png",
-        "/gallery/b.png"
-      ]
-    }
-  }
-}
-```
+The relay decides server-side whether the YouTube target is a normal VOD or a live stream. Worlds should not store temporary `/api/youtube-relay/...` URLs.
 
-```json
-{
-  "items": [
-    {"title":"Image A", "path":"/gallery/a.png"},
-    {"title":"Image B", "path":"/gallery/b.png"}
-  ]
-}
-```
+## Supported player targets
 
-For object rows set `Image URL/path field` to `path` in the last example.
+### Stock VRChat components
 
-## Mapping downloaded path strings to images
+- `VRCAVProVideoPlayer`
+- `VRCUnityVideoPlayer`
 
-VRChat does not allow arbitrary runtime `VRCUrl` construction from strings downloaded in JSON. NekoSune therefore maps JSON strings onto creator-predeclared `VRCUrl[]` entries.
+If both are assigned, the bridge prefers AVPro. AVPro is the recommended target when the same integration must support normal videos and YouTube Live.
 
-You can map by:
+### Community/custom Udon players
 
-1. numeric `imageIndex`;
-2. exact full URL;
-3. a relative path that matches the end of the predeclared URL;
-4. a creator-defined entry in `imageUrlMapKeys[]` / **Optional aliases**.
+The bridge also has a generic adapter:
 
-Example Builder configuration:
+1. assign the target `UdonBehaviour`
+2. enter the program variable that receives a `VRCUrl`
+3. enter the custom event that loads/plays it
+4. optionally enter a stop event
+
+For example:
 
 ```text
-Predeclared image URLs:
-https://cdn.example.com/gallery/a.png
-https://cdn.example.com/gallery/b.png
-
-Optional aliases:
-/gallery/a.png
-/gallery/b.png
+VRCUrl variable: url
+Play event: Play
+Stop event: Stop
 ```
 
-The remote JSON may then contain only `/gallery/a.png` and `/gallery/b.png` while VRChat still receives the actual predeclared `VRCUrl` values.
+Community video prefabs use different variable/event names, so these values are configurable instead of hard-coded.
 
-## Effects
+## Quick setup
 
-- Cross fade
-- Slide left
-- Slide right
-- Slide up
-- Zoom
-- Spin + zoom
-- Shader wipe
-- Shader dissolve
-- Shader radial reveal
+Open:
 
-The transform effects use two `RawImage` layers. Shader effects use `Shaders/NekoGalleryTransition.shader` and a third UI layer.
+```text
+NekoSune > World > YouTube Proxy
+```
 
-## Repairing an older generated gallery
+Then either:
 
-If `Assets/NekoSune/Gallery/Generated/NekoImageGalleryRuntime.cs` came from an older package and has a compile error, you do not need to rebuild the UI.
+```text
+ADD / REPAIR BRIDGE ON SELECTED PLAYER
+```
 
-1. Update NekoSune World Gallery.
-2. Open `NekoSune > World > Image Gallery`.
-3. Click **REPAIR / COPY LATEST GALLERY RUNTIME**.
-4. Let Unity/UdonSharp finish compiling.
-5. Select the existing `Neko Image Gallery` root.
-6. Click **AUTO-WIRE / REPAIR SELECTED GALLERY**.
+or:
 
-The Auto-Wire repair also verifies/repairs the generated `UdonSharpProgramAsset` before attaching the runtime.
+```text
+ADD BRIDGES TO ALL STOCK VRCHAT VIDEO PLAYERS
+```
 
-## Demo
+The setup window auto-wires stock AVPro/Unity components and tries to find a `VRCUrlInputField` in the same player hierarchy.
 
-Open `NekoSune > World > Image Gallery`, configure the source/mapping if desired, and choose **BUILD DEMO IMAGE GALLERY**. After Unity/UdonSharp compiles the generated script, select the gallery root and choose **AUTO-WIRE / REPAIR SELECTED GALLERY**.
+## Creator start URL
+
+Creators can paste a normal YouTube URL in the Unity editor, for example:
+
+```text
+https://www.youtube.com/watch?v=O9qAGM_JVGI
+```
+
+The editor tool extracts the 11-character video ID and stores this editor-created `VRCUrl` on the bridge:
+
+```text
+https://tools.nekosunevr.co.uk/v/O9qAGM_JVGI?vrc=1
+```
+
+This can optionally play on world start and can be synchronized.
+
+## Runtime URL input limitation
+
+VRChat does **not** allow Udon to freely construct a new `VRCUrl` from an arbitrary string at runtime. A user-created `VRCUrl` normally comes from `VRCUrlInputField`.
+
+That means a pure Udon component cannot transparently do this for an arbitrary runtime entry:
+
+```text
+https://www.youtube.com/watch?v=O9qAGM_JVGI
+        ↓ impossible to construct a different VRCUrl in pure Udon
+https://tools.nekosunevr.co.uk/v/O9qAGM_JVGI?vrc=1
+```
+
+The package therefore supports the VRChat-safe flows:
+
+- creator converts normal YouTube URL to proxy URL in the editor
+- user pastes a complete NekoSune `/v/...` URL into a `VRCUrlInputField`
+- setup tool prefills a `VRCUrlInputField` with:
+
+```text
+https://tools.nekosunevr.co.uk/v/VIDEO_ID?vrc=1
+```
+
+and the user replaces `VIDEO_ID`
+- optional direct-YouTube fallback can be enabled, but that bypasses the NekoSune proxy
+
+The package deliberately does not fake a runtime `new VRCUrl(dynamicString)` API that VRChat does not support.
+
+## URL synchronization
+
+`NekoYouTubeProxyPlayer` can synchronize the stable `VRCUrl` itself using manual Udon synchronization.
+
+Only the stable `/v/...` URL is synchronized. Temporary relay tokens are never treated as canonical world state.
+
+Disable `synchronizeUrl` if the community player already owns URL synchronization and you only want the bridge as a local adapter.
+
+## VRChat URL rate limit
+
+VRChat globally limits a user to roughly one new video-player URL every five seconds.
+
+The bridge therefore:
+
+- waits at least 5.1 seconds between new `PlayURL` requests on that bridge
+- queues instead of spamming
+- retries video errors after approximately 5, 10 and 20 seconds
+- stops after three retries
+
+If a world runs many independent video players simultaneously, creators should still stagger their startup because the VRChat limit is global across the user's video players, not only this component.
+
+## Allow Untrusted URLs
+
+`tools.nekosunevr.co.uk` may require the player's **Allow Untrusted URLs** setting unless the domain is accepted by the world's/current VRChat URL rules.
+
+A redirect later in the relay chain does not make the initial short-link domain automatically trusted.
+
+## Start URL quality
+
+The editor helper supports:
+
+```text
+auto  = prefer 1080p, fallback 720p
+1080  = prefer/force the 1080 profile
+720   = 720p profile
+```
+
+The Udon side does not need to determine whether the result is MP4 or HLS.
+
+## Source ownership
+
+The world package depends only on the stable public endpoint:
+
+```text
+https://tools.nekosunevr.co.uk/v/{youtubeVideoId}?vrc=1
+```
+
+It does not depend on the relay's internal `/info`, GoogleVideo, temporary MP4 token or temporary HLS token URLs.
+
+## Files
+
+```text
+Runtime/NekoYouTubeProxyPlayer.cs
+Editor/NekoYouTubeProxySetupWindow.cs
+Editor/NekoSune.WorldYouTubeProxy.Editor.asmdef
+```
+
+## Testing note
+
+The package source is designed for VRChat Worlds SDK/UdonSharp, but repository publishing does not execute a Unity or VRChat client compile. Always test the installed package with a clean world project and VRChat Build & Test before publishing a production world.
