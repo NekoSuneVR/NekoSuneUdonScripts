@@ -1,37 +1,31 @@
-# NekoSune World Hub
+# NekoSune World Gallery
 
-Base/template package for NekoSune world/Udon addons.
+A beginner-friendly VRChat image gallery/slideshow addon for the NekoSune World Hub.
 
-**Package ID:** `com.nekosune.worlds`
+## Sources
 
-This branch stays intentionally small: Hub, About page, localization/styles and the public addon contract. Actual creator features are separate VPM addons.
+- Local `Texture[]` baked with the world.
+- Predeclared `VRCUrl[]` downloaded lazily with `VRCImageDownloader`.
+- Optional JSON metadata parsed with `VRCJson`.
 
-## Menu
+JSON may be a root array or wrapped in `items`, `images`, `gallery`, or `data`. The runtime exposes editable field names for title, subtitle, image index, and image URL.
 
-- `NekoSune → World → Hub`
-- `NekoSune → World → About`
+VRChat does not currently allow arbitrary runtime `VRCUrl` construction from JSON strings. For remote JSON galleries, predeclare the image URLs and map JSON entries to them with `imageIndex` or a matching `imageUrl` string.
 
-Addon packages implementing `INekoAddon` with `[NekoAddon]` are discovered automatically. The World Hub does not need to be edited when a new addon branch is published.
+## Effects
 
-## Current addons
+- Cross fade
+- Slide left
+- Slide right
+- Slide up
+- Zoom
+- Spin + zoom
+- Shader wipe
+- Shader dissolve
+- Shader radial reveal
 
-- `com.nekosune.world-tools` — lightweight world framework/template helpers
-- `com.nekosune.optimizer` — Avatar + World optimizer
-- `com.nekosune.doctors` — Avatar + World/Udon diagnostics
-- `com.nekosune.converters` — ChilloutVR CCK 3/4 Avatar/Prop/World + Resonite
+The transform effects use two `RawImage` layers. Shader effects use `Shaders/NekoGalleryTransition.shader` and a third UI layer.
 
-## Make a new World addon branch
+## Demo
 
-1. Create a branch from this template or from the closest existing addon.
-2. Use a unique package ID.
-3. Depend on `com.nekosune.worlds`.
-4. Reference `NekoSune.Worlds.Editor`.
-5. Add a class implementing public `INekoAddon` with `[NekoAddon]`.
-6. Put the tool menu under `NekoSune → World → ...`.
-7. Publish a normal VPM release ZIP.
-
-See `Templates/WorldAddonTemplate.cs.txt`.
-
-## VCC repository
-
-`https://nekosunevr.github.io/NekoSuneUdonScripts/index.json`
+Open `NekoSune > World > Image Gallery` and choose **BUILD DEMO IMAGE GALLERY**. After Unity/UdonSharp compiles the generated script, select the gallery root and choose **AUTO-WIRE SELECTED GALLERY**.

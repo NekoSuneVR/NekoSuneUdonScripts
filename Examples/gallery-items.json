@@ -1,0 +1,7 @@
+{
+  "items": [
+    {"title":"Welcome","subtitle":"Local or remote image 1","imageIndex":0},
+    {"title":"Events","subtitle":"Map any JSON fields you want","imageIndex":1},
+    {"title":"Supporters","subtitle":"Works with gallery/shop/supporter metadata","imageIndex":2}
+  ]
+}

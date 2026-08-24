@@ -1,10 +1,15 @@
 {
-  "name": "com.nekosune.worlds",
-  "displayName": "NekoSune World Hub",
-  "version": "0.5.5",
-  "unity": "2021.3",
-  "description": "Base/template World Hub for NekoSune VRChat and ChilloutVR creator addons. Provides the shared Avatar-style Hub UI, About page, localization and automatic addon discovery API.",
+  "name": "com.nekosune.world-gallery",
+  "displayName": "NekoSune World Gallery",
+  "version": "1.0.0",
+  "unity": "2022.3",
+  "description": "Stylish VRChat world image gallery builder with local/remote images, flexible JSON metadata mapping, lazy loading and animated/shader transitions.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
-  "keywords": ["vrchat","chilloutvr","world","udon","hub","template","addon","nekosune"],
+  "keywords": ["vrchat","world","gallery","images","slideshow","json","vrcjson","transitions","shader","ui"],
+  "dependencies": {"com.unity.ugui":"1.0.0"},
+  "vpmDependencies": {
+    "com.nekosune.worlds": ">=0.5.6",
+    "com.vrchat.worlds": ">=3.8.1"
+  },
   "hideInEditor": false
 }
