@@ -1,0 +1,8 @@
+{
+  "name": "NekoSune.WorldAvatarSearch.Editor",
+  "rootNamespace": "NekoSune.WorldAvatarSearch.Editor",
+  "references": ["NekoSune.Worlds.Editor", "UnityEngine.UI"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true,
+  "noEngineReferences": false
+}

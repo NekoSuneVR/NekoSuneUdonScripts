@@ -1,37 +1,50 @@
-# NekoSune World Hub
+# NekoSune World Avatar Search
 
-Base/template package for NekoSune world/Udon addons.
+A beginner-friendly VRChat world avatar browser/search builder for the NekoSune World Hub.
 
-**Package ID:** `com.nekosune.worlds`
+## Demo endpoint
 
-This branch stays intentionally small: Hub, About page, localization/styles and the public addon contract. Actual creator features are separate VPM addons.
+The included demo preset uses:
 
-## Menu
+```text
+https://vrcavatarsearch.nekosunevr.co.uk/vrcx_search?search=Rindo
+```
 
-- `NekoSune → World → Hub`
-- `NekoSune → World → About`
+The default mapper expects the VRCX-style root-array fields `id`, `name`, `authorName`, `description`, `thumbnailImageUrl`, and `releaseStatus`.
 
-Addon packages implementing `INekoAddon` with `[NekoAddon]` are discovered automatically. The World Hub does not need to be edited when a new addon branch is published.
+## Flexible JSON adapter
 
-## Current addons
+The runtime can also read APIs wrapped in `avatars`, `results`, `items`, or `data`, and tries common aliases such as:
 
-- `com.nekosune.world-tools` — lightweight world framework/template helpers
-- `com.nekosune.optimizer` — Avatar + World optimizer
-- `com.nekosune.doctors` — Avatar + World/Udon diagnostics
-- `com.nekosune.converters` — ChilloutVR CCK 3/4 Avatar/Prop/World + Resonite
+- `id`, `avatarId`, `avatar_id`
+- `name`, `avatarName`, `title`
+- `authorName`, `author`, `creatorName`
+- `description`, `desc`, `summary`
+- `releaseStatus`, `status`, `visibility`
+- `thumbnailImageUrl`, `thumbnailUrl`, `imageUrl`
 
-## Make a new World addon branch
+All preferred keys remain editable in the generated behaviour.
 
-1. Create a branch from this template or from the closest existing addon.
-2. Use a unique package ID.
-3. Depend on `com.nekosune.worlds`.
-4. Reference `NekoSune.Worlds.Editor`.
-5. Add a class implementing public `INekoAddon` with `[NekoAddon]`.
-6. Put the tool menu under `NekoSune → World → ...`.
-7. Publish a normal VPM release ZIP.
+## Search input limitation
 
-See `Templates/WorldAddonTemplate.cs.txt`.
+VRChat Udon cannot construct an arbitrary `VRCUrl` from a normal runtime string. The package therefore supports creator-predeclared preset/demo searches plus a `VRCUrlInputField` for a complete user-entered API URL.
 
-## VCC repository
+If an API domain is not trusted by VRChat, the player must enable **Allow Untrusted URLs**.
 
-`https://nekosunevr.github.io/NekoSuneUdonScripts/index.json`
+## Avatar switching
+
+Results store the avatar ID and use a `VRCAvatarPedestal`:
+
+1. **PREVIEW** calls `SwitchAvatar(id)` on the preview pedestal.
+2. **USE AVATAR** switches the pedestal then calls `SetAvatarUse(Networking.LocalPlayer)`.
+
+VRChat continues to enforce the normal public/private/Marketplace ownership rules.
+
+## Demo workflow
+
+1. Open `NekoSune > World > Avatar Search Builder`.
+2. Click **BUILD AVATAR SEARCH DEMO**.
+3. Wait for UdonSharp to compile the generated runtime script.
+4. Keep the generated UI selected.
+5. Click **AUTO-WIRE SELECTED SEARCH UI**.
+6. Test with VRChat Build & Test.

@@ -1,0 +1,189 @@
+using UdonSharp;
+using UnityEngine;
+using UnityEngine.UI;
+using VRC.SDK3.Components;
+using VRC.SDK3.Data;
+using VRC.SDK3.StringLoading;
+using VRC.SDKBase;
+
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+public class NekoAvatarSearchBrowser : UdonSharpBehaviour
+{
+    [Header("Search")]
+    public VRCUrlInputField searchUrlInput;
+    public VRCUrl demoSearchUrl;
+
+    [Header("Flexible JSON mapper")]
+    public string rootKey = "";
+    public string idKey = "id";
+    public string nameKey = "name";
+    public string authorKey = "authorName";
+    public string descriptionKey = "description";
+    public string releaseStatusKey = "releaseStatus";
+    public string thumbnailKey = "thumbnailImageUrl";
+
+    [Header("Result UI")]
+    public GameObject[] resultCards;
+    public Text[] resultNames;
+    public Text[] resultAuthors;
+    public Text[] resultDescriptions;
+    public Text[] resultStatus;
+    public Text selectedName;
+    public Text selectedAuthor;
+    public Text selectedDescription;
+    public Text selectedId;
+    public Text statusText;
+
+    [Header("Avatar switching")]
+    public VRCAvatarPedestal previewPedestal;
+
+    private string[] _ids;
+    private string[] _names;
+    private string[] _authors;
+    private string[] _descriptions;
+    private string[] _statuses;
+    private string[] _thumbnails;
+    private int _count;
+    private int _selected = -1;
+
+    void Start()
+    {
+        int slots = resultCards == null ? 0 : resultCards.Length;
+        _ids = new string[slots]; _names = new string[slots]; _authors = new string[slots]; _descriptions = new string[slots]; _statuses = new string[slots]; _thumbnails = new string[slots];
+        ClearResults();
+        SetStatus("Paste a complete search API URL, or press DEMO RINDO.");
+    }
+
+    public void SearchDemo()
+    {
+        if (VRCUrl.IsNullOrEmpty(demoSearchUrl)) { SetStatus("Demo URL is not configured."); return; }
+        BeginSearch(demoSearchUrl);
+    }
+
+    public void SearchFromUrlField()
+    {
+        if (searchUrlInput == null) { SetStatus("Search URL field is not assigned."); return; }
+        VRCUrl url = searchUrlInput.GetUrl();
+        if (VRCUrl.IsNullOrEmpty(url)) { SetStatus("Enter the complete API search URL first."); return; }
+        BeginSearch(url);
+    }
+
+    void BeginSearch(VRCUrl url)
+    {
+        SetStatus("Searching...");
+        VRCStringDownloader.LoadUrl(url, this);
+    }
+
+    public override void OnStringLoadSuccess(IVRCStringDownload result)
+    {
+        DataToken root;
+        if (!VRCJson.TryDeserializeFromJson(result.Result, out root)) { SetStatus("JSON parse failed: " + root.ToString()); return; }
+        DataList list = ResolveList(root);
+        if (list == null) { SetStatus("No avatar array found. Set Root Key if this API wraps results differently."); return; }
+
+        ClearResults();
+        int slots = resultCards == null ? 0 : resultCards.Length;
+        int count = Mathf.Min(list.Count, slots);
+        for (int i = 0; i < count; i++)
+        {
+            DataToken rowToken;
+            if (!list.TryGetValue(i, TokenType.DataDictionary, out rowToken)) continue;
+            DataDictionary row = rowToken.DataDictionary;
+            string id = GetString(row, idKey, "id", "avatarId", "avatar_id");
+            if (string.IsNullOrEmpty(id)) continue;
+            _ids[_count] = id;
+            _names[_count] = GetString(row, nameKey, "name", "avatarName", "title");
+            _authors[_count] = GetString(row, authorKey, "authorName", "author", "creatorName");
+            _descriptions[_count] = GetString(row, descriptionKey, "description", "desc", "summary");
+            _statuses[_count] = GetString(row, releaseStatusKey, "releaseStatus", "status", "visibility");
+            _thumbnails[_count] = GetString(row, thumbnailKey, "thumbnailImageUrl", "thumbnailUrl", "imageUrl");
+            RenderCard(_count);
+            _count++;
+        }
+        if (_count == 0) { SetStatus("Search returned no usable avatar IDs."); return; }
+        SelectResult(0);
+        SetStatus("Loaded " + _count + " avatars. Select one, then PREVIEW or USE AVATAR.");
+    }
+
+    public override void OnStringLoadError(IVRCStringDownload result)
+    {
+        SetStatus("Search failed: " + result.ErrorCode + " - " + result.Error + ". This host may require Allow Untrusted URLs.");
+    }
+
+    DataList ResolveList(DataToken root)
+    {
+        if (root.TokenType == TokenType.DataList) return root.DataList;
+        if (root.TokenType != TokenType.DataDictionary) return null;
+        DataDictionary d = root.DataDictionary; DataToken token;
+        if (!string.IsNullOrEmpty(rootKey) && d.TryGetValue(rootKey, TokenType.DataList, out token)) return token.DataList;
+        if (d.TryGetValue("avatars", TokenType.DataList, out token)) return token.DataList;
+        if (d.TryGetValue("results", TokenType.DataList, out token)) return token.DataList;
+        if (d.TryGetValue("items", TokenType.DataList, out token)) return token.DataList;
+        if (d.TryGetValue("data", TokenType.DataList, out token)) return token.DataList;
+        return null;
+    }
+
+    string GetString(DataDictionary d, string preferred, string a, string b, string c)
+    {
+        DataToken token;
+        if (!string.IsNullOrEmpty(preferred) && d.TryGetValue(preferred, out token) && token.TokenType == TokenType.String) return token.String;
+        if (d.TryGetValue(a, out token) && token.TokenType == TokenType.String) return token.String;
+        if (d.TryGetValue(b, out token) && token.TokenType == TokenType.String) return token.String;
+        if (d.TryGetValue(c, out token) && token.TokenType == TokenType.String) return token.String;
+        return "";
+    }
+
+    void ClearResults()
+    {
+        _count = 0; _selected = -1;
+        if (resultCards != null) for (int i = 0; i < resultCards.Length; i++) if (resultCards[i] != null) resultCards[i].SetActive(false);
+        if (selectedName != null) selectedName.text = "NO AVATAR SELECTED";
+        if (selectedAuthor != null) selectedAuthor.text = "";
+        if (selectedDescription != null) selectedDescription.text = "Search for an avatar to begin.";
+        if (selectedId != null) selectedId.text = "";
+    }
+
+    void RenderCard(int i)
+    {
+        if (resultCards != null && i < resultCards.Length && resultCards[i] != null) resultCards[i].SetActive(true);
+        if (resultNames != null && i < resultNames.Length && resultNames[i] != null) resultNames[i].text = string.IsNullOrEmpty(_names[i]) ? "Unnamed Avatar" : _names[i];
+        if (resultAuthors != null && i < resultAuthors.Length && resultAuthors[i] != null) resultAuthors[i].text = string.IsNullOrEmpty(_authors[i]) ? "Unknown creator" : "by " + _authors[i];
+        if (resultDescriptions != null && i < resultDescriptions.Length && resultDescriptions[i] != null) resultDescriptions[i].text = _descriptions[i];
+        if (resultStatus != null && i < resultStatus.Length && resultStatus[i] != null) resultStatus[i].text = string.IsNullOrEmpty(_statuses[i]) ? "" : _statuses[i].ToUpper();
+    }
+
+    void SelectResult(int i)
+    {
+        if (i < 0 || i >= _count || string.IsNullOrEmpty(_ids[i])) return;
+        _selected = i;
+        if (selectedName != null) selectedName.text = string.IsNullOrEmpty(_names[i]) ? "Unnamed Avatar" : _names[i];
+        if (selectedAuthor != null) selectedAuthor.text = string.IsNullOrEmpty(_authors[i]) ? "Unknown creator" : "Created by " + _authors[i];
+        if (selectedDescription != null) selectedDescription.text = _descriptions[i];
+        if (selectedId != null) selectedId.text = _ids[i];
+    }
+
+    public void PreviewSelected()
+    {
+        if (_selected < 0 || previewPedestal == null) { SetStatus("Select an avatar and assign the preview pedestal."); return; }
+        previewPedestal.SwitchAvatar(_ids[_selected]);
+        SetStatus("Preview pedestal switched to " + _names[_selected] + ". The pedestal preview is shared world content.");
+    }
+
+    public void UseSelectedAvatar()
+    {
+        if (_selected < 0 || previewPedestal == null || Networking.LocalPlayer == null) { SetStatus("Select an avatar first."); return; }
+        previewPedestal.SwitchAvatar(_ids[_selected]);
+        previewPedestal.SetAvatarUse(Networking.LocalPlayer);
+    }
+
+    public void Select0() { SelectResult(0); }
+    public void Select1() { SelectResult(1); }
+    public void Select2() { SelectResult(2); }
+    public void Select3() { SelectResult(3); }
+    public void Select4() { SelectResult(4); }
+    public void Select5() { SelectResult(5); }
+    public void Select6() { SelectResult(6); }
+    public void Select7() { SelectResult(7); }
+
+    void SetStatus(string value) { if (statusText != null) statusText.text = value; }
+}
