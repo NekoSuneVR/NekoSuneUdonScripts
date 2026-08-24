@@ -88,12 +88,12 @@ namespace NekoSune.WorldEconomy.Editor
         static void Stretch(RectTransform rt, float pad) { rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one; rt.offsetMin = new Vector2(pad,pad); rt.offsetMax = new Vector2(-pad,-pad); }
         static void AddText(Transform parent, string value, int size, FontStyle style, float height)
         {
-            GameObject go = NewUi("Text - " + value, parent); var t = go.AddComponent<Text>(); t.font = Resources.GetBuiltinResource<Font>("Arial.ttf"); t.text = value; t.fontSize = size; t.fontStyle = style; t.color = Color.white; t.alignment = TextAnchor.MiddleLeft; var le = go.AddComponent<LayoutElement>(); le.preferredHeight = height;
+            GameObject go = NewUi("Text - " + value, parent); var t = go.AddComponent<Text>(); t.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); t.text = value; t.fontSize = size; t.fontStyle = style; t.color = Color.white; t.alignment = TextAnchor.MiddleLeft; var le = go.AddComponent<LayoutElement>(); le.preferredHeight = height;
         }
         static void AddButton(Transform parent, string label, string note, float height)
         {
             GameObject go = NewUi("Button - " + label, parent); var img = go.AddComponent<Image>(); img.color = new Color(0.29f,0.56f,0.98f,1f); go.AddComponent<Button>(); var le = go.AddComponent<LayoutElement>(); le.preferredHeight = height;
-            GameObject textGo = NewUi("Label", go.transform); Stretch(textGo.GetComponent<RectTransform>(), 8f); var t = textGo.AddComponent<Text>(); t.font = Resources.GetBuiltinResource<Font>("Arial.ttf"); t.text = label + "\n" + note; t.fontSize = 20; t.fontStyle = FontStyle.Bold; t.color = Color.white; t.alignment = TextAnchor.MiddleCenter;
+            GameObject textGo = NewUi("Label", go.transform); Stretch(textGo.GetComponent<RectTransform>(), 8f); var t = textGo.AddComponent<Text>(); t.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); t.text = label + "\n" + note; t.fontSize = 20; t.fontStyle = FontStyle.Bold; t.color = Color.white; t.alignment = TextAnchor.MiddleCenter;
         }
 
         static void CopyTemplate(string sourceName, string targetName)
