@@ -1,7 +1,7 @@
 {
   "name": "com.nekosune.world-economy",
   "displayName": "NekoSune World Economy",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "unity": "2022.3",
   "description": "Beginner-friendly VRChat Creator Economy builders for product unlocks, store/listing UI, quantity purchase events and supporter walls.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
