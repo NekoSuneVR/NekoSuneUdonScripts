@@ -1,17 +1,23 @@
 # NekoSune Avatar Tools
 
-Focused addon package for the NekoSune Avatar Hub.
+The lightweight shared Avatar helper package for the NekoSune Hub ecosystem.
 
-**Package ID:** `com.nekosune.avatar-tools`
+## Included
 
-## Includes
+- shared avatar reflection/performance API used by Optimizer, Doctors, Converters and Animation Tools
+- beginner **Toggle + Menu Builder**
+  - Bool Expression Parameter
+  - Expression Menu Toggle
+  - OFF / ON AnimationClips
+  - FX Animator Bool parameter
+  - FX OFF/ON state layer
+  - attempts to assign/create the avatar's expression assets and FX controller
 
-- Lip Sync Studio
-- Rank Advisor
-- shared avatar reflection/performance analysis API used by Optimizer, Doctors and Converters
+The setup builder discovers VRChat SDK types through reflection. Avatar Tools intentionally does not hard-depend on `com.vrchat.avatars`, because Optimizer/Doctors/Converters may be installed in World-only projects too.
 
-This package depends on `com.nekosune.avatars`, so installing it automatically installs the Avatar Hub. Its `[NekoAddon]` cards are then discovered by the Hub without any registry edit.
+## Moved to dedicated addons
 
-The Hub/Core/localization implementation intentionally lives only in the `avatar` branch to make future addon branches small and reusable.
+- **Lip Sync Studio** → `com.nekosune.animation-tools`
+- **Rank Advisor** → `com.nekosune.optimizer`
 
-VCC repository: `https://nekosunevr.github.io/NekoSuneUdonScripts/index.json`
+This keeps Avatar Tools focused on reusable APIs and simple avatar setup helpers.
