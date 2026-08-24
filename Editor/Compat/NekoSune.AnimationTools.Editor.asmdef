@@ -1,0 +1,14 @@
+{
+  "name": "NekoSune.AnimationTools.Editor",
+  "rootNamespace": "NekoSune.AnimationTools.Compatibility",
+  "references": [],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
