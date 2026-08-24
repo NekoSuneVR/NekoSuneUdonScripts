@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDK3.Image;
 using VRC.SDKBase;
+using VRC.Udon.Common.Interfaces;
 
 public class NekoRemoteImageFeed : UdonSharpBehaviour
 {
@@ -24,7 +25,7 @@ public class NekoRemoteImageFeed : UdonSharpBehaviour
         {
             if (VRCUrl.IsNullOrEmpty(imageUrls[i])) continue;
             if (_downloads[i] != null) _downloads[i].Dispose();
-            _downloads[i] = _downloader.DownloadImage(imageUrls[i], null, this, new TextureInfo());
+            _downloads[i] = _downloader.DownloadImage(imageUrls[i], null, (IUdonEventReceiver)this, new TextureInfo());
         }
     }
 
@@ -43,7 +44,7 @@ public class NekoRemoteImageFeed : UdonSharpBehaviour
 
     public override void OnImageLoadError(IVRCImageDownload result)
     {
-        Debug.LogError("[NekoSune World Data] Image load failed: " + result.ErrorCode + " - " + result.Error);
+        Debug.LogError("[NekoSune World Data] Image load failed: " + result.Error + " - " + result.ErrorMessage);
     }
 
     void OnDestroy()
