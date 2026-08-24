@@ -30,10 +30,10 @@ namespace NekoSune.Worlds.Editor
                 _version = "0.0.0";
                 try
                 {
-                    string p = NekoPaths.ToAbsolute(NekoPaths.Root + "/package.json");
-                    if (!string.IsNullOrEmpty(p) && File.Exists(p))
+                    string abs = NekoPaths.ToAbsolute(NekoPaths.Root + "/package.json");
+                    if (abs != null && File.Exists(abs))
                     {
-                        Match m = Regex.Match(File.ReadAllText(p), "\"version\"\\s*:\\s*\"([^\"]+)\"");
+                        Match m = Regex.Match(File.ReadAllText(abs), "\"version\"\\s*:\\s*\"([^\"]+)\"");
                         if (m.Success) _version = m.Groups[1].Value;
                     }
                 }
@@ -45,52 +45,89 @@ namespace NekoSune.Worlds.Editor
         void OnGUI()
         {
             NekoStyles.Ensure();
-            NekoStyles.Header("NekoSune World Hub", "Install World addons and they appear here automatically");
-            DrawLanguagePicker();
-            GUILayout.Space(6f);
+            NekoStyles.HeaderBar("World Hub", "NekoSune", "Install addon packages and they appear here automatically");
+            DrawLanguageBar();
+            NekoStyles.Rule(2f);
+
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
             IList<INekoAddon> addons = NekoAddonRegistry.All;
             if (addons.Count == 0)
-                EditorGUILayout.HelpBox("No World addons are installed yet. Install NekoSune World Tools, Optimizer, Doctors or Converters from the shared VCC repository.", MessageType.Info);
+            {
+                EditorGUILayout.HelpBox(
+                    "No World addons are installed yet. Install NekoSune World Tools, World UI Builder, Optimizer, Doctors or Converters from the shared VCC repository.",
+                    MessageType.Info);
+            }
             else
             {
                 string last = null;
                 for (int i = 0; i < addons.Count; i++)
                 {
                     INekoAddon addon = addons[i];
-                    string category = NekoLoc.T(addon.CategoryKey);
-                    if (category != last) { GUILayout.Space(6f); GUILayout.Label(category.ToUpperInvariant(), EditorStyles.miniBoldLabel); last = category; }
-                    DrawAddon(addon);
+                    string cat = NekoLoc.T(addon.CategoryKey);
+                    if (cat != last)
+                    {
+                        GUILayout.Space(6f);
+                        GUILayout.Label(cat.ToUpperInvariant(), EditorStyles.miniBoldLabel);
+                        last = cat;
+                    }
+                    DrawAddonCard(addon);
                 }
             }
+
+            GUILayout.Space(10f);
             EditorGUILayout.EndScrollView();
+            NekoStyles.Rule(2f);
+
             EditorGUILayout.BeginHorizontal();
             GUILayout.Label("World Hub v" + Version, NekoStyles.Subtitle);
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("About", EditorStyles.miniButton)) NekoWorldAboutWindow.Open();
-            if (GUILayout.Button("Refresh addons", EditorStyles.miniButton)) { NekoAddonRegistry.Refresh(); Repaint(); }
+            if (GUILayout.Button("Refresh addons", EditorStyles.miniButton))
+            {
+                NekoAddonRegistry.Refresh();
+                Repaint();
+            }
             EditorGUILayout.EndHorizontal();
         }
 
-        static void DrawLanguagePicker()
+        void DrawLanguageBar()
         {
-            List<NekoLanguageInfo> languages = NekoLoc.Languages;
-            if (languages == null || languages.Count <= 1) return;
-            EditorGUILayout.BeginHorizontal(); GUILayout.FlexibleSpace(); GUILayout.Label(NekoLoc.T("common.language"), EditorStyles.miniLabel);
-            string[] names = new string[languages.Count]; int current = 0;
-            for (int i = 0; i < languages.Count; i++) { names[i] = languages[i].Display; if (languages[i].Code == NekoLoc.ActiveCode) current = i; }
-            int selected = EditorGUILayout.Popup(current, names, GUILayout.Width(190f));
-            if (selected != current) NekoLoc.SetLanguage(languages[selected].Code);
+            List<NekoLanguageInfo> langs = NekoLoc.Languages;
+            if (langs == null || langs.Count == 0) return;
+
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            GUILayout.Label(NekoLoc.T("common.language"), NekoStyles.Subtitle);
+
+            string[] names = new string[langs.Count];
+            int current = 0;
+            for (int i = 0; i < langs.Count; i++)
+            {
+                names[i] = langs[i].Display;
+                if (langs[i].Code == NekoLoc.ActiveCode) current = i;
+            }
+
+            int picked = EditorGUILayout.Popup(current, names, GUILayout.Width(180f));
+            if (picked != current) NekoLoc.SetLanguage(langs[picked].Code);
             EditorGUILayout.EndHorizontal();
         }
 
-        static void DrawAddon(INekoAddon addon)
+        static void DrawAddonCard(INekoAddon addon)
         {
             EditorGUILayout.BeginHorizontal(NekoStyles.Card);
-            GUILayout.Label(addon.Glyph, EditorStyles.boldLabel, GUILayout.Width(28f));
-            EditorGUILayout.BeginVertical(); GUILayout.Label(NekoLoc.T(addon.TitleKey), NekoStyles.CardTitle); GUILayout.Label(NekoLoc.T(addon.DescriptionKey), NekoStyles.CardDescription); EditorGUILayout.EndVertical();
+            GUILayout.Label(addon.Glyph, NekoStyles.IconBig, GUILayout.Width(34f), GUILayout.Height(38f));
+
+            EditorGUILayout.BeginVertical();
+            GUILayout.Label(NekoLoc.T(addon.TitleKey), NekoStyles.SlotName);
+            GUILayout.Label(NekoLoc.T(addon.DescriptionKey), NekoStyles.SlotMeta);
+            EditorGUILayout.EndVertical();
+
             GUILayout.FlexibleSpace();
-            using (new EditorGUI.DisabledScope(!addon.IsAvailable)) if (GUILayout.Button(NekoLoc.T("hub.open"), NekoStyles.PrimaryButton, GUILayout.Width(80f))) addon.Open();
+            using (new EditorGUI.DisabledScope(!addon.IsAvailable))
+            {
+                if (GUILayout.Button(NekoLoc.T("hub.open"), NekoStyles.PrimaryButton, GUILayout.Height(28f)))
+                    addon.Open();
+            }
             EditorGUILayout.EndHorizontal();
         }
     }
