@@ -54,7 +54,7 @@ namespace NekoSune.Worlds.Editor
             if (addons.Count == 0)
             {
                 EditorGUILayout.HelpBox(
-                    "No World addons are installed yet. Install World Tools, World UI Builder, World Gameplay, World Data, World Economy, Starter Games, Optimizer, Doctors or Converters from the shared NekoSune VCC repository.",
+                    "No World addons are installed yet. Install World Tools, World UI Builder, World Gameplay, World Data, World Economy, Starter Games, Image Gallery, Avatar Search, Player Tools, Optimizer, Doctors or Converters from the shared NekoSune VCC repository.",
                     MessageType.Info);
             }
             else
