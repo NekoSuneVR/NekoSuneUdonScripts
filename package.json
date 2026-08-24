@@ -1,7 +1,7 @@
 {
   "name": "com.nekosune.world-data",
   "displayName": "NekoSune World Data",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "unity": "2022.3",
   "description": "VRChat remote-data builders for VRCJson, string loading, image loading, JSON UI feeds and download diagnostics.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
