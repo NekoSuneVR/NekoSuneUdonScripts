@@ -1,11 +1,11 @@
 {
   "name": "com.nekosune.world-avatar-search",
   "displayName": "NekoSune World Avatar Search",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "unity": "2022.3",
-  "description": "VRChat world avatar-search UI builder with flexible JSON/VRCX mapping, a real VRCUrlInputField, result cards, 3D pedestal preview and avatar switching.",
+  "description": "VRChat world avatar-search UI builder with flexible JSON/VRCX mapping, prefilled VRCUrl search, paginated result cards, 3D pedestal preview and avatar switching.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
-  "keywords": ["vrchat","world","avatar","search","vrcx","json","vrcjson","pedestal","ui","browser"],
+  "keywords": ["vrchat","world","avatar","search","vrcx","json","vrcjson","pedestal","ui","browser","pagination"],
   "dependencies": {"com.unity.ugui":"1.0.0"},
   "vpmDependencies": {
     "com.nekosune.worlds": ">=0.5.6",
