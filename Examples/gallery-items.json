@@ -1,7 +1,21 @@
 {
   "items": [
-    {"title":"Welcome","subtitle":"Local or remote image 1","imageIndex":0},
-    {"title":"Events","subtitle":"Map any JSON fields you want","imageIndex":1},
-    {"title":"Supporters","subtitle":"Works with gallery/shop/supporter metadata","imageIndex":2}
-  ]
+    {"title":"Welcome","subtitle":"Map by explicit index","imageIndex":0},
+    {"title":"Events","subtitle":"Map by a relative path alias","path":"/gallery/events.png"},
+    {"title":"Supporters","subtitle":"Map by full predeclared URL","path":"https://cdn.example.com/gallery/supporters.png"}
+  ],
+  "pathArray": [
+    "/gallery/welcome.png",
+    "/gallery/events.png",
+    "/gallery/supporters.png"
+  ],
+  "nested": {
+    "gallery": {
+      "images": [
+        "/gallery/welcome.png",
+        "/gallery/events.png",
+        "/gallery/supporters.png"
+      ]
+    }
+  }
 }
