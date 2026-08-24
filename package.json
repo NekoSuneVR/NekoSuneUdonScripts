@@ -1,9 +1,9 @@
 {
   "name": "com.nekosune.world-gallery",
   "displayName": "NekoSune World Gallery",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "unity": "2022.3",
-  "description": "Stylish VRChat world image gallery builder with local/remote images, flexible JSON metadata mapping, lazy loading and animated/shader transitions.",
+  "description": "Stylish VRChat world image gallery builder with local/remote images, raw and embedded JSON metadata, flexible mapping, lazy loading and animated/shader transitions.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
   "keywords": ["vrchat","world","gallery","images","slideshow","json","vrcjson","transitions","shader","ui"],
   "dependencies": {"com.unity.ugui":"1.0.0"},
