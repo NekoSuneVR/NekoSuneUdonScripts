@@ -15,7 +15,7 @@ namespace NekoSune.WorldAvatarSearch.Editor
     {
         public string Id { get { return "world-avatar-search"; } }
         public string TitleKey { get { return "Avatar Search"; } }
-        public string DescriptionKey { get { return "Build a stylish JSON/VRCX avatar browser with flexible endpoint mapping and real VRChat avatar switching."; } }
+        public string DescriptionKey { get { return "Build a stylish paginated JSON/VRCX avatar browser with flexible endpoint mapping and real VRChat avatar switching."; } }
         public string CategoryKey { get { return "cat.world"; } }
         public string Glyph { get { return "A"; } }
         public bool IsAvailable { get { return true; } }
@@ -45,12 +45,12 @@ namespace NekoSune.WorldAvatarSearch.Editor
         void OnGUI()
         {
             NekoStyles.Ensure();
-            NekoStyles.HeaderBar("Avatar Search", "NekoSune", "Search JSON/VRCX-style endpoints, inspect results and switch through a VRChat avatar pedestal");
+            NekoStyles.HeaderBar("Avatar Search", "NekoSune", "Search JSON/VRCX-style endpoints, page through results and switch through a VRChat avatar pedestal");
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
 
             EditorGUILayout.BeginVertical(NekoStyles.Card);
             GUILayout.Label("Build demo browser", NekoStyles.SlotName);
-            EditorGUILayout.LabelField("Creates eight result cards, a selected-avatar panel, a VRC URL search field, and a separate preview pedestal. The demo endpoint is the NekoSune VRCX-style Rindo search.", NekoStyles.WrapLabel);
+            EditorGUILayout.LabelField("Creates a paginated eight-card browser, selected-avatar details, a real VRC URL search field, and a separate 3D preview pedestal. The URL field starts with the NekoSune Rindo demo so a user can replace the search term in-place.", NekoStyles.WrapLabel);
             if (GUILayout.Button("BUILD AVATAR SEARCH DEMO", NekoStyles.PrimaryButton, GUILayout.Height(36f))) BuildDemo();
             if (GUILayout.Button("AUTO-WIRE SELECTED SEARCH UI", NekoStyles.PrimaryButton, GUILayout.Height(34f))) AutoWire(Selection.activeGameObject);
             EditorGUILayout.EndVertical();
@@ -64,12 +64,12 @@ namespace NekoSune.WorldAvatarSearch.Editor
             _descriptionKey = EditorGUILayout.TextField("Description", _descriptionKey);
             _statusKey = EditorGUILayout.TextField("Release status", _statusKey);
             _thumbnailKey = EditorGUILayout.TextField("Thumbnail URL metadata", _thumbnailKey);
-            EditorGUILayout.LabelField("The runtime also auto-tries avatars/results/items/data wrappers and common aliases such as avatarId, avatar_id, avatarName, title, author and creatorName.", NekoStyles.WrapLabel);
+            EditorGUILayout.LabelField("The runtime also auto-tries avatars/results/items/data wrappers and common aliases such as avatarId, avatar_id, avatarName, title, author and creatorName. Up to 128 mapped results are kept by default and rendered eight at a time.", NekoStyles.WrapLabel);
             EditorGUILayout.EndVertical();
 
             EditorGUILayout.BeginVertical(NekoStyles.Card);
             GUILayout.Label("VRChat URL restriction", NekoStyles.SlotName);
-            EditorGUILayout.LabelField("A normal InputField cannot be converted into an arbitrary VRCUrl at runtime. The browser therefore supports creator-predeclared preset/demo URLs and a real VRCUrlInputField where a user can enter a complete search URL. If the API is not trusted by VRChat, Allow Untrusted URLs is required.", NekoStyles.WrapLabel);
+            EditorGUILayout.LabelField("A normal InputField cannot be converted into an arbitrary VRCUrl at runtime. The browser therefore uses a real VRCUrlInputField. The demo value is created at editor time; in VRChat, users may edit the complete URL and press SEARCH. Untrusted API domains require Allow Untrusted URLs.", NekoStyles.WrapLabel);
             EditorGUILayout.EndVertical();
 
             EditorGUILayout.BeginVertical(NekoStyles.Card);
@@ -84,9 +84,10 @@ namespace NekoSune.WorldAvatarSearch.Editor
             Type urlInputType = FindType("VRC.SDK3.Components.VRCUrlInputField");
             Type pedestalType = FindType("VRC.SDK3.Components.VRCAvatarPedestal");
             if (pedestalType == null) pedestalType = FindType("VRC.SDKBase.VRC_AvatarPedestal");
-            if (urlInputType == null || pedestalType == null)
+            Type urlType = FindType("VRC.SDKBase.VRCUrl");
+            if (urlInputType == null || pedestalType == null || urlType == null)
             {
-                EditorUtility.DisplayDialog("Avatar Search", "VRChat Worlds SDK components were not found.", "OK");
+                EditorUtility.DisplayDialog("Avatar Search", "VRChat Worlds SDK URL/pedestal components were not found.", "OK");
                 return;
             }
 
@@ -100,17 +101,15 @@ namespace NekoSune.WorldAvatarSearch.Editor
 
             Text header = TextNode(root.transform,"Header","AVATAR SEARCH",44,FontStyle.Bold,TextAnchor.MiddleLeft);
             SetRect(header.rectTransform,new Vector2(.03f,.90f),new Vector2(.48f,.98f));
-            Text sub = TextNode(root.transform,"SubHeader","VRCX-style JSON browser • flexible endpoint mapper",20,FontStyle.Normal,TextAnchor.MiddleLeft);
-            SetRect(sub.rectTransform,new Vector2(.03f,.86f),new Vector2(.55f,.91f));
+            Text sub = TextNode(root.transform,"SubHeader","VRCX-style JSON browser • flexible mapper • 8 results per page",20,FontStyle.Normal,TextAnchor.MiddleLeft);
+            SetRect(sub.rectTransform,new Vector2(.03f,.86f),new Vector2(.60f,.91f));
 
-            // VRCUrlInputField is its own Selectable implementation. Do not stack a normal
-            // Unity InputField on the same object or GetUrl() can read a different field.
             GameObject urlBox = UiDynamic("[UrlInput]", root.transform, new[] { typeof(Image), urlInputType });
             SetRect(urlBox.GetComponent<RectTransform>(),new Vector2(.03f,.79f),new Vector2(.66f,.85f));
             Image urlBackground = urlBox.GetComponent<Image>();
             urlBackground.color = new Color(.08f,.10f,.15f,1f);
             Component vrcInput = urlBox.GetComponent(urlInputType);
-            Text inputText = TextNode(urlBox.transform,"Text","",19,FontStyle.Normal,TextAnchor.MiddleLeft);
+            Text inputText = TextNode(urlBox.transform,"Text","",18,FontStyle.Normal,TextAnchor.MiddleLeft);
             Stretch(inputText.rectTransform,12f);
             Text placeholder = TextNode(urlBox.transform,"Placeholder","Paste complete search API URL...",18,FontStyle.Italic,TextAnchor.MiddleLeft);
             placeholder.color = new Color(.55f,.58f,.68f,1f);
@@ -120,18 +119,27 @@ namespace NekoSune.WorldAvatarSearch.Editor
             SetMember(vrcInput,"targetGraphic",urlBackground);
             SetMember(vrcInput,"navigation",new Navigation { mode = Navigation.Mode.None });
 
+            object demoUrl = Activator.CreateInstance(urlType,new object[]{DemoUrl});
+            MethodInfo setUrl = urlInputType.GetMethod("SetUrl", BindingFlags.Public | BindingFlags.Instance);
+            if (setUrl != null) setUrl.Invoke(vrcInput,new[]{demoUrl});
+
             ButtonNode(root.transform,"[SearchButton]","SEARCH",new Vector2(.675f,.79f),new Vector2(.79f,.85f));
             ButtonNode(root.transform,"[DemoButton]","DEMO RINDO",new Vector2(.80f,.79f),new Vector2(.97f,.85f));
 
             GameObject listPanel = Ui("Results",root.transform,typeof(Image));
-            SetRect(listPanel.GetComponent<RectTransform>(),new Vector2(.03f,.10f),new Vector2(.56f,.76f));
+            SetRect(listPanel.GetComponent<RectTransform>(),new Vector2(.03f,.16f),new Vector2(.56f,.76f));
             listPanel.GetComponent<Image>().color = new Color(.045f,.055f,.085f,1f);
             var layout = listPanel.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(14,14,14,14);
-            layout.spacing = 8f;
+            layout.padding = new RectOffset(12,12,12,12);
+            layout.spacing = 7f;
             layout.childControlWidth = true;
             layout.childForceExpandHeight = false;
             for (int i = 0; i < 8; i++) CreateResultCard(listPanel.transform,i);
+
+            ButtonNode(root.transform,"[PrevPage]","‹ PAGE",new Vector2(.03f,.10f),new Vector2(.14f,.145f));
+            Text page = TextNode(root.transform,"[ResultsPage]","Page 0 / 0",16,FontStyle.Bold,TextAnchor.MiddleCenter);
+            SetRect(page.rectTransform,new Vector2(.15f,.10f),new Vector2(.44f,.145f));
+            ButtonNode(root.transform,"[NextPage]","PAGE ›",new Vector2(.45f,.10f),new Vector2(.56f,.145f));
 
             GameObject detail = Ui("Details",root.transform,typeof(Image));
             SetRect(detail.GetComponent<RectTransform>(),new Vector2(.58f,.10f),new Vector2(.97f,.76f));
@@ -150,10 +158,11 @@ namespace NekoSune.WorldAvatarSearch.Editor
             SetRect(selectedId.rectTransform,new Vector2(.06f,.29f),new Vector2(.94f,.37f));
             ButtonNode(detail.transform,"[PreviewButton]","PREVIEW",new Vector2(.06f,.15f),new Vector2(.46f,.25f));
             ButtonNode(detail.transform,"[UseButton]","USE AVATAR",new Vector2(.50f,.15f),new Vector2(.94f,.25f));
-            Text note = TextNode(detail.transform,"Note","Preview pedestal is shared world content. Avatar switching only affects you.",15,FontStyle.Normal,TextAnchor.UpperLeft);
+            Text note = TextNode(detail.transform,"Note","3D pedestal preview is shared world content. USE AVATAR only changes your local avatar.",15,FontStyle.Normal,TextAnchor.UpperLeft);
             note.color = new Color(.65f,.68f,.75f);
             SetRect(note.rectTransform,new Vector2(.06f,.04f),new Vector2(.94f,.13f));
-            Text status = TextNode(root.transform,"[StatusText]","Paste a search URL or press DEMO RINDO.",17,FontStyle.Normal,TextAnchor.MiddleLeft);
+
+            Text status = TextNode(root.transform,"[StatusText]","Edit the URL search term or press DEMO RINDO.",17,FontStyle.Normal,TextAnchor.MiddleLeft);
             status.color = new Color(.64f,.70f,.82f);
             SetRect(status.rectTransform,new Vector2(.03f,.02f),new Vector2(.97f,.08f));
 
@@ -169,22 +178,22 @@ namespace NekoSune.WorldAvatarSearch.Editor
 
             CopyRuntime();
             Selection.activeGameObject = root;
-            EditorUtility.DisplayDialog("Avatar Search","Created the search UI and preview pedestal. Wait for UdonSharp to compile NekoAvatarSearchBrowser.cs, then Auto-Wire the selected UI.","OK");
+            EditorUtility.DisplayDialog("Avatar Search","Created the paginated search UI and preview pedestal. The URL field is prefilled with the Rindo demo. Wait for UdonSharp to compile, then Auto-Wire the selected UI.","OK");
         }
 
         void CreateResultCard(Transform parent,int index)
         {
             GameObject card = Ui("[Result"+index+"]",parent,typeof(Image),typeof(Button),typeof(LayoutElement));
             card.GetComponent<Image>().color = index % 2 == 0 ? new Color(.075f,.09f,.135f,1f) : new Color(.065f,.078f,.118f,1f);
-            card.GetComponent<LayoutElement>().preferredHeight = 68f;
-            Text name = TextNode(card.transform,"[Result"+index+"Name]","Avatar Result",21,FontStyle.Bold,TextAnchor.UpperLeft);
+            card.GetComponent<LayoutElement>().preferredHeight = 54f;
+            Text name = TextNode(card.transform,"[Result"+index+"Name]","Avatar Result",18,FontStyle.Bold,TextAnchor.UpperLeft);
             SetRect(name.rectTransform,new Vector2(.03f,.45f),new Vector2(.72f,.94f));
-            Text author = TextNode(card.transform,"[Result"+index+"Author]","by creator",15,FontStyle.Normal,TextAnchor.LowerLeft);
+            Text author = TextNode(card.transform,"[Result"+index+"Author]","by creator",13,FontStyle.Normal,TextAnchor.LowerLeft);
             author.color = new Color(.63f,.68f,.78f);
             SetRect(author.rectTransform,new Vector2(.03f,.08f),new Vector2(.72f,.48f));
             Text desc = TextNode(card.transform,"[Result"+index+"Description]","",12,FontStyle.Normal,TextAnchor.MiddleLeft);
             desc.gameObject.SetActive(false);
-            Text status = TextNode(card.transform,"[Result"+index+"Status]","PUBLIC",13,FontStyle.Bold,TextAnchor.MiddleCenter);
+            Text status = TextNode(card.transform,"[Result"+index+"Status]","PUBLIC",12,FontStyle.Bold,TextAnchor.MiddleCenter);
             status.color = new Color(.45f,.86f,.58f);
             SetRect(status.rectTransform,new Vector2(.75f,.22f),new Vector2(.97f,.78f));
             card.SetActive(false);
@@ -203,16 +212,21 @@ namespace NekoSune.WorldAvatarSearch.Editor
             Type pedestalType = FindType("VRC.SDK3.Components.VRCAvatarPedestal");
             if (pedestalType == null) pedestalType = FindType("VRC.SDKBase.VRC_AvatarPedestal");
             Type urlType = FindType("VRC.SDKBase.VRCUrl");
-            if (runtimeType == null)
+            if (runtimeType == null || urlInputType == null || urlType == null)
             {
-                EditorUtility.DisplayDialog("Avatar Search","NekoAvatarSearchBrowser has not compiled yet.","OK");
+                EditorUtility.DisplayDialog("Avatar Search","The generated runtime or VRChat URL types are not compiled/available yet.","OK");
                 return;
             }
 
             Component c = root.GetComponent(runtimeType);
             if (c == null) c = Undo.AddComponent(root,runtimeType);
-            Set(c,"searchUrlInput",Find(root,"[UrlInput]").GetComponent(urlInputType));
-            if (urlType != null) Set(c,"demoSearchUrl",Activator.CreateInstance(urlType,new object[]{DemoUrl}));
+            Component urlInput = Find(root,"[UrlInput]").GetComponent(urlInputType);
+            Set(c,"searchUrlInput",urlInput);
+            object demoUrl = Activator.CreateInstance(urlType,new object[]{DemoUrl});
+            Set(c,"demoSearchUrl",demoUrl);
+            MethodInfo setUrl = urlInputType.GetMethod("SetUrl", BindingFlags.Public | BindingFlags.Instance);
+            if (setUrl != null) setUrl.Invoke(urlInput,new[]{demoUrl});
+            Set(c,"maxResults",128);
             Set(c,"rootKey",_rootKey);
             Set(c,"idKey",_idKey);
             Set(c,"nameKey",_nameKey);
@@ -240,6 +254,7 @@ namespace NekoSune.WorldAvatarSearch.Editor
             Set(c,"resultAuthors",authors);
             Set(c,"resultDescriptions",descs);
             Set(c,"resultStatus",statuses);
+            Set(c,"resultsPageText",Find(root,"[ResultsPage]").GetComponent<Text>());
             Set(c,"selectedName",Find(root,"[SelectedName]").GetComponent<Text>());
             Set(c,"selectedAuthor",Find(root,"[SelectedAuthor]").GetComponent<Text>());
             Set(c,"selectedDescription",Find(root,"[SelectedDescription]").GetComponent<Text>());
@@ -251,10 +266,12 @@ namespace NekoSune.WorldAvatarSearch.Editor
 
             Wire(Find(root,"[SearchButton]").GetComponent<Button>(),c,"SearchFromUrlField");
             Wire(Find(root,"[DemoButton]").GetComponent<Button>(),c,"SearchDemo");
+            Wire(Find(root,"[PrevPage]").GetComponent<Button>(),c,"PreviousPage");
+            Wire(Find(root,"[NextPage]").GetComponent<Button>(),c,"NextPage");
             Wire(Find(root,"[PreviewButton]").GetComponent<Button>(),c,"PreviewSelected");
             Wire(Find(root,"[UseButton]").GetComponent<Button>(),c,"UseSelectedAvatar");
             EditorUtility.SetDirty(c);
-            EditorUtility.DisplayDialog("Avatar Search","Auto-wired. DEMO RINDO uses the predeclared endpoint; arbitrary searches use the complete-URL field because VRChat cannot construct arbitrary VRCUrls from a normal query string.","OK");
+            EditorUtility.DisplayDialog("Avatar Search","Auto-wired with pagination and the prefilled Rindo demo URL. Users can edit the complete URL in VRChat and press SEARCH.","OK");
         }
 
         static GameObject Ui(string name,Transform parent,params Type[] components) { return UiDynamic(name,parent,components); }
@@ -286,7 +303,7 @@ namespace NekoSune.WorldAvatarSearch.Editor
             GameObject go = Ui(name,parent,typeof(Image),typeof(Button));
             SetRect(go.GetComponent<RectTransform>(),min,max);
             go.GetComponent<Image>().color = new Color(.29f,.56f,.98f,1f);
-            Text t = TextNode(go.transform,"Label",label,19,FontStyle.Bold,TextAnchor.MiddleCenter);
+            Text t = TextNode(go.transform,"Label",label,17,FontStyle.Bold,TextAnchor.MiddleCenter);
             Stretch(t.rectTransform,6f);
             return go.GetComponent<Button>();
         }
