@@ -6,8 +6,8 @@ using UnityEngine;
 namespace NekoSune.Avatars.Editor
 {
     /// <summary>
-    /// Editor-only audition of an AudioClip. UnityEditor.AudioUtil is internal and its method
-    /// names changed across versions, so everything here is reflection with graceful fallbacks.
+    /// Editor-only AudioClip preview used by Lip Sync and Animation Tools.
+    /// UnityEditor.AudioUtil is internal, so every call is reflection with graceful fallbacks.
     /// </summary>
     internal static class NekoAudioPreview
     {
@@ -31,11 +31,25 @@ namespace NekoSune.Avatars.Editor
         public static void Play(AudioClip clip)
         {
             if (clip == null || AudioUtil == null) return;
-            if (Invoke("PlayPreviewClip", new object[] { clip, 0, false },
-                       new[] { typeof(AudioClip), typeof(int), typeof(bool) })) return;
-            if (Invoke("PlayClip", new object[] { clip, 0, false },
-                       new[] { typeof(AudioClip), typeof(int), typeof(bool) })) return;
+            if (Invoke("PlayPreviewClip", new object[] { clip, 0, false }, new[] { typeof(AudioClip), typeof(int), typeof(bool) })) return;
+            if (Invoke("PlayClip", new object[] { clip, 0, false }, new[] { typeof(AudioClip), typeof(int), typeof(bool) })) return;
             Invoke("PlayClip", new object[] { clip }, new[] { typeof(AudioClip) });
+        }
+
+        public static void PlayAt(AudioClip clip, float seconds)
+        {
+            if (clip == null) return;
+            Stop();
+            Play(clip);
+            Seek(clip, seconds);
+        }
+
+        public static void Seek(AudioClip clip, float seconds)
+        {
+            if (clip == null || AudioUtil == null) return;
+            int sample = Mathf.Clamp(Mathf.RoundToInt(Mathf.Clamp(seconds, 0f, clip.length) * clip.frequency), 0, Mathf.Max(0, clip.samples - 1));
+            if (Invoke("SetPreviewClipSamplePosition", new object[] { clip, sample }, new[] { typeof(AudioClip), typeof(int) })) return;
+            Invoke("SetClipSamplePosition", new object[] { clip, sample }, new[] { typeof(AudioClip), typeof(int) });
         }
 
         public static void Stop()
@@ -54,7 +68,6 @@ namespace NekoSune.Avatars.Editor
             return r is bool && (bool)r;
         }
 
-        /// <summary>Returns true when a matching method existed and ran without throwing.</summary>
         static bool Invoke(string name, object[] args, Type[] sig)
         {
             bool ok;
@@ -72,8 +85,7 @@ namespace NekoSune.Avatars.Editor
         {
             ok = false;
             if (AudioUtil == null) return null;
-            MethodInfo m = AudioUtil.GetMethod(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic,
-                                               null, sig, null);
+            MethodInfo m = AudioUtil.GetMethod(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, sig, null);
             if (m == null) return null;
             try
             {
@@ -81,10 +93,7 @@ namespace NekoSune.Avatars.Editor
                 ok = true;
                 return result;
             }
-            catch
-            {
-                return null;
-            }
+            catch { return null; }
         }
     }
 }
