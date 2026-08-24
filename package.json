@@ -1,7 +1,7 @@
 {
   "name": "com.nekosune.animation-tools",
   "displayName": "NekoSune Animation Tools",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "unity": "2021.3",
   "description": "Beat-aware animation authoring for avatars and worlds: Lip Sync Studio, waveform/audio timeline, Hardstyle/Uptempo/Frenchcore kick/drop mapping, auto/manual keyframing, shader/particle/humanoid binding helpers and timed 3D lyrics.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
@@ -9,7 +9,7 @@
   "vpmDependencies": {
     "com.nekosune.avatars": ">=0.7.2",
     "com.nekosune.worlds": ">=0.5.7",
-    "com.nekosune.avatar-tools": ">=1.2.1"
+    "com.nekosune.avatar-tools": ">=1.2.2"
   },
   "hideInEditor": false
 }
