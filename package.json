@@ -1,11 +1,11 @@
 {
   "name": "com.nekosune.world-youtube-proxy",
   "displayName": "NekoSune World YouTube Proxy",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "unity": "2022.3",
-  "description": "VRChat World addon for the NekoSuneTools stable YouTube relay. Bridges stock AVPro/Unity players and generic community Udon video players, auto-watches VRCUrlInputField changes, supports stable start URLs, optional URL sync and rate-limit-safe retries.",
+  "description": "VRChat World addon that applies NekoSuneTools relay handling only to YouTube URLs while passing every non-YouTube VRCUrl through to stock AVPro/Unity or community Udon players unchanged.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
-  "keywords": ["vrchat","world","video","youtube","proxy","relay","avpro","udonsharp","player","nekosune"],
+  "keywords": ["vrchat","world","video","youtube","proxy","relay","avpro","udonsharp","player","passthrough","nekosune"],
   "dependencies": {
     "com.unity.ugui": "1.0.0"
   },
