@@ -23,6 +23,7 @@ public class NekoRemoteImageFeed : UdonSharpBehaviour
         for (int i = 0; i < count; i++)
         {
             if (VRCUrl.IsNullOrEmpty(imageUrls[i])) continue;
+            if (_downloads[i] != null) _downloads[i].Dispose();
             _downloads[i] = _downloader.DownloadImage(imageUrls[i], null, this, new TextureInfo());
         }
     }
@@ -34,10 +35,8 @@ public class NekoRemoteImageFeed : UdonSharpBehaviour
         for (int i = 0; i < count; i++)
         {
             if (imageUrls[i].Get() != loaded) continue;
-            Texture old = slots[i].texture;
             slots[i].texture = result.Result;
             slots[i].gameObject.SetActive(true);
-            if (old != null && old != result.Result) _downloader.Dispose(old);
             return;
         }
     }
