@@ -36,6 +36,27 @@ The browser keeps up to 128 mapped results by default. The creator chooses **5**
               [ 5 / PAGE ] [ 10 / PAGE ]
 ```
 
+## UdonSharp program-asset repair
+
+Older versions attached the generated `NekoAvatarSearchBrowser` with Unity's normal `AddComponent` flow. That can leave a C# proxy with no valid `UdonSharpProgramAsset`, producing errors such as:
+
+```text
+Unable to find valid U# program asset associated with script 'NekoAvatarSearchBrowser'
+```
+
+The Builder now uses **AUTO-WIRE / REPAIR SELECTED SEARCH UI**. It:
+
+1. waits until Unity has finished compiling/importing;
+2. verifies `NekoAvatarSearchBrowser.cs` exists and has compiled;
+3. finds or creates `Assets/NekoSune/AvatarSearch/Generated/NekoAvatarSearchBrowser.asset`;
+4. associates that program asset with the generated MonoScript;
+5. requests an UdonSharp compile when repair is needed;
+6. stops before attaching anything if UdonSharp still needs to compile;
+7. attaches the behaviour through UdonSharp's editor `AddUdonSharpComponent` API;
+8. wires the fields/buttons and copies proxy data to the backing UdonBehaviour.
+
+If the repair creates the program asset, wait for Unity/UdonSharp to finish and click Auto-Wire once more.
+
 ## Search input limitation
 
 VRChat Udon cannot construct an arbitrary `VRCUrl` from a normal runtime string. The package therefore supports creator-predeclared preset/demo searches plus a real `VRCUrlInputField` for a complete user-entered API URL.
@@ -53,12 +74,13 @@ Results store the avatar ID and use a `VRCAvatarPedestal`:
 
 VRChat continues to enforce the normal public/private/Marketplace ownership rules.
 
-## Demo workflow
+## Demo / repair workflow
 
 1. Open `NekoSune > World > Avatar Search Builder`.
 2. Choose 5 or 10 results per page.
-3. Click **BUILD AVATAR SEARCH DEMO**.
-4. Wait for UdonSharp to compile the generated runtime script.
-5. Keep the generated UI selected.
-6. Click **AUTO-WIRE SELECTED SEARCH UI**.
-7. Test with VRChat Build & Test.
+3. Click **BUILD AVATAR SEARCH DEMO** for a fresh UI, or select an existing generated UI.
+4. Let Unity finish compiling.
+5. Select `Neko Avatar Search UI`.
+6. Click **AUTO-WIRE / REPAIR SELECTED SEARCH UI**.
+7. If told a program asset was created/repaired, wait for UdonSharp and click Auto-Wire again.
+8. Test with VRChat Build & Test.
