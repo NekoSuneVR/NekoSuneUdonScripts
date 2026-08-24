@@ -1,9 +1,9 @@
-name: Build Avatar Tools Release
+name: Build Animation Tools Release
 
 on:
   workflow_dispatch:
   push:
-    branches: [avatar-tools]
+    branches: [animation-tools]
     paths: [package.json]
 
 permissions:
@@ -24,7 +24,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "display=$DISPLAY" >> "$GITHUB_OUTPUT"
           echo "zip=${NAME}-${VERSION}.zip" >> "$GITHUB_OUTPUT"
-          echo "tag=avatar-tools-v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=animation-tools-v${VERSION}" >> "$GITHUB_OUTPUT"
       - id: existing
         env: { GH_TOKEN: "${{ github.token }}", TAG: "${{ steps.package.outputs.tag }}" }
         run: |
