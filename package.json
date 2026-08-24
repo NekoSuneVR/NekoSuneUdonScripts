@@ -1,14 +1,14 @@
 {
   "name": "com.nekosune.world-economy",
   "displayName": "NekoSune World Economy",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "unity": "2022.3",
   "description": "Beginner-friendly VRChat Creator Economy builders for product unlocks, store/listing UI, quantity purchase events and supporter walls.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
   "keywords": ["vrchat","world","creator-economy","udonproduct","store","listing","supporters","credits"],
   "dependencies": {"com.unity.ugui":"1.0.0"},
   "vpmDependencies": {
-    "com.nekosune.worlds": ">=0.5.3",
+    "com.nekosune.worlds": ">=0.5.4",
     "com.vrchat.worlds": ">=3.5.0"
   },
   "hideInEditor": false
