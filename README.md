@@ -27,7 +27,14 @@ The runtime can also read APIs wrapped in `avatars`, `results`, `items`, or `dat
 
 All preferred keys remain editable in the generated behaviour.
 
-The browser keeps up to 128 mapped results by default and displays eight styled cards at a time with **Previous Page** / **Next Page** controls.
+## Paging
+
+The browser keeps up to 128 mapped results by default. The creator chooses **5** or **10 results per page** when building the UI, and players can switch between 5/page and 10/page from the generated footer. Ten reusable result slots are generated once and recycled across every page.
+
+```text
+[ ‹ PAGE ]   Page 2 / 7 • 68 results   [ PAGE › ]
+              [ 5 / PAGE ] [ 10 / PAGE ]
+```
 
 ## Search input limitation
 
@@ -49,8 +56,9 @@ VRChat continues to enforce the normal public/private/Marketplace ownership rule
 ## Demo workflow
 
 1. Open `NekoSune > World > Avatar Search Builder`.
-2. Click **BUILD AVATAR SEARCH DEMO**.
-3. Wait for UdonSharp to compile the generated runtime script.
-4. Keep the generated UI selected.
-5. Click **AUTO-WIRE SELECTED SEARCH UI**.
-6. Test with VRChat Build & Test.
+2. Choose 5 or 10 results per page.
+3. Click **BUILD AVATAR SEARCH DEMO**.
+4. Wait for UdonSharp to compile the generated runtime script.
+5. Keep the generated UI selected.
+6. Click **AUTO-WIRE SELECTED SEARCH UI**.
+7. Test with VRChat Build & Test.
