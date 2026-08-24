@@ -1,7 +1,7 @@
 {
   "name": "com.nekosune.world-ui-builder",
   "displayName": "NekoSune World UI Builder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "unity": "2021.3",
   "description": "Beginner-friendly visual and data-driven world-space UI builder for VRChat and ChilloutVR with editable themes, templates, JSON feeds, images, interaction starters and UI diagnostics.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
@@ -10,7 +10,7 @@
     "com.unity.ugui": "1.0.0"
   },
   "vpmDependencies": {
-    "com.nekosune.worlds": ">=0.5.2"
+    "com.nekosune.worlds": ">=0.5.4"
   },
   "hideInEditor": false
 }
