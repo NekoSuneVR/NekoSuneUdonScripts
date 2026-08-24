@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using UnityEditor;
@@ -43,7 +44,7 @@ namespace NekoSune.Avatars.Editor
         void OnGUI()
         {
             NekoStyles.Ensure();
-            NekoStyles.Header("Toggle + Menu Builder", "Beginner setup for Parameters → Menu → FX → Animation");
+            NekoStyles.HeaderBar("Toggle + Menu Builder", "NekoSune", "Beginner setup for Parameters → Menu → FX → Animation");
             _avatar=(GameObject)EditorGUILayout.ObjectField("Avatar root",_avatar,typeof(GameObject),true);
             _target=(GameObject)EditorGUILayout.ObjectField("Object to toggle",_target,typeof(GameObject),true);
             _label=EditorGUILayout.TextField("Menu label",_label);
