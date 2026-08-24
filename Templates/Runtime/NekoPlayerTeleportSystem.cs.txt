@@ -8,12 +8,21 @@ using VRC.Udon.Common.Interfaces;
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class NekoPlayerTeleportSystem : UdonSharpBehaviour
 {
-    [Header("Destinations")]
+    [Header("World destinations")]
     public Transform[] destinations;
     public string[] destinationNames;
 
+    [Header("Player-to-player teleport")]
+    [Tooltip("Arrival offset in the target player's local rotation, so players do not overlap exactly.")]
+    public Vector3 playerArrivalOffset = new Vector3(0f, 0f, -1.25f);
+
+    [Header("Restricted player-teleport areas")]
+    [Tooltip("If the target player or arrival point is inside one of these BoxColliders, player-to-player teleport is blocked.")]
+    public BoxCollider[] restrictedAreas;
+
     [Header("UI")]
     public Text selectedPlayerText;
+    public Text selectedTargetPlayerText;
     public Text selectedDestinationText;
     public Text consentText;
     public Text statusText;
@@ -24,6 +33,7 @@ public class NekoPlayerTeleportSystem : UdonSharpBehaviour
     private VRCPlayerApi[] _players = new VRCPlayerApi[16];
     private int _playerCount;
     private int _playerIndex;
+    private int _targetPlayerIndex;
     private int _destinationIndex;
 
     void Start()
@@ -46,8 +56,16 @@ public class NekoPlayerTeleportSystem : UdonSharpBehaviour
         }
         VRCPlayerApi.GetPlayers(_players);
         _playerCount = count;
-        if (_playerCount <= 0) _playerIndex = 0;
-        else if (_playerIndex >= _playerCount) _playerIndex = _playerCount - 1;
+        if (_playerCount <= 0)
+        {
+            _playerIndex = 0;
+            _targetPlayerIndex = 0;
+        }
+        else
+        {
+            if (_playerIndex >= _playerCount) _playerIndex = _playerCount - 1;
+            if (_targetPlayerIndex >= _playerCount) _targetPlayerIndex = _playerCount - 1;
+        }
         RefreshUi();
     }
 
@@ -63,6 +81,21 @@ public class NekoPlayerTeleportSystem : UdonSharpBehaviour
         if (_playerCount <= 0) return;
         _playerIndex--;
         if (_playerIndex < 0) _playerIndex = _playerCount - 1;
+        RefreshUi();
+    }
+
+    public void NextTargetPlayer()
+    {
+        if (_playerCount <= 0) return;
+        _targetPlayerIndex = (_targetPlayerIndex + 1) % _playerCount;
+        RefreshUi();
+    }
+
+    public void PreviousTargetPlayer()
+    {
+        if (_playerCount <= 0) return;
+        _targetPlayerIndex--;
+        if (_targetPlayerIndex < 0) _targetPlayerIndex = _playerCount - 1;
         RefreshUi();
     }
 
@@ -86,48 +119,84 @@ public class NekoPlayerTeleportSystem : UdonSharpBehaviour
     public void ToggleAllowTeleportRequests()
     {
         allowRemoteTeleportRequests = !allowRemoteTeleportRequests;
-        SetStatus(allowRemoteTeleportRequests ? "Other players may now request that you teleport to one of this world's listed destinations." : "Remote teleport requests are blocked for you.");
+        SetStatus(allowRemoteTeleportRequests ? "Other players may request that your client teleport you. Restricted areas are still enforced." : "Remote teleport requests are blocked for you.");
         RefreshUi();
     }
 
     public void TeleportMe()
     {
-        TeleportLocalTo(_destinationIndex);
+        TeleportLocalToDestination(_destinationIndex);
+    }
+
+    public void TeleportMeToTargetPlayer()
+    {
+        VRCPlayerApi target = SelectedTargetPlayer();
+        if (!Utilities.IsValid(target)) { SetStatus("No valid target player selected."); return; }
+        TeleportLocalToPlayer(target.playerId);
     }
 
     public void RequestSelectedPlayerTeleport()
     {
-        if (_playerCount <= 0 || _playerIndex < 0 || _playerIndex >= _playerCount) { SetStatus("No player selected."); return; }
-        VRCPlayerApi target = _players[_playerIndex];
-        if (!Utilities.IsValid(target)) { RefreshPlayers(); SetStatus("That player is no longer available."); return; }
-        if (target.isLocal) { TeleportLocalTo(_destinationIndex); return; }
-        SetStatus("Teleport request sent to " + target.displayName + ". They must have Allow Teleport Requests enabled.");
-        SendCustomNetworkEvent(NetworkEventTarget.All, nameof(ReceiveTeleportRequest), target.playerId, _destinationIndex);
+        VRCPlayerApi target = SelectedPlayer();
+        if (!Utilities.IsValid(target)) { SetStatus("No player selected."); return; }
+        if (target.isLocal) { TeleportLocalToDestination(_destinationIndex); return; }
+        SetStatus("Destination teleport request sent to " + target.displayName + ". They must allow requests.");
+        SendCustomNetworkEvent(NetworkEventTarget.All, nameof(ReceiveDestinationTeleportRequest), target.playerId, _destinationIndex);
+    }
+
+    public void RequestSelectedPlayerToTargetPlayer()
+    {
+        VRCPlayerApi subject = SelectedPlayer();
+        VRCPlayerApi target = SelectedTargetPlayer();
+        if (!Utilities.IsValid(subject) || !Utilities.IsValid(target)) { SetStatus("Choose both a player to move and a target player."); return; }
+        if (subject.playerId == target.playerId) { SetStatus("Player to move and target player are the same player."); return; }
+        if (subject.isLocal) { TeleportLocalToPlayer(target.playerId); return; }
+        SetStatus("Player-to-player request sent to " + subject.displayName + " → " + target.displayName + ".");
+        SendCustomNetworkEvent(NetworkEventTarget.All, nameof(ReceivePlayerTeleportRequest), subject.playerId, target.playerId);
+    }
+
+    public void RequestSelectedPlayerToMe()
+    {
+        VRCPlayerApi subject = SelectedPlayer();
+        VRCPlayerApi local = Networking.LocalPlayer;
+        if (!Utilities.IsValid(subject) || !Utilities.IsValid(local)) { SetStatus("Selected/local player is not available."); return; }
+        if (subject.isLocal) { SetStatus("You are already the selected player."); return; }
+        SetStatus("Teleport-to-me request sent to " + subject.displayName + ".");
+        SendCustomNetworkEvent(NetworkEventTarget.All, nameof(ReceivePlayerTeleportRequest), subject.playerId, local.playerId);
     }
 
     [NetworkCallable(maxEventsPerSecond: 2)]
-    public void ReceiveTeleportRequest(int targetPlayerId, int destinationIndex)
+    public void ReceiveDestinationTeleportRequest(int targetPlayerId, int destinationIndex)
     {
-        if (Networking.LocalPlayer == null || Networking.LocalPlayer.playerId != targetPlayerId) return;
-        if (!allowRemoteTeleportRequests)
-        {
-            SetStatus("A teleport request was ignored because your consent toggle is OFF.");
-            return;
-        }
-        if (destinationIndex < 0 || destinations == null || destinationIndex >= destinations.Length)
-        {
-            SetStatus("Received an invalid teleport destination.");
-            return;
-        }
+        if (!IsLocalTarget(targetPlayerId)) return;
+        if (!allowRemoteTeleportRequests) { SetStatus("A destination teleport request was ignored because your consent toggle is OFF."); return; }
+        if (destinationIndex < 0 || destinations == null || destinationIndex >= destinations.Length) { SetStatus("Received an invalid teleport destination."); return; }
         VRCPlayerApi sender = NetworkCalling.CallingPlayer;
         string senderName = Utilities.IsValid(sender) ? sender.displayName : "another player";
-        TeleportLocalTo(destinationIndex);
-        SetStatus("Accepted teleport request from " + senderName + ".");
+        TeleportLocalToDestination(destinationIndex);
+        SetStatus("Accepted destination teleport request from " + senderName + ".");
     }
 
-    void TeleportLocalTo(int index)
+    [NetworkCallable(maxEventsPerSecond: 2)]
+    public void ReceivePlayerTeleportRequest(int subjectPlayerId, int targetPlayerId)
     {
-        if (Networking.LocalPlayer == null || destinations == null || index < 0 || index >= destinations.Length || destinations[index] == null)
+        if (!IsLocalTarget(subjectPlayerId)) return;
+        if (!allowRemoteTeleportRequests) { SetStatus("A player-to-player teleport request was ignored because your consent toggle is OFF."); return; }
+        VRCPlayerApi target = VRCPlayerApi.GetPlayerById(targetPlayerId);
+        if (!Utilities.IsValid(target)) { SetStatus("Teleport target left the instance."); return; }
+        VRCPlayerApi sender = NetworkCalling.CallingPlayer;
+        string senderName = Utilities.IsValid(sender) ? sender.displayName : "another player";
+        if (TeleportLocalToPlayer(targetPlayerId)) SetStatus("Accepted player teleport request from " + senderName + " → " + target.displayName + ".");
+    }
+
+    bool IsLocalTarget(int playerId)
+    {
+        return Utilities.IsValid(Networking.LocalPlayer) && Networking.LocalPlayer.playerId == playerId;
+    }
+
+    void TeleportLocalToDestination(int index)
+    {
+        if (!Utilities.IsValid(Networking.LocalPlayer) || destinations == null || index < 0 || index >= destinations.Length || destinations[index] == null)
         {
             SetStatus("Teleport destination is not configured.");
             return;
@@ -137,16 +206,67 @@ public class NekoPlayerTeleportSystem : UdonSharpBehaviour
         SetStatus("Teleported to " + DestinationName(index) + ".");
     }
 
+    bool TeleportLocalToPlayer(int targetPlayerId)
+    {
+        VRCPlayerApi local = Networking.LocalPlayer;
+        VRCPlayerApi target = VRCPlayerApi.GetPlayerById(targetPlayerId);
+        if (!Utilities.IsValid(local) || !Utilities.IsValid(target)) { SetStatus("Target player is no longer in this instance."); return false; }
+        if (target.isLocal) { SetStatus("Target player is you."); return false; }
+
+        Vector3 targetPosition = target.GetPosition();
+        Quaternion targetRotation = target.GetRotation();
+        Vector3 arrival = targetPosition + targetRotation * playerArrivalOffset;
+
+        if (IsRestricted(targetPosition) || IsRestricted(arrival))
+        {
+            SetStatus("Teleport blocked: the target player is inside or too close to a creator-restricted teleport area.");
+            return false;
+        }
+
+        local.TeleportTo(arrival, targetRotation);
+        SetStatus("Teleported to player " + target.displayName + ".");
+        return true;
+    }
+
+    bool IsRestricted(Vector3 worldPosition)
+    {
+        if (restrictedAreas == null) return false;
+        for (int i = 0; i < restrictedAreas.Length; i++)
+        {
+            BoxCollider box = restrictedAreas[i];
+            if (box == null || !box.enabled || !box.gameObject.activeInHierarchy) continue;
+            Vector3 p = box.transform.InverseTransformPoint(worldPosition) - box.center;
+            Vector3 half = box.size * 0.5f;
+            if (Mathf.Abs(p.x) <= half.x && Mathf.Abs(p.y) <= half.y && Mathf.Abs(p.z) <= half.z) return true;
+        }
+        return false;
+    }
+
+    VRCPlayerApi SelectedPlayer()
+    {
+        if (_playerCount <= 0 || _playerIndex < 0 || _playerIndex >= _playerCount) return null;
+        VRCPlayerApi p = _players[_playerIndex];
+        return Utilities.IsValid(p) ? p : null;
+    }
+
+    VRCPlayerApi SelectedTargetPlayer()
+    {
+        if (_playerCount <= 0 || _targetPlayerIndex < 0 || _targetPlayerIndex >= _playerCount) return null;
+        VRCPlayerApi p = _players[_targetPlayerIndex];
+        return Utilities.IsValid(p) ? p : null;
+    }
+
     void RefreshUi()
     {
         if (selectedPlayerText != null)
         {
-            if (_playerCount <= 0) selectedPlayerText.text = "No players";
-            else
-            {
-                VRCPlayerApi p = _players[_playerIndex];
-                selectedPlayerText.text = Utilities.IsValid(p) ? p.displayName + (p.isLocal ? "  (You)" : "") : "Player left";
-            }
+            VRCPlayerApi p = SelectedPlayer();
+            selectedPlayerText.text = Utilities.IsValid(p) ? p.displayName + (p.isLocal ? "  (You)" : "") : "No players";
+        }
+        if (selectedTargetPlayerText != null)
+        {
+            VRCPlayerApi p = SelectedTargetPlayer();
+            selectedTargetPlayerText.text = Utilities.IsValid(p) ? p.displayName + (p.isLocal ? "  (You)" : "") : "No target player";
         }
         if (selectedDestinationText != null) selectedDestinationText.text = DestinationName(_destinationIndex);
         if (consentText != null) consentText.text = allowRemoteTeleportRequests ? "ALLOW TELEPORT REQUESTS: ON" : "ALLOW TELEPORT REQUESTS: OFF";
