@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using NekoSune.Worlds.Editor;
 using UnityEditor;
@@ -23,6 +24,10 @@ namespace NekoSune.WorldYouTubeProxy.Editor
     {
         const string ProxyOrigin = "https://tools.nekosunevr.co.uk";
         const string ProxyTemplate = "https://tools.nekosunevr.co.uk/v/VIDEO_ID?vrc=1";
+        const string GeneratedFolder = "Assets/NekoSune/YouTubeProxy/Generated";
+        const string GeneratedScriptPath = GeneratedFolder + "/NekoYouTubeProxyPlayer.cs";
+        const string GeneratedProgramPath = GeneratedFolder + "/NekoYouTubeProxyPlayer.asset";
+        const string RuntimeTemplatePath = "Packages/com.nekosune.world-youtube-proxy/Templates/Runtime/NekoYouTubeProxyPlayer.cs.txt";
 
         GameObject _target;
         Component _customPlayer;
@@ -42,7 +47,7 @@ namespace NekoSune.WorldYouTubeProxy.Editor
         public static void Open()
         {
             var w = GetWindow<NekoYouTubeProxySetupWindow>(false, "YouTube Proxy", true);
-            w.minSize = new Vector2(720f, 610f);
+            w.minSize = new Vector2(720f, 650f);
             w.Show();
         }
 
@@ -55,11 +60,13 @@ namespace NekoSune.WorldYouTubeProxy.Editor
 
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
 
-            CardStart("1. Add the bridge");
+            CardStart("1. Install / add the bridge");
             _target = (GameObject)EditorGUILayout.ObjectField("Player / bridge object", _target, typeof(GameObject), true);
             if (_target == null && Selection.activeGameObject != null) _target = Selection.activeGameObject;
+            if (GUILayout.Button("INSTALL / REPAIR GENERATED UDON RUNTIME", GUILayout.Height(30f))) InstallRepairRuntime();
             if (GUILayout.Button("ADD / REPAIR BRIDGE ON SELECTED PLAYER", GUILayout.Height(34f))) AddBridgeToSelected();
             if (GUILayout.Button("ADD BRIDGES TO ALL STOCK VRCHAT VIDEO PLAYERS", GUILayout.Height(30f))) AddToAllStockPlayers();
+            EditorGUILayout.HelpBox("The UdonSharp runtime is generated under Assets/NekoSune/YouTubeProxy/Generated so Unity/UdonSharp can compile a normal project script and program asset. On a first install, click Install/Repair, wait for Unity to finish compiling, then click Add/Repair Bridge.", MessageType.Info);
             EditorGUILayout.HelpBox("Stock detection supports VRCAVProVideoPlayer and VRCUnityVideoPlayer. If both exist on one object, runtime playback prefers AVPro so the same bridge can handle normal VOD and live HLS.", MessageType.Info);
             CardEnd();
 
@@ -71,11 +78,12 @@ namespace NekoSune.WorldYouTubeProxy.Editor
             string id = ExtractYouTubeId(_youtubeUrl);
             string shortUrl = string.IsNullOrEmpty(id) ? "Invalid / unsupported YouTube ID" : BuildProxyUrl(id, QualityValues[Mathf.Clamp(_quality, 0, QualityValues.Length - 1)]);
             EditorGUILayout.SelectableLabel(shortUrl, EditorStyles.textField, GUILayout.Height(20f));
+            EditorGUILayout.HelpBox("Every generated NekoSune relay URL keeps vrc=1 as the final query parameter.", MessageType.None);
             if (GUILayout.Button("APPLY START URL TO SELECTED BRIDGE", GUILayout.Height(32f))) ApplyStartUrl();
             CardEnd();
 
             CardStart("3. Runtime URL input");
-            EditorGUILayout.HelpBox("VRChat only allows users to create arbitrary VRCUrl values through VRCUrlInputField. Udon cannot take a normal YouTube string and construct a brand-new proxy VRCUrl from it at runtime. This tool can prefill an input field with the NekoSune proxy template so the user replaces VIDEO_ID, or the user can paste a complete /v/... short URL.", MessageType.Warning);
+            EditorGUILayout.HelpBox("Only YouTube URLs are special. Non-YouTube URLs are left to the existing player. VRChat does not allow pure Udon to freely create a new VRCUrl from a rewritten runtime string, so players should enter a complete NekoSune /v/VIDEO_ID?vrc=1 URL for proxy playback.", MessageType.Warning);
             EditorGUILayout.SelectableLabel(ProxyTemplate, EditorStyles.textField, GUILayout.Height(20f));
             if (GUILayout.Button("PREFILL SELECTED VRC URL INPUT WITH PROXY TEMPLATE", GUILayout.Height(30f))) PrepareSelectedUrlInput();
             CardEnd();
@@ -91,12 +99,48 @@ namespace NekoSune.WorldYouTubeProxy.Editor
 
             CardStart("Important VRChat rules");
             GUILayout.Label("• tools.nekosunevr.co.uk is the stable URL. Do not sync temporary /api/youtube-relay tokens.", EditorStyles.wordWrappedLabel);
+            GUILayout.Label("• Only youtube.com, youtu.be and NekoSune /v/... URLs are watched/intercepted. Other URLs remain on the original player's normal path.", EditorStyles.wordWrappedLabel);
             GUILayout.Label("• VRChat globally rate-limits new video URLs to about one every five seconds per user. The bridge debounces and retries at 5 / 10 / 20 seconds.", EditorStyles.wordWrappedLabel);
             GUILayout.Label("• The NekoSuneTools domain may require Allow Untrusted URLs unless it is allowed for the world/user.", EditorStyles.wordWrappedLabel);
-            GUILayout.Label("• A normal YouTube URL entered at runtime cannot be silently rewritten into a new VRCUrl by pure Udon. The bridge can optionally fall back to direct YouTube, but proxy mode requires the stable NekoSune short URL.", EditorStyles.wordWrappedLabel);
             CardEnd();
 
             EditorGUILayout.EndScrollView();
+        }
+
+        void InstallRepairRuntime()
+        {
+            bool changed;
+            if (!EnsureGeneratedRuntime(out changed)) return;
+
+            if (changed)
+            {
+                EditorUtility.DisplayDialog("YouTube Proxy", "Generated/refreshed:\n" + GeneratedScriptPath + "\n\nUnity/UdonSharp will compile it now. Wait for the spinner to finish, then click ADD / REPAIR BRIDGE.", "OK");
+                return;
+            }
+
+            Type runtimeType = FindType("NekoSune.WorldYouTubeProxy.NekoYouTubeProxyPlayer");
+            if (runtimeType == null)
+            {
+                AssetDatabase.ImportAsset(GeneratedScriptPath, ImportAssetOptions.ForceUpdate);
+                AssetDatabase.Refresh();
+                EditorUtility.DisplayDialog("YouTube Proxy", "The generated runtime already exists, but Unity has not exposed the compiled type yet. Wait for Unity/UdonSharp compilation to finish, then click this button again. If it never appears, check the first red Console error.", "OK");
+                return;
+            }
+
+            bool createdProgram;
+            if (!EnsureUdonSharpProgramAsset(runtimeType, out createdProgram))
+            {
+                EditorUtility.DisplayDialog("YouTube Proxy", "The C# runtime compiled, but its UdonSharp program asset could not be found/repaired. Use VRChat SDK > Udon Sharp > Refresh All UdonSharp Assets, then click this button again.", "OK");
+                return;
+            }
+
+            if (createdProgram || EditorApplication.isCompiling || EditorApplication.isUpdating)
+            {
+                EditorUtility.DisplayDialog("YouTube Proxy", "The UdonSharp program asset was created/refreshed. Let Unity/UdonSharp finish compiling, then add the bridge.", "OK");
+                return;
+            }
+
+            EditorUtility.DisplayDialog("YouTube Proxy", "Runtime and UdonSharp program asset are ready.", "OK");
         }
 
         void AddBridgeToSelected()
@@ -110,7 +154,7 @@ namespace NekoSune.WorldYouTubeProxy.Editor
             AutoWireInput(go, bridge);
             ApplyProxy(bridge);
             Selection.activeGameObject = go;
-            EditorUtility.DisplayDialog("YouTube Proxy", "Bridge added/repaired. Assign a start URL or use a VRCUrlInputField with a NekoSune /v/... URL.", "OK");
+            EditorUtility.DisplayDialog("YouTube Proxy", "Bridge added/repaired. YouTube can use the NekoSune /v/... URL; non-YouTube URLs remain untouched by passive watching.", "OK");
         }
 
         void AddToAllStockPlayers()
@@ -118,6 +162,14 @@ namespace NekoSune.WorldYouTubeProxy.Editor
             Type avType = FindType("VRC.SDK3.Video.Components.AVPro.VRCAVProVideoPlayer");
             Type unityType = FindType("VRC.SDK3.Video.Components.VRCUnityVideoPlayer");
             if (avType == null && unityType == null) { EditorUtility.DisplayDialog("YouTube Proxy", "VRChat Worlds video components were not found.", "OK"); return; }
+
+            bool changedRuntime;
+            if (!EnsureGeneratedRuntime(out changedRuntime)) return;
+            if (changedRuntime || EditorApplication.isCompiling || EditorApplication.isUpdating)
+            {
+                EditorUtility.DisplayDialog("YouTube Proxy", "Generated/refreshed the Udon runtime first. Let Unity finish compiling, then click ADD BRIDGES TO ALL again.", "OK");
+                return;
+            }
 
             var objects = new HashSet<GameObject>();
             CollectSceneObjects(avType, objects);
@@ -167,7 +219,7 @@ namespace NekoSune.WorldYouTubeProxy.Editor
             Undo.RecordObject(input, "Prepare Neko proxy URL input");
             setUrl.Invoke(input, new[] { url });
             EditorUtility.SetDirty(input);
-            EditorUtility.DisplayDialog("YouTube Proxy", "Prefilled the input field. At runtime replace VIDEO_ID with the 11-character YouTube ID, or paste a complete NekoSune short URL.", "OK");
+            EditorUtility.DisplayDialog("YouTube Proxy", "Prefilled the input field with a proxy URL ending in ?vrc=1. Replace VIDEO_ID with the 11-character YouTube ID.", "OK");
         }
 
         void ApplyCustomAdapter()
@@ -190,12 +242,41 @@ namespace NekoSune.WorldYouTubeProxy.Editor
 
         static Component EnsureBridge(GameObject go)
         {
+            bool generatedChanged;
+            if (!EnsureGeneratedRuntime(out generatedChanged)) return null;
+            if (generatedChanged)
+            {
+                EditorUtility.DisplayDialog("YouTube Proxy", "Installed/refreshed NekoYouTubeProxyPlayer.cs under Assets. Let Unity/UdonSharp compile, then click ADD / REPAIR BRIDGE again.", "OK");
+                return null;
+            }
+
+            if (EditorApplication.isCompiling || EditorApplication.isUpdating)
+            {
+                EditorUtility.DisplayDialog("YouTube Proxy", "Unity is still compiling/importing. Wait for it to finish, then click Add/Repair again.", "OK");
+                return null;
+            }
+
             Type runtimeType = FindType("NekoSune.WorldYouTubeProxy.NekoYouTubeProxyPlayer");
             if (runtimeType == null)
             {
-                EditorUtility.DisplayDialog("YouTube Proxy", "NekoYouTubeProxyPlayer has not compiled yet. Let Unity/UdonSharp finish importing the package and check the Console.", "OK");
+                AssetDatabase.ImportAsset(GeneratedScriptPath, ImportAssetOptions.ForceUpdate);
+                AssetDatabase.Refresh();
+                EditorUtility.DisplayDialog("YouTube Proxy", "The generated script exists, but Unity has not exposed NekoYouTubeProxyPlayer yet. Wait for compilation and click Add/Repair again. If it persists, check the first red Console error.", "OK");
                 return null;
             }
+
+            bool createdProgram;
+            if (!EnsureUdonSharpProgramAsset(runtimeType, out createdProgram))
+            {
+                EditorUtility.DisplayDialog("YouTube Proxy", "Could not find/create the UdonSharp program asset for NekoYouTubeProxyPlayer. Use VRChat SDK > Udon Sharp > Refresh All UdonSharp Assets, then try again.", "OK");
+                return null;
+            }
+            if (createdProgram || EditorApplication.isCompiling || EditorApplication.isUpdating)
+            {
+                EditorUtility.DisplayDialog("YouTube Proxy", "Created/repaired the UdonSharp program asset. Let UdonSharp finish compiling, then click Add/Repair again.", "OK");
+                return null;
+            }
+
             Component bridge = go.GetComponent(runtimeType);
             if (bridge != null) return bridge;
 
@@ -206,10 +287,14 @@ namespace NekoSune.WorldYouTubeProxy.Editor
                 if (add != null)
                 {
                     try { return add.Invoke(null, new object[] { go, runtimeType }) as Component; }
-                    catch (Exception e) { Debug.LogError("[NekoSune YouTube Proxy] UdonSharp AddComponent failed: " + e.Message); }
+                    catch (Exception e)
+                    {
+                        Exception cause = e.InnerException ?? e;
+                        Debug.LogError("[NekoSune YouTube Proxy] UdonSharp AddComponent failed: " + cause.Message);
+                    }
                 }
             }
-            EditorUtility.DisplayDialog("YouTube Proxy", "UdonSharp's editor AddUdonSharpComponent API was not found. Add NekoYouTubeProxyPlayer from Add Component, then click Repair again.", "OK");
+            EditorUtility.DisplayDialog("YouTube Proxy", "UdonSharp's editor AddUdonSharpComponent API was not found. Use VRChat SDK > Udon Sharp > Refresh All UdonSharp Assets, then click Repair again.", "OK");
             return null;
         }
 
@@ -218,6 +303,96 @@ namespace NekoSune.WorldYouTubeProxy.Editor
             if (go == null) return null;
             Type runtimeType = FindType("NekoSune.WorldYouTubeProxy.NekoYouTubeProxyPlayer");
             return runtimeType == null ? null : go.GetComponent(runtimeType);
+        }
+
+        static bool EnsureGeneratedRuntime(out bool changed)
+        {
+            changed = false;
+            string source = Path.GetFullPath(RuntimeTemplatePath);
+            if (!File.Exists(source))
+            {
+                EditorUtility.DisplayDialog("YouTube Proxy", "Runtime template is missing from the installed package:\n" + RuntimeTemplatePath, "OK");
+                return false;
+            }
+
+            EnsureFolder(GeneratedFolder);
+            string projectRoot = Directory.GetParent(Application.dataPath).FullName;
+            string destination = Path.Combine(projectRoot, GeneratedScriptPath.Replace('/', Path.DirectorySeparatorChar));
+            string wanted = File.ReadAllText(source);
+            string current = File.Exists(destination) ? File.ReadAllText(destination) : null;
+
+            if (!string.Equals(current, wanted, StringComparison.Ordinal))
+            {
+                File.WriteAllText(destination, wanted);
+                changed = true;
+            }
+
+            AssetDatabase.ImportAsset(GeneratedScriptPath, ImportAssetOptions.ForceUpdate);
+            AssetDatabase.Refresh();
+            return true;
+        }
+
+        static bool EnsureUdonSharpProgramAsset(Type runtimeType, out bool created)
+        {
+            created = false;
+            Type programType = FindType("UdonSharp.UdonSharpProgramAsset");
+            if (programType == null) return false;
+
+            MethodInfo getProgram = programType.GetMethod("GetProgramAssetForClass", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static, null, new[] { typeof(Type) }, null);
+            if (getProgram != null)
+            {
+                try { if (getProgram.Invoke(null, new object[] { runtimeType }) != null) return true; }
+                catch { }
+            }
+
+            MonoScript source = AssetDatabase.LoadAssetAtPath<MonoScript>(GeneratedScriptPath);
+            if (source == null) return false;
+
+            UnityEngine.Object existing = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(GeneratedProgramPath);
+            FieldInfo sourceField = programType.GetField("sourceCsScript", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (sourceField == null) return false;
+
+            if (existing == null)
+            {
+                ScriptableObject program = ScriptableObject.CreateInstance(programType);
+                sourceField.SetValue(program, source);
+                AssetDatabase.CreateAsset(program, GeneratedProgramPath);
+                EditorUtility.SetDirty(program);
+                AssetDatabase.SaveAssets();
+                created = true;
+            }
+            else if (sourceField.GetValue(existing) == null)
+            {
+                sourceField.SetValue(existing, source);
+                EditorUtility.SetDirty(existing);
+                AssetDatabase.SaveAssets();
+                created = true;
+            }
+
+            TryCompileUdonSharp(programType);
+            AssetDatabase.ImportAsset(GeneratedProgramPath, ImportAssetOptions.ForceUpdate);
+
+            if (created) return true;
+            if (getProgram == null) return existing != null;
+            try { return getProgram.Invoke(null, new object[] { runtimeType }) != null; }
+            catch { return false; }
+        }
+
+        static void TryCompileUdonSharp(Type programType)
+        {
+            try
+            {
+                MethodInfo compile = programType.GetMethod("CompileAllCsPrograms", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                if (compile == null) return;
+                ParameterInfo[] ps = compile.GetParameters();
+                if (ps.Length == 2) compile.Invoke(null, new object[] { true, true });
+                else if (ps.Length == 1) compile.Invoke(null, new object[] { true });
+                else compile.Invoke(null, null);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[NekoSune YouTube Proxy] UdonSharp compile request deferred: " + e.Message);
+            }
         }
 
         static void AutoWireStock(GameObject go, Component bridge)
@@ -259,8 +434,9 @@ namespace NekoSune.WorldYouTubeProxy.Editor
 
         static string BuildProxyUrl(string id, string quality)
         {
-            string value = ProxyOrigin + "/v/" + id + "?vrc=1";
-            if (!string.IsNullOrEmpty(quality) && quality != "auto") value += "&q=" + quality;
+            string value = ProxyOrigin + "/v/" + id + "?";
+            if (!string.IsNullOrEmpty(quality) && quality != "auto") value += "q=" + quality + "&";
+            value += "vrc=1";
             return value;
         }
 
@@ -311,6 +487,19 @@ namespace NekoSune.WorldYouTubeProxy.Editor
                 if (!(char.IsLetterOrDigit(c) || c == '-' || c == '_')) return false;
             }
             return true;
+        }
+
+        static string EnsureFolder(string path)
+        {
+            string[] parts = path.Split('/');
+            string current = parts[0];
+            for (int i = 1; i < parts.Length; i++)
+            {
+                string next = current + "/" + parts[i];
+                if (!AssetDatabase.IsValidFolder(next)) AssetDatabase.CreateFolder(current, parts[i]);
+                current = next;
+            }
+            return current;
         }
 
         static Type FindType(string fullName)
