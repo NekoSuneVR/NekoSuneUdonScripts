@@ -25,6 +25,9 @@ namespace NekoSune.WorldAvatarSearch.Editor
     internal sealed class NekoAvatarSearchBuilderWindow : EditorWindow
     {
         const string DemoUrl = "https://vrcavatarsearch.nekosunevr.co.uk/vrcx_search?search=Rindo";
+        const string GeneratedFolder = "Assets/NekoSune/AvatarSearch/Generated";
+        const string GeneratedScriptPath = GeneratedFolder + "/NekoAvatarSearchBrowser.cs";
+        const string GeneratedProgramPath = GeneratedFolder + "/NekoAvatarSearchBrowser.asset";
 
         Vector2 _scroll;
         int _pageSize = 10;
@@ -55,7 +58,8 @@ namespace NekoSune.WorldAvatarSearch.Editor
             _pageSize = EditorGUILayout.IntPopup("Results per page", _pageSize, new[] { "5", "10" }, new[] { 5, 10 });
             EditorGUILayout.LabelField("The generated UI always owns 10 reusable result slots. 5/page hides the extra five; 10/page uses all of them.", NekoStyles.WrapLabel);
             if (GUILayout.Button("BUILD AVATAR SEARCH DEMO", NekoStyles.PrimaryButton, GUILayout.Height(36f))) BuildDemo();
-            if (GUILayout.Button("AUTO-WIRE SELECTED SEARCH UI", NekoStyles.PrimaryButton, GUILayout.Height(34f))) AutoWire(Selection.activeGameObject);
+            if (GUILayout.Button("AUTO-WIRE / REPAIR SELECTED SEARCH UI", NekoStyles.PrimaryButton, GUILayout.Height(34f))) AutoWire(Selection.activeGameObject);
+            EditorGUILayout.HelpBox("Auto-Wire now verifies the generated UdonSharpProgramAsset before attaching the behaviour. If it has to create/repair that asset, let Unity finish compiling and click Auto-Wire again.", MessageType.Info);
             EditorGUILayout.EndVertical();
 
             EditorGUILayout.BeginVertical(NekoStyles.Card);
@@ -160,7 +164,7 @@ namespace NekoSune.WorldAvatarSearch.Editor
 
             CopyRuntime();
             Selection.activeGameObject = root;
-            EditorUtility.DisplayDialog("Avatar Search", "Created 10 reusable result slots. Wait for UdonSharp to compile, then Auto-Wire the selected UI.", "OK");
+            EditorUtility.DisplayDialog("Avatar Search", "Created 10 reusable result slots and refreshed NekoAvatarSearchBrowser.cs. Let Unity compile, then click AUTO-WIRE / REPAIR. The first repair may create the missing UdonSharpProgramAsset and ask you to wait once more.", "OK");
         }
 
         void CreateResultCard(Transform parent, int index)
@@ -178,15 +182,34 @@ namespace NekoSune.WorldAvatarSearch.Editor
         void AutoWire(GameObject root)
         {
             if (root == null || root.name != "Neko Avatar Search UI") { EditorUtility.DisplayDialog("Avatar Search","Select the generated Neko Avatar Search UI root.","OK"); return; }
+            if (EditorApplication.isCompiling || EditorApplication.isUpdating) { EditorUtility.DisplayDialog("Avatar Search","Unity is still compiling/importing. Wait for it to finish, then Auto-Wire again.","OK"); return; }
 
             Type runtimeType = FindType("NekoAvatarSearchBrowser");
             Type urlInputType = FindType("VRC.SDK3.Components.VRCUrlInputField");
             Type pedestalType = FindType("VRC.SDK3.Components.VRCAvatarPedestal"); if (pedestalType == null) pedestalType = FindType("VRC.SDKBase.VRC_AvatarPedestal");
             Type urlType = FindType("VRC.SDKBase.VRCUrl");
-            if (runtimeType == null) { EditorUtility.DisplayDialog("Avatar Search","NekoAvatarSearchBrowser has not compiled yet.","OK"); return; }
+            if (runtimeType == null) { EditorUtility.DisplayDialog("Avatar Search","NekoAvatarSearchBrowser has not compiled yet. Check the Console for compile errors, then try again.","OK"); return; }
 
-            Component c = root.GetComponent(runtimeType); if (c == null) c = Undo.AddComponent(root,runtimeType);
-            Set(c,"searchUrlInput",Find(root,"[UrlInput]").GetComponent(urlInputType));
+            bool createdProgram;
+            if (!EnsureUdonSharpProgramAsset(runtimeType, out createdProgram))
+            {
+                EditorUtility.DisplayDialog("Avatar Search","Could not find/create the UdonSharpProgramAsset for NekoAvatarSearchBrowser. Use VRChat SDK → Udon Sharp → Refresh All UdonSharp Assets, then try Auto-Wire again.","OK");
+                return;
+            }
+            if (createdProgram || EditorApplication.isCompiling || EditorApplication.isUpdating)
+            {
+                EditorUtility.DisplayDialog("Avatar Search","Created/repaired NekoAvatarSearchBrowser.asset. Let UdonSharp finish compiling it, then click Auto-Wire again. No behaviour was attached yet, so this avoids the invalid-program-asset error.","OK");
+                return;
+            }
+
+            Component c = root.GetComponent(runtimeType);
+            if (c == null) c = AddUdonSharpComponent(root, runtimeType);
+            else RunUdonSharpSetup(c);
+            if (c == null) { EditorUtility.DisplayDialog("Avatar Search","UdonSharp could not attach NekoAvatarSearchBrowser through its editor API. Check the Console and run Auto-Wire again after UdonSharp finishes compiling.","OK"); return; }
+
+            GameObject urlInputGo = Find(root,"[UrlInput]");
+            if (urlInputGo == null || urlInputType == null) { EditorUtility.DisplayDialog("Avatar Search","Generated VRCUrlInputField is missing.","OK"); return; }
+            Set(c,"searchUrlInput",urlInputGo.GetComponent(urlInputType));
             if (urlType != null) Set(c,"demoSearchUrl",Activator.CreateInstance(urlType,new object[]{DemoUrl}));
             Set(c,"resultsPerPage",_pageSize);
             Set(c,"rootKey",_rootKey); Set(c,"idKey",_idKey); Set(c,"nameKey",_nameKey); Set(c,"authorKey",_authorKey); Set(c,"descriptionKey",_descriptionKey); Set(c,"releaseStatusKey",_statusKey); Set(c,"thumbnailKey",_thumbnailKey);
@@ -204,8 +227,102 @@ namespace NekoSune.WorldAvatarSearch.Editor
             GameObject p=GameObject.Find("Neko Avatar Search Preview Pedestal"); if(p!=null&&pedestalType!=null) Set(c,"previewPedestal",p.GetComponent(pedestalType));
             Wire(Find(root,"[SearchButton]").GetComponent<Button>(),c,"SearchFromUrlField"); Wire(Find(root,"[DemoButton]").GetComponent<Button>(),c,"SearchDemo"); Wire(Find(root,"[PreviewButton]").GetComponent<Button>(),c,"PreviewSelected"); Wire(Find(root,"[UseButton]").GetComponent<Button>(),c,"UseSelectedAvatar");
             Wire(Find(root,"[PreviousPageButton]").GetComponent<Button>(),c,"PreviousPage"); Wire(Find(root,"[NextPageButton]").GetComponent<Button>(),c,"NextPage"); Wire(Find(root,"[Page5Button]").GetComponent<Button>(),c,"SetPageSize5"); Wire(Find(root,"[Page10Button]").GetComponent<Button>(),c,"SetPageSize10");
+            ApplyUdonSharpProxy(c);
             EditorUtility.SetDirty(c);
-            EditorUtility.DisplayDialog("Avatar Search", "Auto-wired with "+_pageSize+" results per page. Players can switch between 5 and 10 from the generated UI.", "OK");
+            EditorUtility.DisplayDialog("Avatar Search", "Auto-wired with "+_pageSize+" results per page and a verified UdonSharp program asset.", "OK");
+        }
+
+        static bool EnsureUdonSharpProgramAsset(Type runtimeType, out bool created)
+        {
+            created = false;
+            Type programType = FindType("UdonSharp.UdonSharpProgramAsset");
+            if (programType == null) return false;
+
+            MethodInfo getProgram = programType.GetMethod("GetProgramAssetForClass", BindingFlags.Public|BindingFlags.Static, null, new[]{typeof(Type)}, null);
+            if (getProgram != null)
+            {
+                try { if (getProgram.Invoke(null,new object[]{runtimeType}) != null) return true; } catch {}
+            }
+
+            MonoScript source = AssetDatabase.LoadAssetAtPath<MonoScript>(GeneratedScriptPath);
+            if (source == null) return false;
+            UnityEngine.Object existing = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(GeneratedProgramPath);
+            if (existing == null)
+            {
+                ScriptableObject program = ScriptableObject.CreateInstance(programType);
+                FieldInfo sourceField = programType.GetField("sourceCsScript",BindingFlags.Public|BindingFlags.Instance);
+                if (sourceField == null) { UnityEngine.Object.DestroyImmediate(program); return false; }
+                sourceField.SetValue(program,source);
+                AssetDatabase.CreateAsset(program,GeneratedProgramPath);
+                EditorUtility.SetDirty(program);
+                AssetDatabase.SaveAssets();
+                created = true;
+            }
+            else
+            {
+                FieldInfo sourceField = programType.GetField("sourceCsScript",BindingFlags.Public|BindingFlags.Instance);
+                if (sourceField != null && sourceField.GetValue(existing) == null) { sourceField.SetValue(existing,source); EditorUtility.SetDirty(existing); AssetDatabase.SaveAssets(); created = true; }
+            }
+
+            TryCompileUdonSharp(programType);
+            AssetDatabase.ImportAsset(GeneratedProgramPath,ImportAssetOptions.ForceUpdate);
+            if (created) return true;
+            if (getProgram == null) return existing != null;
+            try { return getProgram.Invoke(null,new object[]{runtimeType}) != null; } catch { return false; }
+        }
+
+        static void TryCompileUdonSharp(Type programType)
+        {
+            try
+            {
+                MethodInfo compile = programType.GetMethod("CompileAllCsPrograms",BindingFlags.Public|BindingFlags.Static);
+                if (compile == null) return;
+                ParameterInfo[] ps = compile.GetParameters();
+                if (ps.Length == 2) compile.Invoke(null,new object[]{true,true});
+                else if (ps.Length == 1) compile.Invoke(null,new object[]{true});
+                else compile.Invoke(null,null);
+            }
+            catch (Exception e) { Debug.LogWarning("[NekoSune Avatar Search] UdonSharp compile request deferred: "+e.Message); }
+        }
+
+        static Component AddUdonSharpComponent(GameObject root, Type runtimeType)
+        {
+            Type extensions = FindType("UdonSharpEditor.UdonSharpComponentExtensions");
+            if (extensions != null)
+            {
+                MethodInfo add = extensions.GetMethod("AddUdonSharpComponent",BindingFlags.Public|BindingFlags.Static,null,new[]{typeof(GameObject),typeof(Type)},null);
+                if (add != null)
+                {
+                    try { return add.Invoke(null,new object[]{root,runtimeType}) as Component; }
+                    catch (Exception e) { Debug.LogError("[NekoSune Avatar Search] UdonSharp AddComponent failed: "+e.InnerException?.Message ?? e.Message); return null; }
+                }
+            }
+            Debug.LogError("[NekoSune Avatar Search] UdonSharp editor AddUdonSharpComponent API was not found.");
+            return null;
+        }
+
+        static void RunUdonSharpSetup(Component component)
+        {
+            Type utility = FindType("UdonSharpEditor.UdonSharpEditorUtility");
+            if (utility == null || component == null) return;
+            MethodInfo[] methods = utility.GetMethods(BindingFlags.Public|BindingFlags.Static|BindingFlags.NonPublic);
+            for (int i=0;i<methods.Length;i++)
+            {
+                MethodInfo m=methods[i]; if(m.Name!="RunBehaviourSetup")continue; ParameterInfo[] p=m.GetParameters();
+                if(p.Length==1&&p[0].ParameterType.IsAssignableFrom(component.GetType())){try{m.Invoke(null,new object[]{component});}catch{}return;}
+            }
+        }
+
+        static void ApplyUdonSharpProxy(Component component)
+        {
+            Type utility = FindType("UdonSharpEditor.UdonSharpEditorUtility");
+            if (utility == null || component == null) return;
+            MethodInfo[] methods = utility.GetMethods(BindingFlags.Public|BindingFlags.Static|BindingFlags.NonPublic);
+            for (int i=0;i<methods.Length;i++)
+            {
+                MethodInfo m=methods[i]; if(m.Name!="CopyProxyToUdon")continue; ParameterInfo[] p=m.GetParameters();
+                if(p.Length==1&&p[0].ParameterType.IsAssignableFrom(component.GetType())){try{m.Invoke(null,new object[]{component});}catch{}return;}
+            }
         }
 
         static GameObject Ui(string name, Transform parent, params Type[] components) { return UiDynamic(name,parent,components); }
@@ -231,7 +348,7 @@ namespace NekoSune.WorldAvatarSearch.Editor
         static void SetStringMember(Component c,string name,string value){SetMember(c,name,value);}
         static void Wire(Button b,Component c,string method){if(b==null||c==null)return;MethodInfo m=c.GetType().GetMethod(method,BindingFlags.Public|BindingFlags.Instance);if(m==null)return;try{UnityAction a=(UnityAction)Delegate.CreateDelegate(typeof(UnityAction),c,m);UnityEventTools.AddPersistentListener(b.onClick,a);EditorUtility.SetDirty(b);}catch(Exception e){Debug.LogWarning("[NekoSune Avatar Search] Could not wire "+method+": "+e.Message);}}
         static void TryAddVrcUiShape(GameObject root){Type t=FindType("VRC.SDK3.Components.VRCUiShape");if(t==null)t=FindType("VRCUiShape");if(t==null)t=FindType("VRC_UiShape");if(t!=null&&root.GetComponent(t)==null)Undo.AddComponent(root,t);}
-        static void CopyRuntime(){string src=Path.GetFullPath(Path.Combine("Packages/com.nekosune.world-avatar-search/Templates/Runtime/NekoAvatarSearchBrowser.cs.txt"));string folder=EnsureFolder("Assets/NekoSune/AvatarSearch/Generated");string dst=Path.Combine(Directory.GetParent(Application.dataPath).FullName,(folder+"/NekoAvatarSearchBrowser.cs").Replace('/',Path.DirectorySeparatorChar));File.Copy(src,dst,true);AssetDatabase.Refresh();}
+        static void CopyRuntime(){string src=Path.GetFullPath(Path.Combine("Packages/com.nekosune.world-avatar-search/Templates/Runtime/NekoAvatarSearchBrowser.cs.txt"));EnsureFolder(GeneratedFolder);string dst=Path.Combine(Directory.GetParent(Application.dataPath).FullName,GeneratedScriptPath.Replace('/',Path.DirectorySeparatorChar));File.Copy(src,dst,true);AssetDatabase.Refresh();}
         static string EnsureFolder(string path){string[]p=path.Split('/');string cur=p[0];for(int i=1;i<p.Length;i++){string n=cur+"/"+p[i];if(!AssetDatabase.IsValidFolder(n))AssetDatabase.CreateFolder(cur,p[i]);cur=n;}return cur;}
     }
 }
