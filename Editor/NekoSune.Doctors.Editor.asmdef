@@ -1,7 +1,7 @@
 {
   "name": "NekoSune.Doctors.Editor",
   "rootNamespace": "NekoSune",
-  "references": ["NekoSune.Avatars.Editor", "NekoSune.Worlds.Editor", "NekoSune.AvatarTools.Editor"],
+  "references": ["NekoSune.Avatars.Editor", "NekoSune.Worlds.Editor", "NekoSune.AvatarTools.Editor", "NekoSune.Optimizer.Editor"],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
