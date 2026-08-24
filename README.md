@@ -4,13 +4,18 @@ A beginner-friendly VRChat image gallery/slideshow addon for the NekoSune World 
 
 ## Sources
 
-- Local `Texture[]` baked with the world.
-- Predeclared `VRCUrl[]` downloaded lazily with `VRCImageDownloader`.
-- Optional JSON metadata parsed with `VRCJson`.
+The same runtime can be driven in several ways:
+
+- local `Texture[]` baked with the world
+- raw `string[]` titles/subtitles
+- embedded JSON pasted directly into the inspector
+- an array of raw JSON-object strings (`string[] rawJsonRows`)
+- predeclared `VRCUrl[]` downloaded lazily with `VRCImageDownloader`
+- optional remote JSON metadata downloaded with `VRCStringDownloader` and parsed with `VRCJson`
 
 JSON may be a root array or wrapped in `items`, `images`, `gallery`, or `data`. The runtime exposes editable field names for title, subtitle, image index, and image URL.
 
-VRChat does not currently allow arbitrary runtime `VRCUrl` construction from JSON strings. For remote JSON galleries, predeclare the image URLs and map JSON entries to them with `imageIndex` or a matching `imageUrl` string.
+VRChat does not currently allow arbitrary runtime `VRCUrl` construction from JSON strings. For remote JSON galleries, predeclare the image URLs and map JSON entries to them with `imageIndex` or a matching `imageUrl` string. Raw strings/embedded JSON can freely control captions and mapping, but remote image addresses still have to obey VRChat's `VRCUrl` security model.
 
 ## Effects
 
