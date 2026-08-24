@@ -1,15 +1,15 @@
 {
   "name": "com.nekosune.optimizer",
   "displayName": "NekoSune Optimizer",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "unity": "2022.3",
-  "description": "Auto-registering Avatar + World Hub addon: Compressor, mesh/material cleanup, Quest/VRAM tooling and World Optimizer.",
+  "description": "Avatar + World optimization suite with Avatar Rank Advisor, build compressed/uncompressed size checks, Compressor/Quest/VRAM tools and PC/Android World Platform Advisor.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
-  "keywords": ["vrchat","addon","optimizer","avatar","world","quest","mesh","texture","vram","compressor"],
+  "keywords": ["vrchat","optimizer","avatar","world","rank","size","quest","android","mesh","texture","vram","compressor"],
   "vpmDependencies": {
-    "com.nekosune.avatars": ">=0.7.0",
-    "com.nekosune.worlds": ">=0.5.0",
-    "com.nekosune.avatar-tools": ">=1.1.0"
+    "com.nekosune.avatars": ">=0.7.2",
+    "com.nekosune.worlds": ">=0.5.7",
+    "com.nekosune.avatar-tools": ">=1.2.0"
   },
   "hideInEditor": false
 }
