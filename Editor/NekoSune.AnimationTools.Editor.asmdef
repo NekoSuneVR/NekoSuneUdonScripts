@@ -1,5 +1,5 @@
 {
-  "name": "NekoSune.AnimationTools.Editor",
+  "name": "NekoSune.AnimationTools.Authoring.Editor",
   "rootNamespace": "NekoSune.AnimationTools.Editor",
   "references": ["NekoSune.Avatars.Editor", "NekoSune.Worlds.Editor"],
   "includePlatforms": ["Editor"],
