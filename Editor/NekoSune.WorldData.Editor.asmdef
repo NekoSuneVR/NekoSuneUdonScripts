@@ -1,0 +1,8 @@
+{
+  "name": "NekoSune.WorldData.Editor",
+  "rootNamespace": "NekoSune.WorldData.Editor",
+  "references": ["NekoSune.Worlds.Editor"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true,
+  "noEngineReferences": false
+}

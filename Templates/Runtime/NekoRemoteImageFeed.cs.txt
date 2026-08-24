@@ -1,0 +1,54 @@
+using UdonSharp;
+using UnityEngine;
+using UnityEngine.UI;
+using VRC.SDK3.Image;
+using VRC.SDKBase;
+
+public class NekoRemoteImageFeed : UdonSharpBehaviour
+{
+    public VRCUrl[] imageUrls;
+    public RawImage[] slots;
+    private VRCImageDownloader _downloader;
+    private IVRCImageDownload[] _downloads;
+
+    void Start()
+    {
+        _downloader = new VRCImageDownloader();
+        _downloads = new IVRCImageDownload[imageUrls.Length];
+    }
+
+    public void LoadPage()
+    {
+        int count = imageUrls.Length < slots.Length ? imageUrls.Length : slots.Length;
+        for (int i = 0; i < count; i++)
+        {
+            if (VRCUrl.IsNullOrEmpty(imageUrls[i])) continue;
+            _downloads[i] = _downloader.DownloadImage(imageUrls[i], null, this, new TextureInfo());
+        }
+    }
+
+    public override void OnImageLoadSuccess(IVRCImageDownload result)
+    {
+        string loaded = result.Url.Get();
+        int count = imageUrls.Length < slots.Length ? imageUrls.Length : slots.Length;
+        for (int i = 0; i < count; i++)
+        {
+            if (imageUrls[i].Get() != loaded) continue;
+            Texture old = slots[i].texture;
+            slots[i].texture = result.Result;
+            slots[i].gameObject.SetActive(true);
+            if (old != null && old != result.Result) _downloader.Dispose(old);
+            return;
+        }
+    }
+
+    public override void OnImageLoadError(IVRCImageDownload result)
+    {
+        Debug.LogError("[NekoSune World Data] Image load failed: " + result.ErrorCode + " - " + result.Error);
+    }
+
+    void OnDestroy()
+    {
+        if (_downloader != null) _downloader.Dispose();
+    }
+}
