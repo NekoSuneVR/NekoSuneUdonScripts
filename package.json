@@ -1,7 +1,7 @@
 {
   "name": "com.nekosune.worlds",
   "displayName": "NekoSune World Hub",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "unity": "2021.3",
   "description": "Base/template World Hub for NekoSune VRChat and ChilloutVR creator addons. Provides the shared Avatar-style Hub UI, About page, localization and automatic addon discovery API.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
