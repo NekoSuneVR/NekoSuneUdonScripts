@@ -17,6 +17,7 @@ public class NekoFlappyStarter : UdonSharpBehaviour
     public float flapVelocity = 330f;
     public float pipeSpeed = 155f;
     public float gapHalfHeight = 105f;
+    public float birdStartX = -220f;
     private const string BestKey = "neko_flappy_bestScore";
     private const string RunsKey = "neko_flappy_runs";
     private const string MedalsKey = "neko_flappy_medals";
@@ -39,8 +40,8 @@ public class NekoFlappyStarter : UdonSharpBehaviour
 
     public void StartGame()
     {
-        if (!_ready || bird == null) return;
-        _running=true; _score=0; _velocity=0f; bird.anchoredPosition=Vector2.zero;
+        if (!_ready || bird == null || upperPipes == null || lowerPipes == null || upperPipes.Length == 0 || upperPipes.Length != lowerPipes.Length) return;
+        _running=true; _score=0; _velocity=0f; bird.anchoredPosition=new Vector2(birdStartX,0f);
         _counted=new bool[upperPipes.Length];
         PlayerData.SetInt(RunsKey,PlayerData.GetInt(Networking.LocalPlayer,RunsKey)+1);
         for(int i=0;i<upperPipes.Length;i++) ResetPipe(i,300f+i*420f);
