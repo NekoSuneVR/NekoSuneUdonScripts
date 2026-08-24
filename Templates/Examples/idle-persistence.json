@@ -1,0 +1,1 @@
+{"prefix":"idle_","keys":[{"name":"coins","type":"Float","default":"0"},{"name":"coinsPerSecond","type":"Float","default":"1"},{"name":"upgradeLevel","type":"Int","default":"0"},{"name":"lifetimeCoins","type":"Float","default":"0"}]}

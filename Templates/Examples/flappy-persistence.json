@@ -1,0 +1,1 @@
+{"prefix":"flappy_","keys":[{"name":"bestScore","type":"Int","default":"0"},{"name":"runs","type":"Int","default":"0"},{"name":"medals","type":"Int","default":"0"}]}

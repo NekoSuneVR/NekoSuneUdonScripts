@@ -1,0 +1,1 @@
+{"prefix":"clicker_","keys":[{"name":"coins","type":"Int","default":"0"},{"name":"clicks","type":"Int","default":"0"},{"name":"bestCombo","type":"Int","default":"0"}]}

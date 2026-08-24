@@ -1,0 +1,36 @@
+using UdonSharp;
+using UnityEngine;
+using UnityEngine.AI;
+
+public class NekoAiPatrol : UdonSharpBehaviour
+{
+    public NavMeshAgent agent;
+    public Transform[] waypoints;
+    public float arriveDistance = 0.35f;
+    public float waitSeconds = 1.0f;
+    private int _index;
+    private float _waitUntil;
+
+    void Start()
+    {
+        if (agent == null) agent = GetComponent<NavMeshAgent>();
+        GoToCurrent();
+    }
+
+    void Update()
+    {
+        if (agent == null || waypoints == null || waypoints.Length == 0 || !agent.isOnNavMesh) return;
+        if (agent.pathPending) return;
+        if (agent.remainingDistance > Mathf.Max(arriveDistance, agent.stoppingDistance)) return;
+        if (Time.time < _waitUntil) return;
+        _index = (_index + 1) % waypoints.Length;
+        _waitUntil = Time.time + waitSeconds;
+        GoToCurrent();
+    }
+
+    public void GoToCurrent()
+    {
+        if (agent == null || waypoints == null || waypoints.Length == 0 || waypoints[_index] == null || !agent.isOnNavMesh) return;
+        agent.SetDestination(waypoints[_index].position);
+    }
+}
