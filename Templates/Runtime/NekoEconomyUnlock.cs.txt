@@ -1,0 +1,44 @@
+using UdonSharp;
+using UnityEngine;
+using UnityEngine.UI;
+using VRC.SDKBase;
+using VRC.Economy;
+
+public class NekoEconomyUnlock : UdonSharpBehaviour
+{
+    public UdonProduct product;
+    public GameObject unlockTarget;
+    public Text statusText;
+    public string listingId = "";
+    private bool _purchasesLoaded;
+
+    public override void OnPurchasesLoaded(IProduct[] products, VRCPlayerApi player)
+    {
+        if (!player.isLocal) return;
+        _purchasesLoaded = true;
+        RefreshOwnership();
+    }
+
+    public override void OnPurchaseConfirmedMultiple(IProduct purchasedProduct, VRCPlayerApi player, bool isNewPurchase, int quantity)
+    {
+        if (!player.isLocal || product == null || purchasedProduct == null) return;
+        if (purchasedProduct.ID == product.ID) RefreshOwnership();
+    }
+
+    public override void OnPurchaseExpired(IProduct expiredProduct, VRCPlayerApi player)
+    {
+        if (!player.isLocal || product == null || expiredProduct == null) return;
+        if (expiredProduct.ID == product.ID) RefreshOwnership();
+    }
+
+    public void RefreshOwnership()
+    {
+        if (!_purchasesLoaded || product == null || Networking.LocalPlayer == null) return;
+        bool owned = Store.DoesPlayerOwnProduct(Networking.LocalPlayer, product);
+        if (unlockTarget != null) unlockTarget.SetActive(owned);
+        if (statusText != null) statusText.text = owned ? "Owned / Unlocked" : "Not owned";
+    }
+
+    public void OpenWorldStore() { Store.OpenWorldStorePage(); }
+    public void OpenListing() { if (listingId != "") Store.OpenListing(listingId); }
+}

@@ -1,0 +1,29 @@
+using UdonSharp;
+using UnityEngine;
+using UnityEngine.UI;
+using VRC.Economy;
+using VRC.Udon;
+
+public class NekoEconomySupporterWall : UdonSharpBehaviour
+{
+    public UdonProduct supporterProduct;
+    public UdonBehaviour receiver;
+    public Text[] rows;
+    public Text statusText;
+
+    public void RefreshSupporters()
+    {
+        if (supporterProduct == null || receiver == null) return;
+        if (statusText != null) statusText.text = "Loading supporters...";
+        Store.ListProductOwners(receiver, supporterProduct);
+    }
+
+    public override void OnListProductOwners(IProduct product, string[] ownerNames)
+    {
+        if (supporterProduct == null || product == null || product.ID != supporterProduct.ID) return;
+        int count = rows.Length < ownerNames.Length ? rows.Length : ownerNames.Length;
+        for (int i = 0; i < count; i++) { rows[i].text = ownerNames[i]; rows[i].gameObject.SetActive(true); }
+        for (int i = count; i < rows.Length; i++) rows[i].gameObject.SetActive(false);
+        if (statusText != null) statusText.text = ownerNames.Length + " supporter(s)";
+    }
+}

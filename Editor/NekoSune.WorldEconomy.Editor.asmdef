@@ -1,0 +1,8 @@
+{
+  "name": "NekoSune.WorldEconomy.Editor",
+  "rootNamespace": "NekoSune.WorldEconomy.Editor",
+  "references": ["NekoSune.Worlds.Editor"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true,
+  "noEngineReferences": false
+}

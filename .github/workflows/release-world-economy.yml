@@ -1,0 +1,31 @@
+name: Build World Economy Release
+on:
+  workflow_dispatch:
+  push:
+    branches: [world-economy]
+    paths: [package.json]
+permissions:
+  contents: write
+  actions: write
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - id: package
+        shell: bash
+        run: |
+          NAME=$(jq -r '.name' package.json); VERSION=$(jq -r '.version' package.json); DISPLAY=$(jq -r '.displayName' package.json)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"; echo "display=$DISPLAY" >> "$GITHUB_OUTPUT"; echo "zip=${NAME}-${VERSION}.zip" >> "$GITHUB_OUTPUT"; echo "tag=world-economy-v${VERSION}" >> "$GITHUB_OUTPUT"
+      - id: existing
+        env: { GH_TOKEN: "${{ github.token }}", TAG: "${{ steps.package.outputs.tag }}" }
+        run: if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then echo "exists=true" >> "$GITHUB_OUTPUT"; else echo "exists=false" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.existing.outputs.exists != 'true'
+        env: { ZIP_FILE: "${{ steps.package.outputs.zip }}" }
+        run: zip -r "$GITHUB_WORKSPACE/$ZIP_FILE" . -x '.git/*' -x '.github/*' && unzip -Z1 "$GITHUB_WORKSPACE/$ZIP_FILE" | grep -qx 'package.json'
+      - if: steps.existing.outputs.exists != 'true'
+        env: { GH_TOKEN: "${{ github.token }}", TAG: "${{ steps.package.outputs.tag }}", ZIP_FILE: "${{ steps.package.outputs.zip }}", VERSION: "${{ steps.package.outputs.version }}", DISPLAY: "${{ steps.package.outputs.display }}" }
+        run: gh release create "$TAG" "$ZIP_FILE" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$DISPLAY v$VERSION" --generate-notes
+      - if: steps.existing.outputs.exists != 'true'
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: gh workflow run build-listing.yml --repo "$GITHUB_REPOSITORY" --ref main
