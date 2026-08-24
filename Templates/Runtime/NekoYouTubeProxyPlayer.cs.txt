@@ -13,6 +13,12 @@ namespace NekoSune.WorldYouTubeProxy
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class NekoYouTubeProxyPlayer : UdonSharpBehaviour
     {
+        [Header("Auto setup")]
+        [Tooltip("Filled automatically by NekoSune one-click setup.")]
+        public string detectedPlayerFamily = "Unknown";
+        [Tooltip("True when a community player owns URL queue/sync/playback. In that mode NekoSune does not race the player's normal runtime path.")]
+        public bool communityPlayerMode;
+
         [Header("Stock VRChat players")]
         public VRCAVProVideoPlayer avProPlayer;
         public VRCUnityVideoPlayer unityPlayer;
@@ -288,7 +294,8 @@ namespace NekoSune.WorldYouTubeProxy
         private bool IsYouTube(string value)
         {
             if (string.IsNullOrEmpty(value)) return false;
-            return value.IndexOf("youtube.com") >= 0 || value.IndexOf("youtu.be") >= 0;
+            string lower = value.ToLower();
+            return lower.IndexOf("youtube.com") >= 0 || lower.IndexOf("youtu.be") >= 0;
         }
 
         private bool IsYouTubeOrProxy(string value)
