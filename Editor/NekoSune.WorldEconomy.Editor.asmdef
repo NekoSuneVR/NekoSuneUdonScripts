@@ -1,7 +1,7 @@
 {
   "name": "NekoSune.WorldEconomy.Editor",
   "rootNamespace": "NekoSune.WorldEconomy.Editor",
-  "references": ["NekoSune.Worlds.Editor"],
+  "references": ["NekoSune.Worlds.Editor", "UnityEngine.UI"],
   "includePlatforms": ["Editor"],
   "autoReferenced": true,
   "noEngineReferences": false
