@@ -1,6 +1,6 @@
 # NekoSune World YouTube Proxy
 
-A VRChat World addon that bridges the stable NekoSuneTools YouTube relay into VRChat video players while leaving non-YouTube URLs alone.
+A VRChat World addon that routes **YouTube** through the stable NekoSuneTools relay while leaving every non-YouTube URL on the video player's normal path.
 
 ## Package
 
@@ -8,15 +8,68 @@ A VRChat World addon that bridges the stable NekoSuneTools YouTube relay into VR
 - VPM package: `com.nekosune.world-youtube-proxy`
 - Menu: `NekoSune > World > YouTube Proxy`
 
-## Stable relay contract
+## One-click setup
 
-Use the stable NekoSuneTools URL as the canonical YouTube URL:
+Open the tool and press:
+
+```text
+ONE CLICK AUTO SETUP WHOLE SCENE
+```
+
+That single action:
+
+1. copies the runtime template to `Assets/NekoSune/YouTubeProxy/Generated/NekoYouTubeProxyPlayer.cs`
+2. waits through Unity's script/domain reload automatically
+3. creates/associates `Assets/NekoSune/YouTubeProxy/Generated/NekoYouTubeProxyPlayer.asset`
+4. requests a synchronous UdonSharp compile when the installed UdonSharp version exposes it
+5. scans the scene for known video-player families
+6. finds the player's existing `VRCUrlInputField`
+7. finds nested stock AVPro/Unity video sources
+8. adds/configures the Neko bridge
+9. converts serialized creator-time YouTube default/playlist URLs to Neko relay URLs
+10. gives detected URL inputs a Neko relay hint
+
+There is also:
+
+```text
+ONE CLICK SETUP SELECTED PLAYER
+```
+
+for a single player/prefab instance.
+
+## Auto-detected players
+
+The scanner uses reflection and hierarchy/type detection, so these packages are **optional** and are not added as hard VPM dependencies.
+
+| Family | One-click behavior |
+| --- | --- |
+| VRChat stock AVPro / Unity Video | Adds bridge, fills source/input references, optional synchronized start URL |
+| VideoTXL | Detects `Texel.*`, its URL input, defaults/playlists, nested video sources |
+| ProTV | Detects ProTV/ArchiTech hierarchy/types and ProTV-based prefabs |
+| RiskiPlayer | Detected as ProTV-based player |
+| USharpVideo | Detects `UdonSharp.Video.*` and the existing control-handler URL field |
+| USharpVideoModernUI | Detected with the USharpVideo family |
+| YamaPlayer | Detects `Yamadev.YamaStream.*` and its URL input fields |
+| VizVid | Detects `JLChnToZ.VRC.VVMW.*` and its UI URL fields |
+| ZPlayer | Detects ZPlayer types/hierarchy |
+| iwaSync3 | Detects iwaSync types/hierarchy |
+| KineL Video Player | Detects KineL types/hierarchy |
+| TopazChat | Detects Topaz player types/hierarchy |
+| UdonVR Video Player | Detects `UdonVR.Takato.VideoPlayer.*` |
+| JT Playlist | Detects JT Playlist hierarchy/types |
+| Generic player fallback | Detects video-looking prefabs containing a `VRCUrlInputField` |
+
+Community video players keep ownership of their own queue, lock, synchronization and playback logic. NekoSune does **not** bypass those systems with a second competing playback path. It configures their existing URL/default data and adds a non-racing bridge marker/configuration.
+
+## Stable relay URL
+
+The canonical relay format is:
 
 ```text
 https://tools.nekosunevr.co.uk/v/{youtubeVideoId}?vrc=1
 ```
 
-`vrc=1` is always kept as the final query parameter.
+`vrc=1` is always the **final** query parameter.
 
 Examples:
 
@@ -31,11 +84,11 @@ https://tools.nekosunevr.co.uk/v/O9qAGM_JVGI?q=1080&vrc=1
 https://tools.nekosunevr.co.uk/v/O9qAGM_JVGI?q=720&vrc=1
 ```
 
-The relay decides server-side whether the YouTube target is a normal VOD or a live stream. Worlds should not store temporary `/api/youtube-relay/...` URLs.
+Do not store/synchronize temporary `/api/youtube-relay/...` URLs in the world.
 
-## YouTube-only interception
+## YouTube only
 
-Passive watching only reacts to:
+Passive bridge logic only treats these specially:
 
 ```text
 youtube.com/*
@@ -43,153 +96,83 @@ youtu.be/*
 https://tools.nekosunevr.co.uk/v/*
 ```
 
-Everything else is deliberately left to the existing video player's normal path:
+These continue through the original player unchanged:
 
 ```text
 Vimeo
 Twitch
 direct MP4
 direct HLS / m3u8
+RTSP where supported
 radio/video CDN URLs
-other supported media URLs
+any other non-YouTube media URL
 ```
 
-The bridge does not duplicate `PlayURL` for those URLs when it is passively watching an existing player.
+## Automatic creator-time URL conversion
 
-## Supported player targets
-
-### Stock VRChat components
-
-- `VRCAVProVideoPlayer`
-- `VRCUnityVideoPlayer`
-
-If both are assigned, the bridge prefers AVPro. AVPro is the recommended target when the same integration must support normal videos and YouTube Live.
-
-### Community/custom Udon players
-
-The bridge also has a generic adapter:
-
-1. assign the target `UdonBehaviour`
-2. enter the program variable that receives a `VRCUrl`
-3. enter the custom event that loads/plays it
-4. optionally enter a stop event
-
-Example:
+One-click setup inspects serialized `VRCUrl` and `VRCUrl[]` fields on detected player prefabs. Existing YouTube defaults/playlists such as:
 
 ```text
-VRCUrl variable: url
-Play event: Play
-Stop event: Stop
+https://www.youtube.com/watch?v=O9qAGM_JVGI
 ```
 
-## Reliable UdonSharp runtime installation
+are converted in the Unity editor to:
 
-The package does not rely on its UdonSharp runtime compiling directly from `Packages/`.
+```text
+https://tools.nekosunevr.co.uk/v/O9qAGM_JVGI?vrc=1
+```
 
-Instead the setup tool copies the runtime template to:
+Non-YouTube entries in the same fields are left untouched.
+
+If an optional creator start URL is entered in the setup window, the tool also tries obvious community-player default URL/playlist fields. Stock players receive it directly on the generated Neko bridge.
+
+## Why runtime normal YouTube links cannot be silently rewritten
+
+VRChat allows `VRCUrl(string)` construction only at **editor time**. At runtime, arbitrary user-entered URLs come from `VRCUrlInputField`.
+
+Therefore pure Udon cannot safely do this after a player types a normal YouTube URL:
+
+```text
+https://youtube.com/watch?v=O9qAGM_JVGI
+        ↓ create a different VRCUrl at runtime
+https://tools.nekosunevr.co.uk/v/O9qAGM_JVGI?vrc=1
+```
+
+For runtime proxy playback the user should enter the complete stable relay URL, for example:
+
+```text
+https://tools.nekosunevr.co.uk/v/O9qAGM_JVGI?vrc=1
+```
+
+The one-click installer automatically adds this format as the detected URL input's hint/placeholder where possible.
+
+## Generated UdonSharp files
+
+The package runtime is shipped as a template and generated into the project:
 
 ```text
 Assets/NekoSune/YouTubeProxy/Generated/NekoYouTubeProxyPlayer.cs
+Assets/NekoSune/YouTubeProxy/Generated/NekoYouTubeProxyPlayer.asset
 ```
 
-That lets Unity and UdonSharp compile it as a normal project script and create/associate a valid UdonSharp program asset.
+This avoids the package-directory UdonSharp program-asset creation problem and lets the one-click setup resume after Unity's domain reload using `SessionState`.
 
-On first install:
+The program asset repair path uses the installed UdonSharp editor APIs when available and otherwise creates a `UdonSharpProgramAsset`, assigns its `sourceCsScript`, force-imports it and requests compilation.
 
-```text
-NekoSune > World > YouTube Proxy
-```
+## VRChat video rate limiting
 
-Then:
+For stock bridge-owned playback the runtime:
 
-```text
-1. INSTALL / REPAIR GENERATED UDON RUNTIME
-2. wait for Unity/UdonSharp compilation to finish
-3. select the video player object
-4. ADD / REPAIR BRIDGE ON SELECTED PLAYER
-```
-
-If the UdonSharp program asset is missing, the repair flow attempts to create/refresh it and asks you to wait for compilation before attaching the behaviour.
-
-## Scene-wide setup
-
-You can also use:
-
-```text
-ADD BRIDGES TO ALL STOCK VRCHAT VIDEO PLAYERS
-```
-
-The setup window scans the scene for stock AVPro/Unity video players and tries to find a `VRCUrlInputField` in each player hierarchy.
-
-## Creator start URL
-
-Creators can paste a normal YouTube URL in the Unity editor:
-
-```text
-https://www.youtube.com/watch?v=O9qAGM_JVGI
-```
-
-The editor extracts the 11-character video ID and stores an editor-created relay `VRCUrl` such as:
-
-```text
-https://tools.nekosunevr.co.uk/v/O9qAGM_JVGI?vrc=1
-```
-
-This can optionally play on world start and can be synchronized.
-
-## Runtime URL input limitation
-
-VRChat does not allow pure Udon to freely create a brand-new `VRCUrl` from an arbitrary rewritten string at runtime.
-
-So a player-entered normal YouTube URL cannot safely be transformed in pure Udon from:
-
-```text
-https://www.youtube.com/watch?v=O9qAGM_JVGI
-```
-
-into:
-
-```text
-https://tools.nekosunevr.co.uk/v/O9qAGM_JVGI?vrc=1
-```
-
-The supported VRChat-safe flows are:
-
-- creator converts the normal YouTube URL in the Unity editor
-- player pastes a complete NekoSune `/v/...?...&vrc=1` URL into `VRCUrlInputField`
-- setup tool prefills the input field with:
-
-```text
-https://tools.nekosunevr.co.uk/v/VIDEO_ID?vrc=1
-```
-
-and the player replaces `VIDEO_ID`
-- optional direct-YouTube fallback can be enabled, but this bypasses the relay
-
-The package does not invent an unsupported runtime `new VRCUrl(dynamicString)` path.
-
-## URL synchronization
-
-`NekoYouTubeProxyPlayer` can synchronize the stable `VRCUrl` using manual Udon synchronization.
-
-Only the stable `/v/...?...&vrc=1` URL is canonical. Temporary relay tokens are never treated as world state.
-
-Disable `synchronizeUrl` when a community player already owns URL synchronization and the NekoSune bridge is only being used as a local adapter.
-
-## VRChat URL rate limit
-
-The bridge:
-
-- waits at least 5.1 seconds between new bridge-owned `PlayURL` requests
-- queues instead of spamming
-- retries video errors after approximately 5, 10 and 20 seconds
+- waits at least 5.1 seconds between bridge-owned `PlayURL` requests
+- queues rather than spamming
+- retries after approximately 5, 10 and 20 seconds
 - stops after three retries
 
-If a world runs many independent video players simultaneously, creators should still stagger startup because VRChat's URL limit is global per user.
+Community players keep their own rate limiting/retry logic because they own playback.
 
 ## Allow Untrusted URLs
 
-`tools.nekosunevr.co.uk` may require the player's **Allow Untrusted URLs** setting unless the domain is accepted by the current VRChat/world URL rules.
+`tools.nekosunevr.co.uk` may require the player's **Allow Untrusted URLs** setting unless VRChat accepts the domain under the current world/video URL rules.
 
 ## Files
 
@@ -199,13 +182,6 @@ Editor/NekoYouTubeProxySetupWindow.cs
 Editor/NekoSune.WorldYouTubeProxy.Editor.asmdef
 ```
 
-Generated in the Unity project:
-
-```text
-Assets/NekoSune/YouTubeProxy/Generated/NekoYouTubeProxyPlayer.cs
-Assets/NekoSune/YouTubeProxy/Generated/NekoYouTubeProxyPlayer.asset
-```
-
 ## Testing note
 
-Repository publishing does not execute a Unity or VRChat client compile. Test the installed package in a clean VRChat World project and use VRChat Build & Test before publishing a production world.
+Repository publishing cannot run Unity, UdonSharp or VRChat Build & Test. Always verify the installed release in a clean VRChat World project before publishing a production world.
