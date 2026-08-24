@@ -1,7 +1,7 @@
 {
   "name": "com.nekosune.world-starter-games",
   "displayName": "NekoSune World Starter Games",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "unity": "2022.3",
   "description": "Beginner VRChat UI mini-game starter kit with persistent Flappy-style, clicker and idle/incremental examples plus automatic post-compile wiring.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
