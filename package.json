@@ -1,9 +1,9 @@
 {
   "name": "com.nekosune.avatar-tools",
   "displayName": "NekoSune Avatar Tools",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "unity": "2019.4",
-  "description": "Avatar Hub addon with the shared avatar reflection/performance API plus beginner Toggle + Menu + FX setup. Lip Sync moved to Animation Tools and Rank Advisor moved to Optimizer.",
+  "description": "Lightweight Avatar Hub addon with the shared avatar reflection/performance API plus beginner Toggle + Menu + FX setup. Lip Sync lives in Animation Tools and Rank Advisor lives in Optimizer.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
   "keywords": ["vrchat","avatar","addon","toggle","menu","fx","parameters","shared-api"],
   "vpmDependencies": {
