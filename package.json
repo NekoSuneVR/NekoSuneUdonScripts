@@ -1,16 +1,16 @@
 {
   "name": "com.nekosune.world-starter-games",
   "displayName": "NekoSune World Starter Games",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "unity": "2022.3",
   "description": "Beginner VRChat UI mini-game starter kit with persistent Flappy-style, clicker and idle/incremental examples plus automatic post-compile wiring.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
   "keywords": ["vrchat","world","game","starter","flappy","clicker","idle","persistence","ui","udonsharp"],
   "dependencies": {"com.unity.ugui":"1.0.0"},
   "vpmDependencies": {
-    "com.nekosune.worlds": ">=0.5.3",
-    "com.nekosune.world-ui-builder": ">=1.0.0",
-    "com.nekosune.world-gameplay": ">=1.0.0",
+    "com.nekosune.worlds": ">=0.5.4",
+    "com.nekosune.world-ui-builder": ">=1.0.1",
+    "com.nekosune.world-gameplay": ">=1.0.1",
     "com.vrchat.worlds": ">=3.5.0"
   },
   "hideInEditor": false
