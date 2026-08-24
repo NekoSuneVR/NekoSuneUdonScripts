@@ -27,9 +27,11 @@ All preferred keys remain editable in the generated behaviour.
 
 ## Search input limitation
 
-VRChat Udon cannot construct an arbitrary `VRCUrl` from a normal runtime string. The package therefore supports creator-predeclared preset/demo searches plus a `VRCUrlInputField` for a complete user-entered API URL.
+VRChat Udon cannot construct an arbitrary `VRCUrl` from a normal runtime string. The package therefore supports creator-predeclared preset/demo searches plus a real `VRCUrlInputField` for a complete user-entered API URL.
 
 If an API domain is not trusted by VRChat, the player must enable **Allow Untrusted URLs**.
+
+`thumbnailImageUrl` is parsed and retained as metadata, but a thumbnail URL arriving only as a JSON string cannot be turned into a new `VRCUrl` by Udon. The demo therefore uses the real 3D `VRCAvatarPedestal` as its selected-avatar preview instead of pretending arbitrary JSON thumbnail URLs can always be downloaded. A creator can still add predeclared thumbnail `VRCUrl` mappings if their catalog is known at upload time.
 
 ## Avatar switching
 
