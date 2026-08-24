@@ -26,10 +26,14 @@ namespace NekoSune.WorldYouTubeProxy
         [Header("Input / status")]
         public VRCUrlInputField proxyInput;
         public Text statusText;
+        [Tooltip("Watch the assigned VRCUrlInputField and submit a changed URL automatically. This lets the bridge sit beside many existing player UIs without replacing their submit button.")]
+        public bool autoWatchInput = true;
 
         [Header("Start URL")]
         public VRCUrl startUrl = VRCUrl.Empty;
         public bool playStartUrl;
+        [Tooltip("Stops stock AVPro/Unity players once when the bridge starts, preventing their native default autoplay from racing the proxy start URL.")]
+        public bool stopNativePlayerOnBridgeStart = true;
 
         [Header("Networking")]
         public bool synchronizeUrl = true;
@@ -45,13 +49,34 @@ namespace NekoSune.WorldYouTubeProxy
         private float _nextAllowedPlayTime;
         private bool _playQueued;
         private int _retryIndex;
+        private string _lastInputValue = "";
+        private float _nextInputPoll;
 
         private const float MinimumUrlInterval = 5.1f;
+        private const float InputPollInterval = 0.25f;
 
         private void Start()
         {
+            if (stopNativePlayerOnBridgeStart)
+            {
+                if (avProPlayer != null) avProPlayer.Stop();
+                if (unityPlayer != null) unityPlayer.Stop();
+            }
+            if (proxyInput != null && !VRCUrl.IsNullOrEmpty(proxyInput.GetUrl())) _lastInputValue = proxyInput.GetUrl().Get();
             SetStatus("NekoSune YouTube Proxy ready.");
             if (playStartUrl && !VRCUrl.IsNullOrEmpty(startUrl)) SubmitUrl(startUrl);
+        }
+
+        private void Update()
+        {
+            if (!autoWatchInput || proxyInput == null || Time.time < _nextInputPoll) return;
+            _nextInputPoll = Time.time + InputPollInterval;
+
+            VRCUrl current = proxyInput.GetUrl();
+            string value = VRCUrl.IsNullOrEmpty(current) ? "" : current.Get();
+            if (value == _lastInputValue) return;
+            _lastInputValue = value;
+            if (!string.IsNullOrEmpty(value)) SubmitUrl(current);
         }
 
         public void PlayFromInput()
