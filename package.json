@@ -1,13 +1,13 @@
 {
   "name": "com.nekosune.world-gameplay",
   "displayName": "NekoSune World Gameplay",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "unity": "2022.3",
   "description": "Beginner-friendly VRChat world gameplay builders for Persistence, inventory/currency schemas, save systems, achievements and AI Navigation.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
   "keywords": ["vrchat","world","udon","persistence","playerdata","inventory","currency","save","ai","navmesh","gameplay"],
   "vpmDependencies": {
-    "com.nekosune.worlds": ">=0.5.3",
+    "com.nekosune.worlds": ">=0.5.4",
     "com.vrchat.worlds": ">=3.5.0"
   },
   "hideInEditor": false
