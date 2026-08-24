@@ -1,37 +1,35 @@
-# NekoSune World Hub
+# NekoSune World Starter Games
 
-Base/template package for NekoSune world/Udon addons.
+UI mini-game examples for beginners learning VRChat UdonSharp + Persistence.
 
-**Package ID:** `com.nekosune.worlds`
+## Included demos
 
-This branch stays intentionally small: Hub, About page, localization/styles and the public addon contract. Actual creator features are separate VPM addons.
+### Neko Flappy
+- world-space UI game board
+- Jump input + FLAP button
+- moving UI pipe obstacles
+- persistent best score
+- persistent run count
+- simple medal counter
 
-## Menu
+### Neko Clicker
+- persistent coins
+- lifetime clicks
+- persistent upgrade level
+- upgrade purchase loop
 
-- `NekoSune → World → Hub`
-- `NekoSune → World → About`
+### Neko Idle
+- persistent coins / production rate / upgrade level / lifetime production
+- local per-frame accumulation
+- PlayerData writes batched every 10 seconds instead of every frame
 
-Addon packages implementing `INekoAddon` with `[NekoAddon]` are discovered automatically. The World Hub does not need to be edited when a new addon branch is published.
+## Build flow
 
-## Current addons
+1. Open `NekoSune → World → Starter Game Kit`.
+2. Pick a starter and click **BUILD SELECTED STARTER**.
+3. Wait for Unity/UdonSharp to compile the generated script.
+4. Keep/select the generated `Neko Starter - ...` root.
+5. Click **AUTO-WIRE SELECTED STARTER**.
+6. Test with VRChat Build & Test.
 
-- `com.nekosune.world-tools` — lightweight world framework/template helpers
-- `com.nekosune.optimizer` — Avatar + World optimizer
-- `com.nekosune.doctors` — Avatar + World/Udon diagnostics
-- `com.nekosune.converters` — ChilloutVR CCK 3/4 Avatar/Prop/World + Resonite
-
-## Make a new World addon branch
-
-1. Create a branch from this template or from the closest existing addon.
-2. Use a unique package ID.
-3. Depend on `com.nekosune.worlds`.
-4. Reference `NekoSune.Worlds.Editor`.
-5. Add a class implementing public `INekoAddon` with `[NekoAddon]`.
-6. Put the tool menu under `NekoSune → World → ...`.
-7. Publish a normal VPM release ZIP.
-
-See `Templates/WorldAddonTemplate.cs.txt`.
-
-## VCC repository
-
-`https://nekosunevr.github.io/NekoSuneUdonScripts/index.json`
+All generated scripts live in `Assets/NekoSune/StarterGames/Generated/` and are intentionally readable/editable.

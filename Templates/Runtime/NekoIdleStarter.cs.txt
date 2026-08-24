@@ -1,0 +1,54 @@
+using UdonSharp;
+using UnityEngine;
+using UnityEngine.UI;
+using VRC.SDK3.Persistence;
+using VRC.SDKBase;
+
+public class NekoIdleStarter : UdonSharpBehaviour
+{
+    public Text coinsText;
+    public Text rateText;
+    public Text levelText;
+    public Text statusText;
+    private const string CoinsKey = "neko_idle_coins";
+    private const string RateKey = "neko_idle_rate";
+    private const string LevelKey = "neko_idle_level";
+    private const string LifetimeKey = "neko_idle_lifetime";
+    private bool _ready;
+    private float _coins;
+    private float _rate;
+    private float _lifetime;
+    private int _level;
+    private float _nextSave;
+    private float _nextUi;
+
+    public override void OnPlayerRestored(VRCPlayerApi player)
+    {
+        if (!player.isLocal) return;
+        if (!PlayerData.HasKey(player, CoinsKey)) PlayerData.SetFloat(CoinsKey, 0f);
+        if (!PlayerData.HasKey(player, RateKey)) PlayerData.SetFloat(RateKey, 1f);
+        if (!PlayerData.HasKey(player, LevelKey)) PlayerData.SetInt(LevelKey, 0);
+        if (!PlayerData.HasKey(player, LifetimeKey)) PlayerData.SetFloat(LifetimeKey, 0f);
+        _coins = PlayerData.GetFloat(player, CoinsKey); _rate = PlayerData.GetFloat(player, RateKey); _level = PlayerData.GetInt(player, LevelKey); _lifetime = PlayerData.GetFloat(player, LifetimeKey);
+        _ready = true; _nextSave = Time.time + 10f; RefreshUi();
+    }
+
+    void Update()
+    {
+        if (!_ready) return;
+        float made = _rate * Time.deltaTime; _coins += made; _lifetime += made;
+        if (Time.time >= _nextUi) { _nextUi = Time.time + 0.2f; RefreshUi(); }
+        if (Time.time >= _nextSave) { _nextSave = Time.time + 10f; Save(); }
+    }
+
+    public void Boost() { if (!_ready) return; _coins += 10f; _lifetime += 10f; RefreshUi(); }
+    public void BuyUpgrade()
+    {
+        if (!_ready) return;
+        float cost = 50f * (_level + 1);
+        if (_coins < cost) { if (statusText != null) statusText.text = "Need " + Mathf.CeilToInt(cost) + " coins"; return; }
+        _coins -= cost; _level++; _rate = 1f + _level * 0.75f; Save(); RefreshUi();
+    }
+    public void Save() { if (!_ready) return; PlayerData.SetFloat(CoinsKey,_coins); PlayerData.SetFloat(RateKey,_rate); PlayerData.SetInt(LevelKey,_level); PlayerData.SetFloat(LifetimeKey,_lifetime); }
+    public void RefreshUi() { if (coinsText!=null) coinsText.text="Coins: "+Mathf.FloorToInt(_coins); if(rateText!=null) rateText.text="Per second: "+_rate.ToString("0.00"); if(levelText!=null) levelText.text="Upgrade level: "+_level; if(statusText!=null) statusText.text="Auto-save every 10 seconds | Lifetime "+Mathf.FloorToInt(_lifetime); }
+}

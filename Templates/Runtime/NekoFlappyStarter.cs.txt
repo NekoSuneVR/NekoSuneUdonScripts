@@ -1,0 +1,94 @@
+using UdonSharp;
+using UnityEngine;
+using UnityEngine.UI;
+using VRC.SDK3.Persistence;
+using VRC.SDKBase;
+using VRC.Udon.Common;
+
+public class NekoFlappyStarter : UdonSharpBehaviour
+{
+    public RectTransform bird;
+    public RectTransform[] upperPipes;
+    public RectTransform[] lowerPipes;
+    public Text scoreText;
+    public Text bestText;
+    public Text statusText;
+    public float gravity = -760f;
+    public float flapVelocity = 330f;
+    public float pipeSpeed = 155f;
+    public float gapHalfHeight = 105f;
+    private const string BestKey = "neko_flappy_bestScore";
+    private const string RunsKey = "neko_flappy_runs";
+    private const string MedalsKey = "neko_flappy_medals";
+    private bool _ready;
+    private bool _running;
+    private float _velocity;
+    private int _score;
+    private bool[] _counted;
+
+    public override void OnPlayerRestored(VRCPlayerApi player)
+    {
+        if (!player.isLocal) return;
+        if (!PlayerData.HasKey(player, BestKey)) PlayerData.SetInt(BestKey,0);
+        if (!PlayerData.HasKey(player, RunsKey)) PlayerData.SetInt(RunsKey,0);
+        if (!PlayerData.HasKey(player, MedalsKey)) PlayerData.SetInt(MedalsKey,0);
+        _ready=true; UpdateHud();
+    }
+
+    public override void InputJump(bool value, UdonInputEventArgs args) { if (value) Flap(); }
+
+    public void StartGame()
+    {
+        if (!_ready || bird == null) return;
+        _running=true; _score=0; _velocity=0f; bird.anchoredPosition=Vector2.zero;
+        _counted=new bool[upperPipes.Length];
+        PlayerData.SetInt(RunsKey,PlayerData.GetInt(Networking.LocalPlayer,RunsKey)+1);
+        for(int i=0;i<upperPipes.Length;i++) ResetPipe(i,300f+i*420f);
+        if(statusText!=null) statusText.text="FLAP!"; UpdateHud();
+    }
+
+    public void Flap() { if (!_running) { StartGame(); return; } _velocity=flapVelocity; }
+
+    void Update()
+    {
+        if (!_running || bird==null) return;
+        _velocity += gravity * Time.deltaTime;
+        bird.anchoredPosition += Vector2.up * (_velocity * Time.deltaTime);
+        for(int i=0;i<upperPipes.Length;i++)
+        {
+            Vector2 up=upperPipes[i].anchoredPosition; Vector2 low=lowerPipes[i].anchoredPosition; up.x-=pipeSpeed*Time.deltaTime; low.x=up.x; upperPipes[i].anchoredPosition=up; lowerPipes[i].anchoredPosition=low;
+            if(!_counted[i] && up.x < bird.anchoredPosition.x){_counted[i]=true;_score++;UpdateHud();}
+            if(up.x < -520f) ResetPipe(i,520f);
+            if(Overlaps(bird,upperPipes[i]) || Overlaps(bird,lowerPipes[i])) { GameOver(); return; }
+        }
+        if(bird.anchoredPosition.y > 280f || bird.anchoredPosition.y < -280f) GameOver();
+    }
+
+    void ResetPipe(int i,float x)
+    {
+        float center=Random.Range(-105f,105f); float halfPipe=120f;
+        upperPipes[i].anchoredPosition=new Vector2(x,center+gapHalfHeight+halfPipe);
+        lowerPipes[i].anchoredPosition=new Vector2(x,center-gapHalfHeight-halfPipe);
+        _counted[i]=false;
+    }
+
+    bool Overlaps(RectTransform a,RectTransform b)
+    {
+        Vector2 ap=a.anchoredPosition; Vector2 bp=b.anchoredPosition; Vector2 ah=a.sizeDelta*.5f; Vector2 bh=b.sizeDelta*.5f;
+        return Mathf.Abs(ap.x-bp.x)<ah.x+bh.x && Mathf.Abs(ap.y-bp.y)<ah.y+bh.y;
+    }
+
+    void GameOver()
+    {
+        _running=false; int best=PlayerData.GetInt(Networking.LocalPlayer,BestKey);
+        if(_score>best){best=_score;PlayerData.SetInt(BestKey,best);}
+        if(_score>=10) PlayerData.SetInt(MedalsKey,PlayerData.GetInt(Networking.LocalPlayer,MedalsKey)+1);
+        if(statusText!=null) statusText.text="Game Over - press START or FLAP"; UpdateHud();
+    }
+
+    void UpdateHud()
+    {
+        if(scoreText!=null) scoreText.text="Score: "+_score;
+        if(bestText!=null && _ready) bestText.text="Best: "+PlayerData.GetInt(Networking.LocalPlayer,BestKey)+" | Runs: "+PlayerData.GetInt(Networking.LocalPlayer,RunsKey);
+    }
+}

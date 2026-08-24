@@ -1,0 +1,60 @@
+using UdonSharp;
+using UnityEngine;
+using UnityEngine.UI;
+using VRC.SDK3.Persistence;
+using VRC.SDKBase;
+
+public class NekoClickerStarter : UdonSharpBehaviour
+{
+    public Text coinsText;
+    public Text lifetimeText;
+    public Text statusText;
+    private const string CoinsKey = "neko_clicker_coins";
+    private const string ClicksKey = "neko_clicker_clicks";
+    private const string UpgradeKey = "neko_clicker_upgrade";
+    private bool _ready;
+
+    public override void OnPlayerRestored(VRCPlayerApi player)
+    {
+        if (!player.isLocal) return;
+        _ready = true;
+        if (!PlayerData.HasKey(player, CoinsKey)) PlayerData.SetInt(CoinsKey, 0);
+        if (!PlayerData.HasKey(player, ClicksKey)) PlayerData.SetInt(ClicksKey, 0);
+        if (!PlayerData.HasKey(player, UpgradeKey)) PlayerData.SetInt(UpgradeKey, 0);
+        RefreshUi();
+    }
+
+    public void Click()
+    {
+        if (!_ready) return;
+        int upgrade = PlayerData.GetInt(Networking.LocalPlayer, UpgradeKey);
+        int coins = PlayerData.GetInt(Networking.LocalPlayer, CoinsKey) + 1 + upgrade;
+        int clicks = PlayerData.GetInt(Networking.LocalPlayer, ClicksKey) + 1;
+        PlayerData.SetInt(CoinsKey, coins);
+        PlayerData.SetInt(ClicksKey, clicks);
+        RefreshUi();
+    }
+
+    public void BuyUpgrade()
+    {
+        if (!_ready) return;
+        int level = PlayerData.GetInt(Networking.LocalPlayer, UpgradeKey);
+        int cost = 25 * (level + 1);
+        int coins = PlayerData.GetInt(Networking.LocalPlayer, CoinsKey);
+        if (coins < cost) { if (statusText != null) statusText.text = "Need " + cost + " coins"; return; }
+        PlayerData.SetInt(CoinsKey, coins - cost);
+        PlayerData.SetInt(UpgradeKey, level + 1);
+        RefreshUi();
+    }
+
+    public void RefreshUi()
+    {
+        if (!_ready) return;
+        int coins = PlayerData.GetInt(Networking.LocalPlayer, CoinsKey);
+        int clicks = PlayerData.GetInt(Networking.LocalPlayer, ClicksKey);
+        int level = PlayerData.GetInt(Networking.LocalPlayer, UpgradeKey);
+        if (coinsText != null) coinsText.text = "Coins: " + coins + "  (+" + (1 + level) + "/click)";
+        if (lifetimeText != null) lifetimeText.text = "Lifetime clicks: " + clicks;
+        if (statusText != null) statusText.text = "Upgrade " + level + " | Next cost " + (25 * (level + 1));
+    }
+}
