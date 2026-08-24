@@ -1,9 +1,9 @@
 {
   "name": "com.nekosune.world-youtube-proxy",
   "displayName": "NekoSune World YouTube Proxy",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "unity": "2022.3",
-  "description": "VRChat World addon that watches/intercepts YouTube URLs for NekoSuneTools relay handling while leaving every non-YouTube URL entirely to the existing video player's normal playback path.",
+  "description": "VRChat World addon that intercepts only YouTube URLs for the NekoSuneTools relay, leaves all other player URLs alone, keeps vrc=1 as the final relay query parameter, and generates its UdonSharp runtime into Assets for reliable compilation.",
   "author": {"name":"NekoSuneVR","email":"contact@nekosunevr.co.uk","url":"https://github.com/NekoSuneVR"},
   "keywords": ["vrchat","world","video","youtube","proxy","relay","avpro","udonsharp","player","passthrough","nekosune"],
   "dependencies": {
