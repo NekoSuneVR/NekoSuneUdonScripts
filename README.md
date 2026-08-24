@@ -37,6 +37,9 @@ Installable addons
 ├─ world-data
 ├─ world-economy
 ├─ world-starter-games
+├─ world-gallery
+├─ world-avatar-search
+├─ world-player-tools
 ├─ optimizer
 ├─ doctors
 └─ converters
@@ -50,8 +53,6 @@ The Hub branches are **not bundles**. An addon implements `INekoAddon` + `[NekoA
 | --- | --- | --- |
 | `avatar` | `com.nekosune.avatars` | Avatar Hub, About, styles/localization and addon API |
 | `world` | `com.nekosune.worlds` | World Hub, About, styles/localization and addon API |
-
-The World Hub keeps a Unity 2021.3 minimum so lightweight cross-platform World addons can still be used in ChilloutVR CCK 3 legacy projects, while VRChat-specific gameplay packages target the current VRChat Unity generation.
 
 ### Hub menus
 
@@ -78,7 +79,7 @@ Package: `com.nekosune.avatar-tools`
 
 - Lip Sync Studio
 - Rank Advisor
-- shared avatar reflection/performance API used by other NekoSune addons
+- shared avatar reflection/performance API
 
 ## NekoSune World Tools
 
@@ -94,157 +95,177 @@ Package: `com.nekosune.world-tools`
 Branch: `world-ui-builder`  
 Package: `com.nekosune.world-ui-builder`
 
-Beginner-first visual/data-driven world-space UI authoring for VRChat, ChilloutVR, both platforms, or generic Unity UI.
-
-Included:
+Beginner-first world-space UI authoring for VRChat, ChilloutVR and generic Unity UI.
 
 - editable JSON UI blueprints
-- World Settings, Mirrors, Teleports, Media, Image Gallery, Supporter/Patreon-style Wall, Shop/Catalog, Links, Credits, Player Controls, Admin/Debug, Rules and Event templates
+- settings, mirrors, teleport, media, gallery, supporter wall, shop/catalog, links, credits, player, admin, rules and event templates
 - Heading, Text, Button, Toggle, Slider, Image, Card, Divider and Spacer elements
 - Neko Dark, Light, Neon, Glass, Pastel, Terminal and Custom themes
 - local images and runtime `RawImage` slots
-- local JSON, Editor-downloaded JSON snapshots and VRChat runtime JSON starters
-- generated VRChat player-action, JSON and image-loading starter scripts
+- JSON/image/action starter scripts
 - optional `VRCUiShape` / `CVRCanvasWrapper` setup
-- UI Doctor and beginner learning explanations
-
-Shop/supporter templates are presentation/catalog UIs. They do not pretend to process external payments inside the world.
+- UI Doctor + beginner learning explanations
 
 ## NekoSune World Gameplay
 
 Branch: `world-gameplay`  
 Package: `com.nekosune.world-gameplay`
 
-A VRChat-specific gameplay system builder focused on Persistence and AI Navigation.
+VRChat gameplay-system builder:
 
-### Persistence Builder
-
-Create a schema visually:
-
-```text
-prefix: nekogame_
-
-coins          Int       0
-xp             Int       0
-level          Int       1
-hasSword       Bool      false
-playerName     String    Adventurer
-```
-
-Then generate readable UdonSharp containing:
-
-- `OnPlayerRestored` gating before PlayerData access
-- unique/prefixed PlayerData keys
-- typed Get/Set helpers
-- Add helpers for numeric fields
-- default initialization
-- storage usage display
-- storage warning/exceeded callbacks
-- reset-to-defaults helper
-
-Built-in schema presets:
-
-- Clicker / Currency
-- Idle / Incremental
-- Flappy-style High Score
-- Simple RPG / Inventory
-
-### AI Navigation Builder
-
-Creates a beginner patrol rig with editable waypoints and a readable `NavMeshAgent` UdonSharp starter. Creators can then expand it into wander, follow, guard, escort or game NPC logic.
+- visual Persistence schema builder
+- prefixed PlayerData keys
+- `OnPlayerRestored` gating
+- typed Get/Set/Add helpers
+- storage usage/warning helpers
+- Clicker, Idle, Flappy and RPG/Inventory starter schemas
+- AI Navigation / NavMeshAgent patrol starter
 
 ## NekoSune World Data
 
 Branch: `world-data`  
 Package: `com.nekosune.world-data`
 
-Remote-data helpers for VRChat Worlds:
+Remote-data helpers:
 
-- URL/JSON tester in the Unity Editor
-- `VRCStringDownloader` starter generator
-- `VRCJson` / `DataDictionary` / `DataList` feed starter
-- `VRCImageDownloader` + `RawImage` starter
-- trusted-host hints
-- queue/rate-limit guidance
-- downloaded-image disposal guidance
-- example news and catalog feeds
-
-This package is intended to power UI Builder content such as event boards, patch notes, staff lists, image galleries, supporter displays and live catalog data.
+- URL/JSON tester
+- `VRCStringDownloader`
+- `VRCJson`, `DataDictionary`, `DataList`
+- `VRCImageDownloader` + `RawImage`
+- trusted-host/rate-limit guidance
+- safe downloaded-image disposal
+- example news/catalog feeds
 
 ## NekoSune World Economy
 
 Branch: `world-economy`  
 Package: `com.nekosune.world-economy`
 
-Beginner helpers for VRChat Creator Economy sellers.
+VRChat Creator Economy helpers:
 
-Included:
+- UdonProduct ownership unlocks
+- `OnPurchasesLoaded` lifecycle
+- quantity-aware purchase events
+- World Store / Listing buttons
+- supporter wall via `Store.ListProductOwners`
+- starter store/supporter UI
 
-- UdonProduct ownership unlock starter
-- ownership checks after `OnPurchasesLoaded`
-- quantity-aware `OnPurchaseConfirmedMultiple`
-- expiry refresh handling
-- Open World Store button
-- Open Listing button
-- supporter wall using `Store.ListProductOwners`
-- starter World Store / Supporter UI
-
-The package never processes payments itself. It connects world Udon to VRChat's own Creator Economy/Store APIs.
+The package never processes payments itself; it connects World Udon to VRChat's own Economy APIs.
 
 ## NekoSune World Starter Games
 
 Branch: `world-starter-games`  
 Package: `com.nekosune.world-starter-games`
 
-A beginner game kit built around world-space UI + Persistence. It depends on World Gameplay and World UI Builder so creators can inspect the game, extend its save schema, and redesign its UI.
+Beginner-editable persistent UI examples:
 
-### Neko Flappy
-
-A Flappy-style educational UI mini-game:
-
-- UI bird and moving pipe obstacles
-- Jump input + FLAP button
-- START button
-- persistent best score
-- persistent run count
-- simple persistent medal counter
-
-### Neko Clicker
-
-- persistent coins
-- persistent lifetime clicks
-- persistent upgrade level
-- increasing click value
-- upgrade-cost loop
-
-### Neko Idle
-
-- persistent coins
-- persistent production rate
-- persistent upgrade level
-- persistent lifetime production
-- local per-frame generation
-- batched PlayerData save every 10 seconds instead of writing every frame
-
-Starter build flow:
+- **Neko Flappy** — flap input, moving pipes, collisions, persistent best score/runs/medals
+- **Neko Clicker** — coins, lifetime clicks, upgrades
+- **Neko Idle** — production rate, upgrades, lifetime production, batched persistence saves
 
 ```text
 Build Selected Starter
         ↓
-complete world-space UI is created
+complete world-space UI
         ↓
-readable UdonSharp is copied to Assets
+readable UdonSharp copied to Assets
         ↓
 Unity / UdonSharp compiles
         ↓
 Auto-Wire Selected Starter
         ↓
-script is attached + fields/buttons are wired
-        ↓
 VRChat Build & Test
 ```
 
-The demos are intentionally editable teaching examples, not opaque precompiled game systems.
+## NekoSune World Gallery
+
+Branch: `world-gallery`  
+Package: `com.nekosune.world-gallery`
+
+Advanced animated image-gallery/slideshow builder.
+
+Data sources:
+
+- local `Texture[]`
+- raw `string[]` titles/subtitles
+- embedded JSON pasted into the inspector
+- `string[]` raw JSON-object rows
+- predeclared remote `VRCUrl[]`
+- remote JSON metadata through `VRCStringDownloader` + `VRCJson`
+- flexible root keys and field mapping
+
+Transitions:
+
+- Cross Fade
+- Slide Left / Right / Up
+- Zoom
+- Spin + Zoom
+- shader Wipe
+- shader Dissolve
+- shader Radial Reveal
+
+The demo builds a three-layer `RawImage` gallery, generates example textures, creates the transition material, copies readable UdonSharp into `Assets`, and auto-wires the controls after compilation.
+
+Remote JSON image strings cannot be turned into arbitrary new `VRCUrl` values by Udon. Remote images are therefore predeclared and JSON maps to them using `imageIndex` or a matching URL string.
+
+## NekoSune World Avatar Search
+
+Branch: `world-avatar-search`  
+Package: `com.nekosune.world-avatar-search`
+
+Stylish VRChat avatar-browser/search starter with a flexible JSON adapter.
+
+The included demo is configured for:
+
+```text
+https://vrcavatarsearch.nekosunevr.co.uk/vrcx_search?search=Rindo
+```
+
+Default VRCX-style fields:
+
+```text
+id
+name
+authorName
+description
+thumbnailImageUrl
+releaseStatus
+```
+
+The mapper also accepts root wrappers such as `avatars`, `results`, `items`, and `data`, with aliases including `avatarId`, `avatar_id`, `avatarName`, `title`, `author`, `creatorName`, `desc`, and `summary`.
+
+The generated UI includes:
+
+- VRChat `VRCUrlInputField`
+- preset **DEMO RINDO** search
+- eight styled result cards
+- selected-avatar detail panel
+- 3D `VRCAvatarPedestal` preview
+- **PREVIEW** button
+- **USE AVATAR** button using `SetAvatarUse(Networking.LocalPlayer)`
+
+Because VRChat cannot construct arbitrary `VRCUrl` objects from ordinary runtime strings, free-form user searches use a complete URL entered through `VRCUrlInputField`; creator-defined preset URLs can be generated at editor time.
+
+## NekoSune World Player Tools
+
+Branch: `world-player-tools`  
+Package: `com.nekosune.world-player-tools`
+
+Player/world interaction helpers. The first module is **Player Teleport Builder**.
+
+Generated UI:
+
+- player selector
+- destination selector
+- Teleport Me
+- Request Selected Player
+- Refresh Players
+- Allow Teleport Requests consent toggle
+- status/feedback panel
+
+`TeleportTo` only moves the local player in VRChat. Remote-player movement is therefore implemented as a parameterized `[NetworkCallable]` request containing a target player ID and destination index. Every client receives it, only the target handles it, and the target only teleports itself when its local consent switch is ON. Consent defaults **OFF**.
+
+The demo creates three editable destination Transforms (`Lobby`, `Games`, `Gallery` by default) and auto-wires the UdonSharp behaviour after compilation.
 
 ## NekoSune Optimizer
 
@@ -252,7 +273,6 @@ Branch: `optimizer`
 Package: `com.nekosune.optimizer`
 
 Avatar:
-
 - Rank-driven Compressor
 - Mesh Compression
 - PC → Quest Assistant
@@ -260,7 +280,6 @@ Avatar:
 - particle and PhysBone optimization helpers
 
 World:
-
 - World Optimizer
 - geometry/material estimates
 - texture-memory review
@@ -273,14 +292,12 @@ Branch: `doctors`
 Package: `com.nekosune.doctors`
 
 Avatar:
-
 - Avatar Doctor
 - PhysBone Doctor
 - Face Tracking Doctor
 - Expression + Animator Doctor
 
 World:
-
 - World Doctor
 - Udon Network Doctor
 
@@ -301,19 +318,18 @@ Package: `com.nekosune.converters`
 
 # World creator stack
 
-The World packages are designed to compose rather than replace each other:
-
 ```text
 World Hub
 │
-├─ World UI Builder ─────────────── visual UI/pages/HUD
-│       │
-│       ├──── World Data ───────── JSON / strings / images
-│       ├──── World Economy ────── products / store / supporters
-│       └──── Starter Games ────── example game HUDs
+├─ World UI Builder ───────── visual pages / settings / HUD
+├─ World Gallery ──────────── advanced animated image UI
+├─ World Avatar Search ────── JSON/VRCX avatar browser + pedestal
+├─ World Player Tools ─────── destination/player teleport UI
 │
-├─ World Gameplay ──────────────── Persistence / inventory schema / AI
-│       └──── Starter Games ────── persistent game examples
+├─ World Data ─────────────── JSON / strings / images
+├─ World Economy ──────────── products / store / supporters
+├─ World Gameplay ─────────── Persistence / inventories / AI
+├─ World Starter Games ────── Flappy / clicker / idle demos
 │
 ├─ Optimizer
 ├─ Doctors
@@ -327,16 +343,25 @@ Persistence Builder
 → coins / XP / unlock schema
 
 World UI Builder
-→ inventory / HUD / settings pages
+→ HUD / settings / inventory pages
+
+World Gallery
+→ animated image/catalog/event slideshow
+
+World Avatar Search
+→ avatar browser/search station
+
+World Player Tools
+→ teleport hub / room navigation
 
 World Data
-→ remote event/news/gallery data
+→ JSON / image feeds
 
 World Economy
-→ VIP/product ownership + supporter list
+→ VIP/product ownership + supporters
 
 Starter Game Kit
-→ learn from working Flappy/clicker/idle examples
+→ learn from working persistent games
 ```
 
 ---
@@ -365,13 +390,11 @@ The Hub scans loaded assemblies automatically.
 
 ## Creating another addon branch
 
-For a new World addon:
-
 1. create a new branch from `world` or the closest existing addon;
-2. use a unique package ID such as `com.nekosune.my-world-addon`;
+2. give it a unique package ID such as `com.nekosune.my-world-addon`;
 3. depend on `com.nekosune.worlds`;
-4. reference assembly `NekoSune.Worlds.Editor`;
-5. add your `[NekoAddon]` registration;
+4. reference `NekoSune.Worlds.Editor`;
+5. add `[NekoAddon]` registration;
 6. put menus under `NekoSune → World → ...`;
 7. publish a ZIP with `package.json` at ZIP root.
 
