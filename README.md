@@ -10,6 +10,8 @@ The included demo preset uses:
 https://vrcavatarsearch.nekosunevr.co.uk/vrcx_search?search=Rindo
 ```
 
+The generated `VRCUrlInputField` is prefilled with that complete URL. In VRChat a user can edit the search value inside the URL and press **SEARCH**, or press **DEMO RINDO** to use the creator-predeclared preset directly.
+
 The default mapper expects the VRCX-style root-array fields `id`, `name`, `authorName`, `description`, `thumbnailImageUrl`, and `releaseStatus`.
 
 ## Flexible JSON adapter
@@ -24,6 +26,8 @@ The runtime can also read APIs wrapped in `avatars`, `results`, `items`, or `dat
 - `thumbnailImageUrl`, `thumbnailUrl`, `imageUrl`
 
 All preferred keys remain editable in the generated behaviour.
+
+The browser keeps up to 128 mapped results by default and displays eight styled cards at a time with **Previous Page** / **Next Page** controls.
 
 ## Search input limitation
 
