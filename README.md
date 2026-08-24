@@ -1,37 +1,36 @@
-# NekoSune World Hub
+# NekoSune World Player Tools
 
-Base/template package for NekoSune world/Udon addons.
+Beginner-friendly VRChat player interaction utilities for the NekoSune World Hub.
 
-**Package ID:** `com.nekosune.worlds`
+## Player Teleport Builder
 
-This branch stays intentionally small: Hub, About page, localization/styles and the public addon contract. Actual creator features are separate VPM addons.
+The first module builds a world-space destination UI with:
 
-## Menu
+- player selector
+- destination selector
+- **Teleport Me**
+- **Request Selected Player**
+- refresh player list
+- explicit **Allow Teleport Requests** consent toggle
+- editable destination Transforms
 
-- `NekoSune → World → Hub`
-- `NekoSune → World → About`
+## Why consent is required
 
-Addon packages implementing `INekoAddon` with `[NekoAddon]` are discovered automatically. The World Hub does not need to be edited when a new addon branch is published.
+VRChat only allows `VRCPlayerApi.TeleportTo` to teleport the local player. To request a remote player's movement, this package sends a parameterized Udon network event containing the target player ID and destination index.
 
-## Current addons
+Every client receives the event, but only the matching target player handles it. The target client then checks its own local `allowRemoteTeleportRequests` flag. The flag defaults **OFF**.
 
-- `com.nekosune.world-tools` — lightweight world framework/template helpers
-- `com.nekosune.optimizer` — Avatar + World optimizer
-- `com.nekosune.doctors` — Avatar + World/Udon diagnostics
-- `com.nekosune.converters` — ChilloutVR CCK 3/4 Avatar/Prop/World + Resonite
+If enabled, the target client teleports its own local player. If disabled, the request is ignored.
 
-## Make a new World addon branch
+This requires VRChat Worlds SDK 3.8.1+ because the request uses `[NetworkCallable]` events with parameters.
 
-1. Create a branch from this template or from the closest existing addon.
-2. Use a unique package ID.
-3. Depend on `com.nekosune.worlds`.
-4. Reference `NekoSune.Worlds.Editor`.
-5. Add a class implementing public `INekoAddon` with `[NekoAddon]`.
-6. Put the tool menu under `NekoSune → World → ...`.
-7. Publish a normal VPM release ZIP.
+## Demo
 
-See `Templates/WorldAddonTemplate.cs.txt`.
-
-## VCC repository
-
-`https://nekosunevr.github.io/NekoSuneUdonScripts/index.json`
+1. Open `NekoSune > World > Player Teleport Builder`.
+2. Enter three starter destination names.
+3. Click **BUILD PLAYER TELEPORT DEMO**.
+4. Move the generated destination Transforms where you want them.
+5. Wait for UdonSharp to compile the generated script.
+6. Select `Neko Player Teleport UI`.
+7. Click **AUTO-WIRE SELECTED TELEPORT UI**.
+8. Use VRChat Build & Test with two or more clients to test consent-based remote requests.

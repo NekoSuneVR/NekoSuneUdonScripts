@@ -1,0 +1,165 @@
+using UdonSharp;
+using UnityEngine;
+using UnityEngine.UI;
+using VRC.SDK3.UdonNetworkCalling;
+using VRC.SDKBase;
+using VRC.Udon.Common.Interfaces;
+
+[UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+public class NekoPlayerTeleportSystem : UdonSharpBehaviour
+{
+    [Header("Destinations")]
+    public Transform[] destinations;
+    public string[] destinationNames;
+
+    [Header("UI")]
+    public Text selectedPlayerText;
+    public Text selectedDestinationText;
+    public Text consentText;
+    public Text statusText;
+
+    [Header("Safety")]
+    public bool allowRemoteTeleportRequests;
+
+    private VRCPlayerApi[] _players = new VRCPlayerApi[16];
+    private int _playerCount;
+    private int _playerIndex;
+    private int _destinationIndex;
+
+    void Start()
+    {
+        RefreshPlayers();
+        RefreshUi();
+    }
+
+    public override void OnPlayerJoined(VRCPlayerApi player) { RefreshPlayers(); }
+    public override void OnPlayerLeft(VRCPlayerApi player) { RefreshPlayers(); }
+
+    public void RefreshPlayers()
+    {
+        int count = VRCPlayerApi.GetPlayerCount();
+        if (_players == null || _players.Length < count)
+        {
+            int capacity = _players == null || _players.Length == 0 ? 8 : _players.Length;
+            while (capacity < count) capacity *= 2;
+            _players = new VRCPlayerApi[capacity];
+        }
+        VRCPlayerApi.GetPlayers(_players);
+        _playerCount = count;
+        if (_playerCount <= 0) _playerIndex = 0;
+        else if (_playerIndex >= _playerCount) _playerIndex = _playerCount - 1;
+        RefreshUi();
+    }
+
+    public void NextPlayer()
+    {
+        if (_playerCount <= 0) return;
+        _playerIndex = (_playerIndex + 1) % _playerCount;
+        RefreshUi();
+    }
+
+    public void PreviousPlayer()
+    {
+        if (_playerCount <= 0) return;
+        _playerIndex--;
+        if (_playerIndex < 0) _playerIndex = _playerCount - 1;
+        RefreshUi();
+    }
+
+    public void NextDestination()
+    {
+        int count = destinations == null ? 0 : destinations.Length;
+        if (count <= 0) return;
+        _destinationIndex = (_destinationIndex + 1) % count;
+        RefreshUi();
+    }
+
+    public void PreviousDestination()
+    {
+        int count = destinations == null ? 0 : destinations.Length;
+        if (count <= 0) return;
+        _destinationIndex--;
+        if (_destinationIndex < 0) _destinationIndex = count - 1;
+        RefreshUi();
+    }
+
+    public void ToggleAllowTeleportRequests()
+    {
+        allowRemoteTeleportRequests = !allowRemoteTeleportRequests;
+        SetStatus(allowRemoteTeleportRequests ? "Other players may now request that you teleport to one of this world's listed destinations." : "Remote teleport requests are blocked for you.");
+        RefreshUi();
+    }
+
+    public void TeleportMe()
+    {
+        TeleportLocalTo(_destinationIndex);
+    }
+
+    public void RequestSelectedPlayerTeleport()
+    {
+        if (_playerCount <= 0 || _playerIndex < 0 || _playerIndex >= _playerCount) { SetStatus("No player selected."); return; }
+        VRCPlayerApi target = _players[_playerIndex];
+        if (!Utilities.IsValid(target)) { RefreshPlayers(); SetStatus("That player is no longer available."); return; }
+        if (target.isLocal) { TeleportLocalTo(_destinationIndex); return; }
+        SetStatus("Teleport request sent to " + target.displayName + ". They must have Allow Teleport Requests enabled.");
+        SendCustomNetworkEvent(NetworkEventTarget.All, nameof(ReceiveTeleportRequest), target.playerId, _destinationIndex);
+    }
+
+    [NetworkCallable(maxEventsPerSecond: 2)]
+    public void ReceiveTeleportRequest(int targetPlayerId, int destinationIndex)
+    {
+        if (Networking.LocalPlayer == null || Networking.LocalPlayer.playerId != targetPlayerId) return;
+        if (!allowRemoteTeleportRequests)
+        {
+            SetStatus("A teleport request was ignored because your consent toggle is OFF.");
+            return;
+        }
+        if (destinationIndex < 0 || destinations == null || destinationIndex >= destinations.Length)
+        {
+            SetStatus("Received an invalid teleport destination.");
+            return;
+        }
+        VRCPlayerApi sender = NetworkCalling.CallingPlayer;
+        string senderName = Utilities.IsValid(sender) ? sender.displayName : "another player";
+        TeleportLocalTo(destinationIndex);
+        SetStatus("Accepted teleport request from " + senderName + ".");
+    }
+
+    void TeleportLocalTo(int index)
+    {
+        if (Networking.LocalPlayer == null || destinations == null || index < 0 || index >= destinations.Length || destinations[index] == null)
+        {
+            SetStatus("Teleport destination is not configured.");
+            return;
+        }
+        Transform target = destinations[index];
+        Networking.LocalPlayer.TeleportTo(target.position, target.rotation);
+        SetStatus("Teleported to " + DestinationName(index) + ".");
+    }
+
+    void RefreshUi()
+    {
+        if (selectedPlayerText != null)
+        {
+            if (_playerCount <= 0) selectedPlayerText.text = "No players";
+            else
+            {
+                VRCPlayerApi p = _players[_playerIndex];
+                selectedPlayerText.text = Utilities.IsValid(p) ? p.displayName + (p.isLocal ? "  (You)" : "") : "Player left";
+            }
+        }
+        if (selectedDestinationText != null) selectedDestinationText.text = DestinationName(_destinationIndex);
+        if (consentText != null) consentText.text = allowRemoteTeleportRequests ? "ALLOW TELEPORT REQUESTS: ON" : "ALLOW TELEPORT REQUESTS: OFF";
+    }
+
+    string DestinationName(int index)
+    {
+        int count = destinations == null ? 0 : destinations.Length;
+        if (count <= 0) return "No destinations";
+        index = Mathf.Clamp(index, 0, count - 1);
+        if (destinationNames != null && index < destinationNames.Length && !string.IsNullOrEmpty(destinationNames[index])) return destinationNames[index];
+        return destinations[index] != null ? destinations[index].name : "Destination " + (index + 1);
+    }
+
+    void SetStatus(string value) { if (statusText != null) statusText.text = value; }
+}

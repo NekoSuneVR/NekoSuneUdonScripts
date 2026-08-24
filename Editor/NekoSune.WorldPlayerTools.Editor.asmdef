@@ -1,0 +1,8 @@
+{
+  "name": "NekoSune.WorldPlayerTools.Editor",
+  "rootNamespace": "NekoSune.WorldPlayerTools.Editor",
+  "references": ["NekoSune.Worlds.Editor", "UnityEngine.UI"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true,
+  "noEngineReferences": false
+}
