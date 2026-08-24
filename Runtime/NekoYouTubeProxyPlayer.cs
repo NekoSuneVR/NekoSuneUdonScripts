@@ -26,20 +26,20 @@ namespace NekoSune.WorldYouTubeProxy
         [Header("Input / status")]
         public VRCUrlInputField proxyInput;
         public Text statusText;
-        [Tooltip("Watch the assigned VRCUrlInputField and submit a changed URL automatically. This lets the bridge sit beside many existing player UIs without replacing their submit button.")]
+        [Tooltip("Watch the assigned VRCUrlInputField and submit a changed URL automatically. YouTube URLs use the NekoSune handling path; every other URL is passed to the player unchanged.")]
         public bool autoWatchInput = true;
 
         [Header("Start URL")]
         public VRCUrl startUrl = VRCUrl.Empty;
         public bool playStartUrl;
-        [Tooltip("Stops stock AVPro/Unity players once when the bridge starts, preventing their native default autoplay from racing the proxy start URL.")]
+        [Tooltip("Stops stock AVPro/Unity players once when the bridge starts, preventing their native default autoplay from racing the bridge start URL.")]
         public bool stopNativePlayerOnBridgeStart = true;
 
         [Header("Networking")]
         public bool synchronizeUrl = true;
 
-        [Header("Compatibility")]
-        [Tooltip("If enabled, a normal youtube.com/youtu.be URL is played directly instead of being rejected. It cannot be rewritten to the NekoSune proxy at runtime because VRChat does not allow constructing arbitrary VRCUrl values in Udon.")]
+        [Header("YouTube compatibility")]
+        [Tooltip("Fallback only. If enabled, a normal youtube.com/youtu.be URL is played directly when it cannot be converted to a NekoSune proxy VRCUrl at runtime. Non-YouTube URLs always pass through unchanged regardless of this setting.")]
         public bool allowDirectYouTubeFallback;
 
         [UdonSynced] private VRCUrl syncedUrl = VRCUrl.Empty;
@@ -62,8 +62,11 @@ namespace NekoSune.WorldYouTubeProxy
                 if (avProPlayer != null) avProPlayer.Stop();
                 if (unityPlayer != null) unityPlayer.Stop();
             }
-            if (proxyInput != null && !VRCUrl.IsNullOrEmpty(proxyInput.GetUrl())) _lastInputValue = proxyInput.GetUrl().Get();
-            SetStatus("NekoSune YouTube Proxy ready.");
+
+            if (proxyInput != null && !VRCUrl.IsNullOrEmpty(proxyInput.GetUrl()))
+                _lastInputValue = proxyInput.GetUrl().Get();
+
+            SetStatus("NekoSune YouTube Proxy ready. Non-YouTube URLs pass through normally.");
             if (playStartUrl && !VRCUrl.IsNullOrEmpty(startUrl)) SubmitUrl(startUrl);
         }
 
@@ -75,6 +78,7 @@ namespace NekoSune.WorldYouTubeProxy
             VRCUrl current = proxyInput.GetUrl();
             string value = VRCUrl.IsNullOrEmpty(current) ? "" : current.Get();
             if (value == _lastInputValue) return;
+
             _lastInputValue = value;
             if (!string.IsNullOrEmpty(value)) SubmitUrl(current);
         }
@@ -86,6 +90,7 @@ namespace NekoSune.WorldYouTubeProxy
                 SetStatus("No VRCUrlInputField assigned.");
                 return;
             }
+
             SubmitUrl(proxyInput.GetUrl());
         }
 
@@ -98,9 +103,12 @@ namespace NekoSune.WorldYouTubeProxy
         {
             _playQueued = false;
             _retryIndex = 0;
+
             if (avProPlayer != null) avProPlayer.Stop();
             if (unityPlayer != null) unityPlayer.Stop();
-            if (customPlayer != null && !string.IsNullOrEmpty(customStopEvent)) customPlayer.SendCustomEvent(customStopEvent);
+            if (customPlayer != null && !string.IsNullOrEmpty(customStopEvent))
+                customPlayer.SendCustomEvent(customStopEvent);
+
             SetStatus("Stopped.");
         }
 
@@ -113,27 +121,37 @@ namespace NekoSune.WorldYouTubeProxy
             }
 
             string raw = url.Get();
+
+            // Already a stable NekoSune YouTube relay URL: use it as-is.
             if (IsNekoProxy(raw))
             {
+                SetStatus("NekoSune YouTube relay URL detected.");
                 PublishAndQueue(url);
                 return;
             }
 
+            // Only YouTube gets special handling. VRChat Udon cannot freely create a new
+            // VRCUrl from a rewritten runtime string, so a normal YouTube URL cannot be
+            // transformed into /v/VIDEO_ID?vrc=1 here unless the URL originated from an
+            // editor/predeclared/proxy-input flow.
             if (IsYouTube(raw))
             {
                 if (allowDirectYouTubeFallback)
                 {
-                    SetStatus("Normal YouTube URL detected. Playing direct because fallback is enabled.");
+                    SetStatus("YouTube URL detected. Proxy conversion is unavailable for this runtime VRCUrl, so direct fallback is being used.");
                     PublishAndQueue(url);
                 }
                 else
                 {
-                    SetStatus("Normal YouTube URL detected. Udon cannot rewrite it into a new proxy VRCUrl at runtime. Use the NekoSune /v/VIDEO_ID?vrc=1 short URL or the prepared proxy input template.");
+                    SetStatus("YouTube URL detected. Use the NekoSune /v/VIDEO_ID?vrc=1 URL so YouTube goes through the proxy.");
                 }
                 return;
             }
 
-            SetStatus("Use a NekoSune short URL from tools.nekosunevr.co.uk.");
+            // Vimeo, Twitch, direct MP4/HLS, radio/video CDNs and every other supported URL
+            // keep their original VRCUrl. The YouTube bridge must not hijack unrelated media.
+            SetStatus("Non-YouTube URL detected. Passing through unchanged.");
+            PublishAndQueue(url);
         }
 
         private void PublishAndQueue(VRCUrl url)
@@ -144,12 +162,14 @@ namespace NekoSune.WorldYouTubeProxy
                 syncedUrl = url;
                 RequestSerialization();
             }
+
             QueuePlay(url, false);
         }
 
         private void QueuePlay(VRCUrl url, bool retry)
         {
             if (VRCUrl.IsNullOrEmpty(url)) return;
+
             _pendingUrl = url;
             if (!retry) _retryIndex = 0;
 
@@ -161,6 +181,7 @@ namespace NekoSune.WorldYouTubeProxy
             }
 
             if (_playQueued) return;
+
             _playQueued = true;
             SetStatus("Queued for VRChat video URL rate limit...");
             SendCustomEventDelayedSeconds("PlayPending", Mathf.Max(0.1f, wait));
@@ -184,23 +205,28 @@ namespace NekoSune.WorldYouTubeProxy
 
             if (avProPlayer != null)
             {
-                SetStatus("Loading through AVPro...");
+                SetStatus(IsYouTubeOrProxy(_activeUrl.Get()) ? "Loading YouTube through AVPro..." : "Loading URL through AVPro...");
                 avProPlayer.PlayURL(_activeUrl);
                 return;
             }
 
             if (unityPlayer != null)
             {
-                SetStatus("Loading through Unity Video...");
+                SetStatus(IsYouTubeOrProxy(_activeUrl.Get()) ? "Loading YouTube through Unity Video..." : "Loading URL through Unity Video...");
                 unityPlayer.PlayURL(_activeUrl);
                 return;
             }
 
             if (customPlayer != null)
             {
-                if (!string.IsNullOrEmpty(customUrlVariable)) customPlayer.SetProgramVariable(customUrlVariable, _activeUrl);
-                if (!string.IsNullOrEmpty(customPlayEvent)) customPlayer.SendCustomEvent(customPlayEvent);
-                SetStatus("Forwarded proxy URL to community player adapter.");
+                if (!string.IsNullOrEmpty(customUrlVariable))
+                    customPlayer.SetProgramVariable(customUrlVariable, _activeUrl);
+                if (!string.IsNullOrEmpty(customPlayEvent))
+                    customPlayer.SendCustomEvent(customPlayEvent);
+
+                SetStatus(IsYouTubeOrProxy(_activeUrl.Get())
+                    ? "Forwarded YouTube URL to community player adapter."
+                    : "Forwarded URL unchanged to community player adapter.");
                 return;
             }
 
@@ -264,7 +290,13 @@ namespace NekoSune.WorldYouTubeProxy
         private bool IsYouTube(string value)
         {
             if (string.IsNullOrEmpty(value)) return false;
-            return value.IndexOf("youtube.com") >= 0 || value.IndexOf("youtu.be") >= 0;
+            string lower = value.ToLower();
+            return lower.IndexOf("youtube.com") >= 0 || lower.IndexOf("youtu.be") >= 0;
+        }
+
+        private bool IsYouTubeOrProxy(string value)
+        {
+            return IsNekoProxy(value) || IsYouTube(value);
         }
 
         private void SetStatus(string value)
