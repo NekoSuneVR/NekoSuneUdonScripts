@@ -47,13 +47,30 @@ jobs:
           path: ${{ env.pathToCi }}
           clean: false
 
+      # package-list-action currently multi-targets net6.0 + net8.0. On newer
+      # hosted runners that can race while generating PackageBuilder.deps.json.
+      # Pin the helper to one supported framework for deterministic listing builds.
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Force package-list builder to net8 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          project="${{ env.pathToCi }}/PackageBuilder/PackageBuilder.csproj"
+          sed -i 's#<TargetFrameworks>net6.0;net8.0</TargetFrameworks>#<TargetFramework>net8.0</TargetFramework>#' "$project"
+          grep -q '<TargetFramework>net8.0</TargetFramework>' "$project"
+          rm -rf "${{ env.pathToCi }}/PackageBuilder/bin" "${{ env.pathToCi }}/PackageBuilder/obj"
+
       - name: Restore builder cache
         uses: actions/cache@v5
         with:
           path: |
             ${{ env.pathToCi }}/.nuke/temp
             ~/.nuget/packages
-          key: ${{ runner.os }}-${{ hashFiles('**/global.json', '**/*.csproj') }}
+          key: ${{ runner.os }}-net8-${{ hashFiles('**/global.json', '**/*.csproj') }}
 
       - name: Build package version listing
         run: ${{ env.pathToCi }}/build.cmd BuildMultiPackageListing --root ${{ env.pathToCi }} --list-publish-directory $GITHUB_WORKSPACE/${{ env.listPublishDirectory }}
