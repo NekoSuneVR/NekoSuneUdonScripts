@@ -2,7 +2,7 @@
 
 A modular VCC/VPM suite for VRChat and social-VR creators.
 
-The repository uses two lightweight **Hub/template packages** plus separately installable addons. New features live on their own branches/packages and register themselves in the Avatar or World Hub automatically.
+The repository uses lightweight **Avatar** and **World Hub/template packages** plus separately installable addons. Addons register themselves in the appropriate Hub automatically, so new features can live on their own branches without editing one giant package.
 
 ## VCC repository
 
@@ -10,27 +10,20 @@ The repository uses two lightweight **Hub/template packages** plus separately in
 https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
 ```
 
-## Architecture
+## Package architecture
 
 ```text
 avatar
 └─ com.nekosune.avatars
    NekoSune Avatar Hub
-   ├─ Hub
-   ├─ About
-   ├─ shared styles/localization
-   └─ public addon discovery API
 
 world
 └─ com.nekosune.worlds
    NekoSune World Hub
-   ├─ Hub
-   ├─ About
-   ├─ shared styles/localization
-   └─ public addon discovery API
 
 Installable addons
 ├─ avatar-tools
+├─ animation-tools
 ├─ world-tools
 ├─ world-ui-builder
 ├─ world-gameplay
@@ -45,246 +38,154 @@ Installable addons
 └─ converters
 ```
 
-The Hub branches are **not bundles**. An addon implements `INekoAddon` + `[NekoAddon]`; the Hub discovers its card from the loaded assembly. No central registry edit is required for each new feature branch.
-
-## Base packages
-
-| Branch | Package ID | Purpose |
-| --- | --- | --- |
-| `avatar` | `com.nekosune.avatars` | Avatar Hub, About, styles/localization and addon API |
-| `world` | `com.nekosune.worlds` | World Hub, About, styles/localization and addon API |
-
-### Hub menus
-
-```text
-NekoSune
-├── Avatar
-│   ├── Hub
-│   └── About
-└── World
-    ├── Hub
-    └── About
-```
-
-Installed addon cards appear automatically in those Hub windows.
+The Hub branches are templates/base UI packages, **not bundles**. An addon implements `INekoAddon` + `[NekoAddon]`; the Hub discovers loaded addon assemblies automatically.
 
 ---
 
-# Addon packages
+# Avatar creator addons
 
 ## NekoSune Avatar Tools
 
 Branch: `avatar-tools`  
 Package: `com.nekosune.avatar-tools`
 
-- Lip Sync Studio
-- Rank Advisor
-- shared avatar reflection/performance API
+The lightweight shared Avatar helper package.
 
-## NekoSune World Tools
+- shared avatar reflection/performance API used by other NekoSune addons
+- beginner **Toggle + Menu Builder**
+  - Bool Expression Parameter
+  - Expression Menu Toggle
+  - OFF / ON `.anim` clips
+  - FX Animator Bool parameter
+  - FX OFF/ON state layer
+  - creates/reuses expression assets and FX controller when the VRChat Avatars SDK is installed
 
-Branch: `world-tools`  
-Package: `com.nekosune.world-tools`
+Lip Sync Studio is no longer stored here. Rank Advisor is no longer stored here.
 
-- World Template Guide
-- lightweight World extension helpers
-- Runtime/Udon starter-layout documentation
+## NekoSune Animation Tools
 
-## NekoSune World UI Builder
+Branch: `animation-tools`  
+Package: `com.nekosune.animation-tools`
 
-Branch: `world-ui-builder`  
-Package: `com.nekosune.world-ui-builder`
+Music/animation authoring addon shared by the Avatar and World Hubs.
 
-Beginner-first world-space UI authoring for VRChat, ChilloutVR and generic Unity UI.
+### Lip Sync
 
-- editable JSON UI blueprints
-- settings, mirrors, teleport, media, gallery, supporter wall, shop/catalog, links, credits, player, admin, rules and event templates
-- Heading, Text, Button, Toggle, Slider, Image, Card, Divider and Spacer elements
-- Neko Dark, Light, Neon, Glass, Pastel, Terminal and Custom themes
-- local images and runtime `RawImage` slots
-- JSON/image/action starter scripts
-- optional `VRCUiShape` / `CVRCanvasWrapper` setup
-- UI Doctor + beginner learning explanations
+- existing NekoSune Lip Sync Studio moved into this package
+- AudioClip analysis and viseme animation generation
+- editor audio preview
 
-## NekoSune World Gameplay
+### Beat / drop mapper
 
-Branch: `world-gameplay`  
-Package: `com.nekosune.world-gameplay`
+- waveform timeline
+- audio scrub / preview seeking
+- bass/low-frequency onset analysis
+- beat, kick and drop markers
+- presets for:
+  - Hardstyle
+  - Uptempo
+  - Frenchcore
+  - custom BPM/sensitivity
 
-VRChat gameplay-system builder:
-
-- visual Persistence schema builder
-- prefixed PlayerData keys
-- `OnPlayerRestored` gating
-- typed Get/Set/Add helpers
-- storage usage/warning helpers
-- Clicker, Idle, Flappy and RPG/Inventory starter schemas
-- AI Navigation / NavMeshAgent patrol starter
-
-## NekoSune World Data
-
-Branch: `world-data`  
-Package: `com.nekosune.world-data`
-
-Remote-data helpers:
-
-- URL/JSON tester
-- `VRCStringDownloader`
-- `VRCJson`, `DataDictionary`, `DataList`
-- `VRCImageDownloader` + `RawImage`
-- trusted-host/rate-limit guidance
-- safe downloaded-image disposal
-- example news/catalog feeds
-
-## NekoSune World Economy
-
-Branch: `world-economy`  
-Package: `com.nekosune.world-economy`
-
-VRChat Creator Economy helpers:
-
-- UdonProduct ownership unlocks
-- `OnPurchasesLoaded` lifecycle
-- quantity-aware purchase events
-- World Store / Listing buttons
-- supporter wall via `Store.ListProductOwners`
-- starter store/supporter UI
-
-The package never processes payments itself; it connects World Udon to VRChat's own Economy APIs.
-
-## NekoSune World Starter Games
-
-Branch: `world-starter-games`  
-Package: `com.nekosune.world-starter-games`
-
-Beginner-editable persistent UI examples:
-
-- **Neko Flappy** — flap input, moving pipes, collisions, persistent best score/runs/medals
-- **Neko Clicker** — coins, lifetime clicks, upgrades
-- **Neko Idle** — production rate, upgrades, lifetime production, batched persistence saves
+Marker colors in the timeline:
 
 ```text
-Build Selected Starter
-        ↓
-complete world-space UI
-        ↓
-readable UdonSharp copied to Assets
-        ↓
-Unity / UdonSharp compiles
-        ↓
-Auto-Wire Selected Starter
-        ↓
-VRChat Build & Test
+green   = beat
+amber   = kick / bass hit
+pink    = detected drop
 ```
 
-## NekoSune World Gallery
+Detection is an editor assistant, not a promise of perfect musical transcription. Manual keyframing remains available.
 
-Branch: `world-gallery`  
-Package: `com.nekosune.world-gallery`
+### Auto + manual keyframing
 
-Advanced animated image-gallery/slideshow builder.
+**Auto mode** discovers real Unity animatable bindings from the selected hierarchy object and writes attack → hit → decay curves to one `.anim` file.
 
-Data sources:
+This can work with properties Unity exposes from:
 
-- local `Texture[]`
-- raw `string[]` titles/subtitles
-- embedded JSON pasted into the inspector
-- `string[]` raw JSON-object rows
-- predeclared remote `VRCUrl[]`
-- remote JSON metadata through `VRCStringDownloader` + `VRCJson`
-- flexible root keys and field mapping
+- Transform / humanoid-bone objects
+- ParticleSystem components
+- Renderer/material/shader properties
+- Lights and other animatable components
+- legally installed third-party effect shaders
 
-Transitions:
+**Manual mode** creates an empty `.anim` plus a beat/kick/drop timestamp guide, leaving all keys to the creator.
 
-- Cross Fade
-- Slide Left / Right / Up
-- Zoom
-- Spin + Zoom
-- shader Wipe
-- shader Dissolve
-- shader Radial Reveal
+### Timed lyrics
 
-The demo builds a three-layer `RawImage` gallery, generates example textures, creates the transition material, copies readable UdonSharp into `Assets`, and auto-wires the controls after compilation.
-
-Remote JSON image strings cannot be turned into arbitrary new `VRCUrl` values by Udon. Remote images are therefore predeclared and JSON maps to them using `imageIndex` or a matching URL string.
-
-## NekoSune World Avatar Search
-
-Branch: `world-avatar-search`  
-Package: `com.nekosune.world-avatar-search`
-
-Stylish VRChat avatar-browser/search starter with a flexible JSON adapter.
-
-The included demo is configured for:
+Accepts exact timestamps such as:
 
 ```text
-https://vrcavatarsearch.nekosunevr.co.uk/vrcx_search?search=Rindo
+[00:12.350]First line
+[00:16.100]Second line
 ```
 
-Default VRCX-style fields:
+or:
 
 ```text
-id
-name
-authorName
-description
-thumbnailImageUrl
-releaseStatus
+12.350|First line
+16.100|Second line
 ```
 
-The mapper also accepts root wrappers such as `avatars`, `results`, `items`, and `data`, with aliases including `avatarId`, `avatar_id`, `avatarName`, `title`, `author`, `creatorName`, `desc`, and `summary`.
+Outputs:
 
-The generated UI includes:
+- World: generated 3D `TextMesh` lyric objects + exact-time visibility `.anim`
+- Avatar/generic: exact-time animation of existing child mesh objects
+- Shader atlas: stepped lyric-index float curve for a compatible installed material/shader
 
-- VRChat `VRCUrlInputField`
-- preset **DEMO RINDO** search
-- eight styled result cards
-- selected-avatar detail panel
-- 3D `VRCAvatarPedestal` preview
-- **PREVIEW** button
-- **USE AVATAR** button using `SetAvatarUse(Networking.LocalPlayer)`
+The tool uses supplied timestamps exactly. It does **not** pretend to automatically transcribe song lyrics from audio.
 
-Because VRChat cannot construct arbitrary `VRCUrl` objects from ordinary runtime strings, free-form user searches use a complete URL entered through `VRCUrlInputField`; creator-defined preset URLs can be generated at editor time.
+### Third-party shaders
 
-## NekoSune World Player Tools
+NekoSune does **not** include, leak, redistribute, or unlock paid/community shaders or creator assets.
 
-Branch: `world-player-tools`  
-Package: `com.nekosune.world-player-tools`
+Animation Tools can keyframe installed shader properties when Unity exposes them as animatable. Examples creators may legally obtain from their official source include:
 
-Player/world interaction helpers. The first module is **Player Teleport Builder**.
+- Doppelgänger / Dope Shader — use the creator's official Patreon/Discord and current licence/tier terms
+- Leviant ScreenSpace Ubershader — use Leviant's official repository/distribution and licence
+- Poiyomi and other creator shaders/effect packages
 
-Generated UI:
-
-- player selector
-- destination selector
-- Teleport Me
-- Request Selected Player
-- Refresh Players
-- Allow Teleport Requests consent toggle
-- status/feedback panel
-
-`TeleportTo` only moves the local player in VRChat. Remote-player movement is therefore implemented as a parameterized `[NetworkCallable]` request containing a target player ID and destination index. Every client receives it, only the target handles it, and the target only teleports itself when its local consent switch is ON. Consent defaults **OFF**.
-
-The demo creates three editable destination Transforms (`Lobby`, `Games`, `Gallery` by default) and auto-wires the UdonSharp behaviour after compilation.
+The package contains information/links only; third-party shader files are not bundled.
 
 ## NekoSune Optimizer
 
 Branch: `optimizer`  
 Package: `com.nekosune.optimizer`
 
-Avatar:
-- Rank-driven Compressor
+### Avatar
+
+- **Rank Advisor** — moved from Avatar Tools
+- PC/mobile VRChat avatar Performance Rank analysis
+- **Build Size Advisor**
+  - PC compressed/download size
+  - PC uncompressed size
+  - Android/Quest/mobile compressed/download size
+  - Android/Quest/mobile uncompressed size
+- Compressor
 - Mesh Compression
 - PC → Quest Assistant
 - VRAM / Texture Inspector
 - particle and PhysBone optimization helpers
 
-World:
+Current Avatar Build Size Advisor caps:
+
+```text
+PC               200 MB download / 500 MB uncompressed
+Android/mobile    10 MB download /  40 MB uncompressed
+```
+
+The advisor attempts to read the latest built bundle sizes from Unity `Editor.log`, with manual values available when SDK log wording changes. Source FBX/texture size is not treated as the final VRChat bundle size.
+
+### World
+
 - World Optimizer
-- geometry/material estimates
-- texture-memory review
-- realtime light/shadow review
-- particle/audio review
+- **World Platform Advisor**
+  - PC scene/build review
+  - Android/mobile scene/build review
+  - compressed/uncompressed last-build display
+  - geometry/material/texture/light/particle/audio snapshot
+
+VRChat does not publish an official World Performance Rank equivalent to avatar ranks, so NekoSune does not invent one. Android world builds are checked against the 100 MB compressed upload limit. PC world ~200 MB is shown as public-world size guidance, not as an official rank/hard cap.
 
 ## NekoSune Doctors
 
@@ -292,12 +193,14 @@ Branch: `doctors`
 Package: `com.nekosune.doctors`
 
 Avatar:
+
 - Avatar Doctor
 - PhysBone Doctor
 - Face Tracking Doctor
 - Expression + Animator Doctor
 
 World:
+
 - World Doctor
 - Udon Network Doctor
 
@@ -316,59 +219,193 @@ Package: `com.nekosune.converters`
 
 ---
 
-# World creator stack
+# World creator addons
+
+## NekoSune World Tools
+
+Branch: `world-tools`  
+Package: `com.nekosune.world-tools`
+
+- World Template Guide
+- lightweight World extension helpers
+- Runtime/Udon starter-layout documentation
+
+## NekoSune World UI Builder
+
+Branch: `world-ui-builder`  
+Package: `com.nekosune.world-ui-builder`
+
+Beginner-first world-space UI authoring for VRChat, ChilloutVR and generic Unity UI.
+
+- settings, mirrors, teleport, media, gallery, supporter wall, shop/catalog, links, credits, player, admin, rules and event templates
+- Heading, Text, Button, Toggle, Slider, Image, Card, Divider and Spacer elements
+- Neko Dark, Light, Neon, Glass, Pastel, Terminal and Custom themes
+- editable JSON UI blueprints
+- local and remote-image starter support
+- JSON/action starter scripts
+- optional `VRCUiShape` / `CVRCanvasWrapper` setup
+- UI Doctor + beginner learning explanations
+
+## NekoSune World Gameplay
+
+Branch: `world-gameplay`  
+Package: `com.nekosune.world-gameplay`
+
+- visual Persistence schema builder
+- prefixed PlayerData keys
+- `OnPlayerRestored` gating
+- typed Get/Set/Add helpers
+- storage usage/warning helpers
+- Clicker, Idle, Flappy and RPG/Inventory starter schemas
+- AI Navigation / NavMeshAgent patrol starter
+
+## NekoSune World Data
+
+Branch: `world-data`  
+Package: `com.nekosune.world-data`
+
+- URL/JSON tester
+- `VRCStringDownloader`
+- `VRCJson`, `DataDictionary`, `DataList`
+- `VRCImageDownloader` + `RawImage`
+- trusted-host/rate-limit guidance
+- safe downloaded-image disposal
+- example news/catalog feeds
+
+## NekoSune World Economy
+
+Branch: `world-economy`  
+Package: `com.nekosune.world-economy`
+
+- UdonProduct ownership unlocks
+- `OnPurchasesLoaded` lifecycle
+- quantity-aware purchase events
+- World Store / Listing buttons
+- supporter wall via `Store.ListProductOwners`
+- starter store/supporter UI
+
+The package connects World Udon to VRChat's Creator Economy APIs; it does not process external payments itself.
+
+## NekoSune World Starter Games
+
+Branch: `world-starter-games`  
+Package: `com.nekosune.world-starter-games`
+
+- **Neko Flappy** — persistent high score/runs/medals
+- **Neko Clicker** — persistent coins/clicks/upgrades
+- **Neko Idle** — persistent production/upgrades with batched saves
+
+The starter builder creates the world-space UI, copies readable UdonSharp into `Assets`, then Auto-Wire attaches the compiled behaviour after Unity/UdonSharp finishes compiling.
+
+## NekoSune World Gallery
+
+Branch: `world-gallery`  
+Package: `com.nekosune.world-gallery`
+
+Sources:
+
+- local `Texture[]`
+- raw title/subtitle arrays
+- embedded JSON
+- raw JSON-object rows
+- predeclared remote `VRCUrl[]`
+- remote JSON metadata via `VRCStringDownloader` + `VRCJson`
+
+Transitions:
+
+- Cross Fade
+- Slide Left / Right / Up
+- Zoom
+- Spin + Zoom
+- shader Wipe
+- shader Dissolve
+- shader Radial Reveal
+
+## NekoSune World Avatar Search
+
+Branch: `world-avatar-search`  
+Package: `com.nekosune.world-avatar-search`
+
+Flexible JSON/VRCX-style VRChat avatar browser.
+
+Demo endpoint:
 
 ```text
+https://vrcavatarsearch.nekosunevr.co.uk/vrcx_search?search=Rindo
+```
+
+Default mapping supports root arrays with:
+
+```text
+id
+name
+authorName
+description
+thumbnailImageUrl
+releaseStatus
+```
+
+and wrapped APIs using `avatars`, `results`, `items`, or `data` plus common field aliases.
+
+Paging:
+
+- creator default: **5 or 10 results/page**
+- player controls: **5 / PAGE** and **10 / PAGE**
+- Previous / Next page
+- up to 128 mapped results by default
+- ten reusable result cards
+
+Avatar interaction:
+
+- `VRCUrlInputField` search
+- 3D `VRCAvatarPedestal` preview
+- PREVIEW
+- USE AVATAR via `SetAvatarUse(Networking.LocalPlayer)`
+
+## NekoSune World Player Tools
+
+Branch: `world-player-tools`  
+Package: `com.nekosune.world-player-tools`
+
+- player selector
+- destination selector
+- Teleport Me
+- Request Selected Player
+- Refresh Players
+- consent toggle for incoming teleport requests
+
+VRChat `TeleportTo` only moves the local player. Remote movement is therefore a parameterized consent-based network request; the target client teleports itself only when that player's local consent switch is ON. Consent defaults OFF.
+
+---
+
+# Suggested creator stack
+
+```text
+Avatar Hub
+├─ Avatar Tools ───────────── toggles / menus / shared API
+├─ Animation Tools ───────── Lip Sync / beat mapping / keyframes / lyrics
+├─ Optimizer ─────────────── Rank / size / Quest / Compressor
+├─ Doctors
+└─ Converters
+
 World Hub
-│
-├─ World UI Builder ───────── visual pages / settings / HUD
-├─ World Gallery ──────────── advanced animated image UI
-├─ World Avatar Search ────── JSON/VRCX avatar browser + pedestal
-├─ World Player Tools ─────── destination/player teleport UI
-│
-├─ World Data ─────────────── JSON / strings / images
-├─ World Economy ──────────── products / store / supporters
-├─ World Gameplay ─────────── Persistence / inventories / AI
-├─ World Starter Games ────── Flappy / clicker / idle demos
-│
+├─ World UI Builder
+├─ Animation Tools ───────── beat/drop animation + 3D timed lyrics
+├─ World Gallery
+├─ World Avatar Search
+├─ World Player Tools
+├─ World Data
+├─ World Economy
+├─ World Gameplay
+├─ World Starter Games
 ├─ Optimizer
 ├─ Doctors
 └─ Converters
 ```
 
-Example beginner workflow:
-
-```text
-Persistence Builder
-→ coins / XP / unlock schema
-
-World UI Builder
-→ HUD / settings / inventory pages
-
-World Gallery
-→ animated image/catalog/event slideshow
-
-World Avatar Search
-→ avatar browser/search station
-
-World Player Tools
-→ teleport hub / room navigation
-
-World Data
-→ JSON / image feeds
-
-World Economy
-→ VIP/product ownership + supporters
-
-Starter Game Kit
-→ learn from working persistent games
-```
-
----
-
 # Automatic Hub registration
 
-A minimal World addon can register itself like this:
+A World addon can register itself like this:
 
 ```csharp
 using NekoSune.Worlds.Editor;
@@ -382,23 +419,13 @@ public sealed class MyWorldAddon : INekoAddon
     public string CategoryKey => "cat.world";
     public string Glyph => "+";
     public bool IsAvailable => true;
-    public void Open() { /* open your EditorWindow */ }
+    public void Open() { }
 }
 ```
 
 The Hub scans loaded assemblies automatically.
 
-## Creating another addon branch
-
-1. create a new branch from `world` or the closest existing addon;
-2. give it a unique package ID such as `com.nekosune.my-world-addon`;
-3. depend on `com.nekosune.worlds`;
-4. reference `NekoSune.Worlds.Editor`;
-5. add `[NekoAddon]` registration;
-6. put menus under `NekoSune → World → ...`;
-7. publish a ZIP with `package.json` at ZIP root.
-
-Templates remain on the base branches:
+Starter templates remain on the base branches:
 
 ```text
 avatar/Templates/AvatarAddonTemplate.cs.txt
@@ -407,13 +434,11 @@ world/Templates/WorldAddonTemplate.cs.txt
 
 # Publishing / listing
 
-Every feature branch has its own GitHub release workflow. `main/source.json` points the VCC package-list builder at this repository once; compatible release ZIPs are collected into the same listing:
+Feature branches publish VPM ZIP releases with `package.json` at ZIP root. `main/source.json` points the listing builder at this repository once, and compatible releases are collected into the shared VCC listing:
 
 ```text
 https://nekosunevr.github.io/NekoSuneUdonScripts/index.json
 ```
-
-`Website/` renders package cards from that generated listing.
 
 ## License
 
